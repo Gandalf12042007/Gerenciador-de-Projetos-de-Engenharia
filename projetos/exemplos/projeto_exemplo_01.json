@@ -1,0 +1,17 @@
+{
+  "id": "projeto-ex-001",
+  "nome": "Projeto Exemplo 01",
+  "cliente": "Cliente Demo",
+  "local": "Cidade/Estado",
+  "engenheiro_responsavel": "Vicente",
+  "data_inicio_prevista": "2026-01-01",
+  "data_termino_prevista": "2026-06-30",
+  "atividades": [
+    {"id": 1, "titulo": "Mobilização", "duracao_dias": 7, "responsavel": "Equipe A"},
+    {"id": 2, "titulo": "Fundações", "duracao_dias": 30, "responsavel": "Equipe B"}
+  ],
+  "orcamento": {
+    "total_previsto": 100000.00,
+    "moeda": "BRL"
+  }
+}

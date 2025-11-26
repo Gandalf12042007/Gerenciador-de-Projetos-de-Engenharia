@@ -1,0 +1,85 @@
+# Patch gerado automaticamente: adiciona a pasta `projetos/` com quatro README.md
+# Como aplicar:
+# 1) Salve este arquivo na raiz do repositório (já está salvo em projetos.patch).
+# 2) No PowerShell, a partir da raiz do repo:
+#    git apply projetos.patch
+#    git add projetos
+#    git commit --author="vicente <vicentedesouza762@gmail.com>" -m "feat(projetos): adicionar estrutura inicial da pasta projetos"
+#    git remote add meu-fork https://github.com/Souza371/Gerenciador-de-Projetos-de-Engenharia.git  # se ainda não existir
+#    git push meu-fork HEAD:feat/projetos-estrutura
+# Ou aplique manualmente e use sua forma preferida de commit/push.
+
+diff --git a/projetos/README.md b/projetos/README.md
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/projetos/README.md
+@@ -0,0 +1,36 @@
++# Pasta `projetos`
++
++Esta pasta contém recursos e modelos relacionados aos projetos de engenharia do repositório.
++
++Estrutura proposta:
++
++- `docs/` - documentação específica de projetos (modelos, instruções).
++- `templates/` - modelos reutilizáveis (escopo, cronograma, planilhas).
++- `exemplos/` - exemplos e projetos de demonstração (JSON/YAML).
++
++Como usar
++
++1. Ajuste/adicione templates e exemplos conforme necessário.
++2. Ao finalizar alterações, faça commit usando seu nome e email de autoria (conforme solicitado):
++
++   git -C "c:\\Users\\vicen\\Gerenciador-de-Projetos-de-Engenharia" config user.name "vicente"
++   git -C "c:\\Users\\vicen\\Gerenciador-de-Projetos-de-Engenharia" config user.email "vicentedesouza762@gmail.com"
++
++Sugestão de commit:
++
++    git add projetos
++    git commit -m "feat(projetos): adicionar estrutura inicial da pasta projetos"
++
++Se desejar, empurre para seu fork/remote e abra um Pull Request para o repositório principal.
++
+diff --git a/projetos/docs/README.md b/projetos/docs/README.md
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/projetos/docs/README.md
+@@ -0,0 +1,15 @@
++# docs/
++
++Documentação e guias específicos para modelos de projeto. Coloque aqui instruções, exemplos de preenchimento e notas técnicas.
++
++Exemplos de arquivos que podem ficar aqui:
++- `manual_projeto.md`
++- `instrucoes_medicao.md`
++- `padroes_documentacao.md`
++
+diff --git a/projetos/templates/README.md b/projetos/templates/README.md
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/projetos/templates/README.md
+@@ -0,0 +1,11 @@
++# templates/
++
++Modelos reutilizáveis para projetos: escopo, cronogramas, planilhas de medição, checklists.
++
++Sugestões de templates:
++- `escopo_template.md`
++- `cronograma_template.xlsx` (ou planilha similar)
++- `relatorio_avanco_template.md`
++
+diff --git a/projetos/exemplos/README.md b/projetos/exemplos/README.md
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/projetos/exemplos/README.md
+@@ -0,0 +1,11 @@
++# exemplos/
++
++Projetos de exemplo para referência e testes. Pode conter arquivos JSON/YAML com estruturas de projeto, tarefas e orçamentos.
++
++Exemplo de uso:
++- `projeto_exemplo_01.json` — exemplo de payload para criação de projeto via API.
++

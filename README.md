@@ -1,75 +1,79 @@
 🚀 Gerenciador de Projetos de Engenharia
+1. Apresentação
 
-O Gerenciador de Projetos de Engenharia é um sistema informatizado concebido para apoiar o planejamento, organização, monitoramento e controle de projetos de engenharia em suas diferentes fases, desde a concepção até o encerramento. A ferramenta propõe uma solução integrada e centralizada para gerenciar informações essenciais, como etapas, prazos, responsáveis técnicos e documentação relacionada, proporcionando maior segurança, rastreabilidade e padronização dos processos. Este trabalho foi desenvolvido como parte do Trabalho de Conclusão de Curso (TCC), evidenciando a aplicação prática dos conhecimentos adquiridos ao longo da formação.
+O Gerenciador de Projetos de Engenharia é um sistema informatizado desenvolvido com o propósito de apoiar a gestão de projetos técnicos em todas as suas fases, abrangendo planejamento, execução, monitoramento e encerramento. A ferramenta centraliza informações essenciais, como prazos, responsáveis, etapas e documentação técnica, garantindo organização, integridade e rastreabilidade das atividades.
+Este software integra o desenvolvimento aplicado no Trabalho de Conclusão de Curso (TCC), refletindo a consolidação de competências técnicas adquiridas ao longo da formação profissional.
 
-🎯 Objetivos do Projeto
+2. Objetivos do Projeto
+2.1 Objetivo Geral
 
-O projeto tem como finalidade principal a criação de um sistema capaz de melhorar a gestão de projetos de engenharia, atendendo às seguintes metas específicas:
+Desenvolver um sistema capaz de gerenciar projetos de engenharia de forma padronizada, automatizada e rastreável.
 
-📂 Automatizar procedimentos relacionados ao registro, acompanhamento e organização de projetos de engenharia.
+2.2 Objetivos Específicos
 
-🗂️ Estruturar informações referentes a tarefas, etapas, prazos, entregáveis e responsáveis técnicos, evitando dispersão e perda de dados.
+📂 Automatizar procedimentos relacionados ao registro e acompanhamento dos projetos;
 
-📊 Proporcionar uma visualização clara e objetiva do progresso dos projetos, facilitando tomadas de decisão fundamentadas.
+🗂️ Organizar informações sobre tarefas, prazos, escopo, responsáveis e entregáveis;
 
-📝 Registrar e documentar decisões, alterações, histórico de versões e informações técnicas, assegurando rastreabilidade e conformidade profissional.
+📊 Proporcionar meios para visualização clara do progresso do projeto;
 
-⚙️ Consolidar uma base tecnológica escalável, permitindo futuras expansões, tais como implantação de relatórios gerenciais, dashboards e integrações com outros sistemas corporativos.
+📝 Registrar histórico, decisões e documentação técnica;
 
-🧩 Funcionalidades Principais
+⚙️ Disponibilizar uma base escalável para futuras implementações, relatórios e integrações.
 
-O sistema contempla funcionalidades que atendem às necessidades reais da gestão de projetos de engenharia, tais como:
+3. Funcionalidades Principais
 
-➕ Cadastro completo de projetos, incluindo informações essenciais como nome, responsável, datas, escopo e status.
+➕ Cadastro e gerenciamento de projetos;
 
-👥 Atribuição de responsáveis para etapas, tarefas e entregas.
+👥 Definição de responsáveis técnicos e atribuídos por etapas;
 
-⏱️ Controle de prazos e acompanhamento de progresso, permitindo identificar atrasos, pendências e pontos críticos.
+⏱️ Controle de prazos e status das atividades;
 
-🔄 Atualização dinâmica de status, facilitando o monitoramento contínuo e colaborativo.
+🔄 Atualização dinâmica do progresso do projeto;
 
-💾 Armazenamento estruturado de dados, evitando redundâncias e permitindo consultas rápidas e precisas.
+💾 Armazenamento estruturado de informações;
 
-📎 Interface intuitiva, desenvolvida com o propósito de facilitar o uso por diferentes perfis de usuários, técnicos ou administrativos.
+📎 Interface intuitiva projetada para facilitar o uso por diferentes perfis de usuários.
 
-👥 Público-Alvo
+4. Público-Alvo
 
-O sistema foi projetado para atender demandas de diferentes contextos, sendo aplicável para:
+O sistema foi concebido para atender às demandas de:
 
-🎓 Estudantes de engenharia, que necessitam registrar, controlar e apresentar projetos acadêmicos e técnicos.
+🎓 Estudantes em projetos acadêmicos e TCCs;
 
-👨‍🏫 Docentes e orientadores, que acompanham o desenvolvimento de TCCs, projetos práticos ou laboratoriais.
+👨‍🏫 Professores, orientadores e instituições de ensino;
 
-🧱 Profissionais autônomos e engenheiros, responsáveis por obras, instalações, projetos industriais, elétricos, civis, mecânicos e afins.
+🧱 Engenheiros e profissionais autônomos;
 
-🏢 Pequenas e médias empresas de engenharia, que ainda não dispõem de ferramentas profissionais de gestão de projetos.
+🏢 Empresas de pequeno e médio porte no setor de engenharia;
 
-🏛️ Escritórios técnicos de engenharia e arquitetura, que demandam controle documental, organização formal de atividades e rastreabilidade de decisões.
+🏛️ Escritórios técnicos de engenharia e arquitetura que necessitam de controle documental e rastreabilidade.
 
-🛠️ Tecnologias Utilizadas (Previstas ou Implementadas)
+5. Tecnologias Previstas / Utilizadas
+Componente	Opções Adotadas / Em Estudo
+Linguagem de Programação	Python, Java, ou equivalente
+Banco de Dados	MySQL, SQLite ou similar
+Interface	GUI (Tkinter / JavaFX) ou Web (HTML + CSS + JS)
+Versionamento	Git + GitHub
 
-💻 Linguagem de programação: Python, Java ou outra tecnologia definida no desenvolvimento.
+Esta seção será atualizada conforme a implementação final.
 
-🗃️ Banco de Dados: MySQL, SQLite ou outro banco relacional, conforme a necessidade do projeto.
+6. Benefícios e Justificativas
 
-🖥️ Interface de usuário: Interface gráfica (ex.: Tkinter, JavaFX) ou interface Web (HTML, CSS e JavaScript).
+⬇️ Redução de retrabalho e inconsistências de dados;
 
-🔁 Versionamento: Git e GitHub, utilizados para controle de versões, colaboração e auditoria do código.
+🔍 Maior transparência no fluxo de informações;
 
-Esta seção poderá ser atualizada conforme a implementação efetiva do projeto.
+🎯 Fortalecimento da gestão de prazos e recursos técnicos;
 
-⭐ Benefícios Acadêmicos e Profissionais
+🧭 Rastreabilidade de decisões e histórico técnico;
 
-⬇️ Redução de erros e retrabalhos, devido ao controle centralizado das informações.
+🛡️ Estrutura modular permitindo ampliações futuras.
 
-🔍 Transparência no fluxo de atividades, facilitando apresentações acadêmicas, auditorias e supervisões técnicas.
+7. Status do Projeto
 
-🎯 Melhor gestão de prazos e recursos, contribuindo para entregas mais previsíveis e bem documentadas.
+O projeto encontra-se em fase de desenvolvimento, com escopo definido e estrutura funcional planejada. Novos recursos serão incorporados conforme o cronograma, até a disponibilização da versão final para apresentação do TCC.
 
-🧭 Rastreabilidade de decisões técnicas, favorecendo conformidade e responsabilidade profissional.
+8. Direitos e Licenciamento
 
-🛡️ Estrutura modular e escalável, permitindo aprimoramentos futuros e ampliação das funcionalidades conforme demandas reais do mercado.
-
-📌 Status do Projeto
-
-O projeto encontra-se em fase de desenvolvimento, com arquitetura definida e funcionalidades iniciais planejadas. À medida que o cronograma de execução do TCC avançar, novas implementações serão adicionadas, consolidando o sistema como uma ferramenta funcional, tecnicamente consistente e aderente às necessidades da gestão de projetos de engenharia.
+Este projeto pode ser disponibilizado sob licença MIT ou outra a ser definida. A licença permite estudo, modificação e redistribuição, desde que os créditos do autor sejam preservados.

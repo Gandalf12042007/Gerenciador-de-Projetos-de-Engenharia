@@ -1,0 +1,334 @@
+// Diagrama do Banco de Dados - Gerenciador de Projetos de Engenharia
+// Visualize em: https://dbdiagram.io/
+
+Project gerenciador_projetos {
+  database_type: 'MySQL'
+  Note: 'Sistema de gerenciamento de projetos de engenharia civil'
+}
+
+// ===== TABELAS DE USUÁRIOS E PERMISSÕES =====
+
+Table usuarios {
+  id int [pk, increment]
+  nome varchar(100) [not null]
+  email varchar(100) [unique, not null]
+  senha_hash varchar(255) [not null]
+  telefone varchar(20)
+  cargo varchar(50)
+  foto_perfil varchar(255)
+  ativo boolean [default: true]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    email
+  }
+}
+
+Table permissoes {
+  id int [pk, increment]
+  nome varchar(50) [unique, not null]
+  descricao text
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  Note: 'Permissões: admin, gerente, engenheiro, cliente, visualizador'
+}
+
+Table usuario_permissoes {
+  id int [pk, increment]
+  usuario_id int [not null]
+  permissao_id int [not null]
+  projeto_id int [null]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    (usuario_id, permissao_id, projeto_id) [unique]
+  }
+}
+
+// ===== TABELAS DE PROJETOS =====
+
+Table projetos {
+  id int [pk, increment]
+  nome varchar(150) [not null]
+  descricao text
+  endereco varchar(255)
+  cliente varchar(100)
+  valor_total decimal(15,2)
+  data_inicio date
+  data_fim_prevista date
+  data_fim_real date
+  status enum('planejamento', 'em_andamento', 'pausado', 'concluido', 'cancelado') [default: 'planejamento']
+  progresso_percentual decimal(5,2) [default: 0]
+  criador_id int [not null]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    status
+    criador_id
+  }
+}
+
+Table equipes {
+  id int [pk, increment]
+  projeto_id int [not null]
+  usuario_id int [not null]
+  papel enum('gerente', 'engenheiro', 'tecnico', 'colaborador') [not null]
+  data_entrada date [not null]
+  data_saida date
+  ativo boolean [default: true]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    (projeto_id, usuario_id) [unique]
+  }
+}
+
+// ===== TABELAS DE TAREFAS (KANBAN) =====
+
+Table tarefas {
+  id int [pk, increment]
+  projeto_id int [not null]
+  titulo varchar(150) [not null]
+  descricao text
+  status enum('a_fazer', 'em_andamento', 'em_revisao', 'concluida') [default: 'a_fazer']
+  prioridade enum('baixa', 'media', 'alta', 'urgente') [default: 'media']
+  data_inicio date
+  data_fim_prevista date
+  data_fim_real date
+  responsavel_id int
+  criador_id int [not null]
+  ordem int [default: 0]
+  progresso_percentual decimal(5,2) [default: 0]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    (projeto_id, status)
+    responsavel_id
+  }
+}
+
+Table tarefa_dependencias {
+  id int [pk, increment]
+  tarefa_id int [not null]
+  tarefa_dependente_id int [not null]
+  tipo enum('termino_inicio', 'inicio_inicio', 'termino_termino') [default: 'termino_inicio']
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    (tarefa_id, tarefa_dependente_id) [unique]
+  }
+  
+  Note: 'Define dependências entre tarefas'
+}
+
+Table comentarios_tarefa {
+  id int [pk, increment]
+  tarefa_id int [not null]
+  usuario_id int [not null]
+  comentario text [not null]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    tarefa_id
+  }
+}
+
+// ===== TABELAS DE DOCUMENTOS =====
+
+Table documentos {
+  id int [pk, increment]
+  projeto_id int [not null]
+  nome varchar(150) [not null]
+  descricao text
+  tipo enum('contrato', 'projeto', 'laudo', 'orcamento', 'nota_fiscal', 'outro') [not null]
+  arquivo_url varchar(255) [not null]
+  tamanho_kb int
+  versao varchar(20) [default: '1.0']
+  usuario_upload_id int [not null]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    projeto_id
+    tipo
+  }
+}
+
+Table versoes_documento {
+  id int [pk, increment]
+  documento_id int [not null]
+  versao varchar(20) [not null]
+  arquivo_url varchar(255) [not null]
+  alteracoes text
+  usuario_id int [not null]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    documento_id
+  }
+}
+
+// ===== TABELAS DE CHAT/MENSAGENS =====
+
+Table chats {
+  id int [pk, increment]
+  projeto_id int [not null]
+  nome varchar(100)
+  tipo enum('geral', 'equipe', 'privado') [default: 'geral']
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    projeto_id
+  }
+}
+
+Table chat_participantes {
+  id int [pk, increment]
+  chat_id int [not null]
+  usuario_id int [not null]
+  data_entrada timestamp [default: `CURRENT_TIMESTAMP`]
+  ultima_leitura timestamp
+  
+  indexes {
+    (chat_id, usuario_id) [unique]
+  }
+}
+
+Table mensagens {
+  id int [pk, increment]
+  chat_id int [not null]
+  usuario_id int [not null]
+  mensagem text [not null]
+  arquivo_url varchar(255)
+  lida boolean [default: false]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    chat_id
+    (chat_id, criado_em)
+  }
+}
+
+// ===== TABELAS DE MATERIAIS E ORÇAMENTO =====
+
+Table materiais {
+  id int [pk, increment]
+  projeto_id int [not null]
+  nome varchar(150) [not null]
+  descricao text
+  unidade varchar(20) [not null]
+  quantidade_prevista decimal(10,2)
+  quantidade_utilizada decimal(10,2) [default: 0]
+  preco_unitario decimal(10,2)
+  fornecedor varchar(100)
+  data_compra date
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    projeto_id
+  }
+  
+  Note: 'unidade: m, m2, m3, kg, ton, un, etc'
+}
+
+Table orcamentos {
+  id int [pk, increment]
+  projeto_id int [not null]
+  descricao varchar(150) [not null]
+  categoria enum('material', 'mao_obra', 'equipamento', 'servico', 'outro') [not null]
+  valor_previsto decimal(15,2) [not null]
+  valor_real decimal(15,2) [default: 0]
+  data_prevista date
+  data_pagamento date
+  status enum('previsto', 'aprovado', 'pago', 'cancelado') [default: 'previsto']
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  atualizado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    projeto_id
+    categoria
+    status
+  }
+}
+
+// ===== TABELAS DE MÉTRICAS E RELATÓRIOS =====
+
+Table metricas_projeto {
+  id int [pk, increment]
+  projeto_id int [not null]
+  data_registro date [not null]
+  tarefas_concluidas int [default: 0]
+  tarefas_atrasadas int [default: 0]
+  progresso_fisico decimal(5,2) [default: 0]
+  progresso_financeiro decimal(5,2) [default: 0]
+  horas_trabalhadas decimal(10,2) [default: 0]
+  valor_gasto decimal(15,2) [default: 0]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    (projeto_id, data_registro) [unique]
+  }
+}
+
+Table notificacoes {
+  id int [pk, increment]
+  usuario_id int [not null]
+  tipo enum('tarefa', 'mensagem', 'documento', 'projeto', 'sistema') [not null]
+  titulo varchar(150) [not null]
+  mensagem text
+  link varchar(255)
+  lida boolean [default: false]
+  criado_em timestamp [default: `CURRENT_TIMESTAMP`]
+  
+  indexes {
+    (usuario_id, lida)
+  }
+}
+
+// ===== RELACIONAMENTOS =====
+
+Ref: usuario_permissoes.usuario_id > usuarios.id [delete: cascade]
+Ref: usuario_permissoes.permissao_id > permissoes.id [delete: cascade]
+Ref: usuario_permissoes.projeto_id > projetos.id [delete: cascade]
+
+Ref: projetos.criador_id > usuarios.id
+
+Ref: equipes.projeto_id > projetos.id [delete: cascade]
+Ref: equipes.usuario_id > usuarios.id [delete: cascade]
+
+Ref: tarefas.projeto_id > projetos.id [delete: cascade]
+Ref: tarefas.responsavel_id > usuarios.id
+Ref: tarefas.criador_id > usuarios.id
+
+Ref: tarefa_dependencias.tarefa_id > tarefas.id [delete: cascade]
+Ref: tarefa_dependencias.tarefa_dependente_id > tarefas.id [delete: cascade]
+
+Ref: comentarios_tarefa.tarefa_id > tarefas.id [delete: cascade]
+Ref: comentarios_tarefa.usuario_id > usuarios.id
+
+Ref: documentos.projeto_id > projetos.id [delete: cascade]
+Ref: documentos.usuario_upload_id > usuarios.id
+
+Ref: versoes_documento.documento_id > documentos.id [delete: cascade]
+Ref: versoes_documento.usuario_id > usuarios.id
+
+Ref: chats.projeto_id > projetos.id [delete: cascade]
+
+Ref: chat_participantes.chat_id > chats.id [delete: cascade]
+Ref: chat_participantes.usuario_id > usuarios.id [delete: cascade]
+
+Ref: mensagens.chat_id > chats.id [delete: cascade]
+Ref: mensagens.usuario_id > usuarios.id
+
+Ref: materiais.projeto_id > projetos.id [delete: cascade]
+
+Ref: orcamentos.projeto_id > projetos.id [delete: cascade]
+
+Ref: metricas_projeto.projeto_id > projetos.id [delete: cascade]
+
+Ref: notificacoes.usuario_id > usuarios.id [delete: cascade]

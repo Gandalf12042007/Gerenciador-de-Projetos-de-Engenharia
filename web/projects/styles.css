@@ -1,0 +1,19 @@
+* { box-sizing: border-box; }
+body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #222; background: #f5f7fa; }
+.topbar{ display:flex; justify-content:space-between; align-items:center; background:#1f2937; color:#fff; padding:14px 18px}
+.topbar h1{ margin:0; font-size:1.25rem}
+.container{ padding:18px; max-width:1200px; margin:0 auto}
+.metrics{ display:flex; gap:12px; margin-bottom:12px; }
+.metric{ background:#fff; padding:12px 14px; border-radius:8px; flex:1; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.filters{ display:flex; gap:12px; align-items:center; margin-bottom:12px }
+.filters label{ display:flex; gap:6px; align-items:center; }
+.project-list{ display:grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:12px }
+.card{ background:#fff; border-radius:8px; padding:14px; box-shadow: 0 1px 6px rgba(16,24,40,0.06);} 
+.card h3{ margin:0 0 6px 0 }
+.card .meta{ color:#6b7280; font-size:0.9rem; margin-bottom:6px }
+.progress-wrap{ background: #e5e7eb; height:12px; border-radius:6px; overflow:hidden}
+.progress{ height:100%; background:#10b981; width:0%; transition: width 0.6s ease}
+.card .links{ margin-top:10px; display:flex; gap:8px; }
+.btn{ padding:8px 12px; border-radius:6px; border:1px solid #d1d5db; background:#fff; cursor:pointer }
+.btn.primary{ background:#2563eb; color:#fff; border-color:#2563eb }
+@media (max-width: 640px){ .metrics{ flex-direction:column } .filters{ flex-direction:column; align-items:stretch } }

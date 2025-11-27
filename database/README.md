@@ -1,17 +1,43 @@
 # 🗄️ Banco de Dados - Gerenciador de Projetos de Engenharia
 
+![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?logo=mysql&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Pronto-success)
+![Tabelas](https://img.shields.io/badge/Tabelas-18-blue)
+![Migrations](https://img.shields.io/badge/Migrations-Automáticas-green)
+
 Sistema completo de gerenciamento de banco de dados MySQL com migrations e seeds automatizados.
+
+## ⚡ Quick Start
+
+```bash
+# 1. Instalar dependências
+pip install -r requirements.txt
+
+# 2. Configurar banco (variáveis de ambiente opcionais)
+$env:DB_PASSWORD="suasenha"
+
+# 3. Criar estrutura
+python migrate.py run
+
+# 4. Popular com dados de exemplo
+python seed.py
+```
 
 ## 📋 Estrutura
 
 ```
 database/
 ├── schema.dbml              # Diagrama do banco (visualizar em dbdiagram.io)
-├── migrate.py              # Sistema de migrations
-├── seed.py                 # Populador de dados de exemplo
+├── DIAGRAMA.md              # Diagrama visual em ASCII
+├── migrate.py               # Sistema de migrations
+├── seed.py                  # Populador de dados de exemplo
+├── db_helper.py             # Helper para conexão e queries
+├── queries_uteis.sql        # Views, procedures e queries comuns
+├── .env.example             # Exemplo de configuração
 ├── migrations/
 │   └── 001_initial_schema.sql  # Schema inicial completo
-└── README.md               # Esta documentação
+└── README.md                # Esta documentação
 ```
 
 ## 🎯 Tabelas do Sistema
@@ -229,6 +255,75 @@ DROP DATABASE gerenciador_projetos;
 # Depois execute novamente
 python migrate.py run
 python seed.py
+```
+
+## 💻 Usando o Database Helper
+
+O arquivo `db_helper.py` fornece uma classe auxiliar para facilitar operações no banco:
+
+```python
+from database.db_helper import DatabaseHelper
+
+# Criar instância (com connection pool)
+db = DatabaseHelper()
+
+# Testar conexão
+db.test_connection()
+
+# Buscar usuário por email
+usuario = db.get_usuario_by_email('joao.silva@exemplo.com')
+
+# Listar projetos ativos
+projetos = db.get_projetos_ativos()
+
+# Buscar projeto com métricas
+projeto = db.get_projeto_com_metricas(projeto_id=1)
+
+# Queries customizadas
+resultados = db.execute_query(
+    "SELECT * FROM projetos WHERE status = %s",
+    ('em_andamento',),
+    fetch=True
+)
+
+# Inserir dados
+db.execute_query(
+    "INSERT INTO tarefas (titulo, projeto_id) VALUES (%s, %s)",
+    ('Nova Tarefa', 1)
+)
+```
+
+### Integração com FastAPI
+
+```python
+from fastapi import FastAPI, Depends
+from database.db_helper import get_db
+
+app = FastAPI()
+
+@app.get("/projetos")
+def listar_projetos():
+    db = get_db()
+    return db.get_projetos_ativos()
+
+@app.get("/projetos/{projeto_id}")
+def detalhes_projeto(projeto_id: int):
+    db = get_db()
+    return db.get_projeto_com_metricas(projeto_id)
+```
+
+## 📊 Queries Úteis e Views
+
+O arquivo `queries_uteis.sql` contém:
+
+- **Views**: `vw_projetos_completo`, `vw_tarefas_usuario`, `vw_orcamento_projeto`
+- **Stored Procedures**: `sp_atualizar_progresso_projeto`, `sp_atribuir_tarefa`
+- **Queries prontas**: Top projetos atrasados, usuários produtivos, análise de custos
+- **Triggers**: Atualização automática de métricas e timestamps
+
+Para aplicar:
+```bash
+mysql -u root -p gerenciador_projetos < queries_uteis.sql
 ```
 
 ## 🎨 Características do Schema

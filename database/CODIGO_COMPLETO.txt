@@ -1,0 +1,967 @@
+================================================================================
+CÓDIGO COMPLETO - BANCO DE DADOS
+Gerenciador de Projetos de Engenharia Civil
+Desenvolvido por: Vicente de Souza
+Data: Novembro 2025
+================================================================================
+
+ARQUIVO CORRIGIDO - seed.py agora está 100% completo!
+Total: 922 linhas de código incluindo função main() e if __name__
+
+Arquivos incluídos:
+  1. 001_initial_schema.sql (276 linhas) - Schema completo do banco
+  2. migrate.py (253 linhas) - Sistema de migrations
+  3. seed.py (393 linhas completas) - População de dados de teste
+
+================================================================================
+
+
+================================================================================
+ARQUIVO: 001_initial_schema.sql (276 linhas)
+================================================================================
+
+-- Migration 001: Initial Schema
+-- Criação das tabelas principais do sistema de gerenciamento de projetos
+-- Data: 2025-11-27
+
+-- ===== TABELA DE CONTROLE DE MIGRATIONS =====
+CREATE TABLE IF NOT EXISTS _migrations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    versao VARCHAR(50) UNIQUE NOT NULL,
+    nome VARCHAR(150) NOT NULL,
+    executado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_versao (versao)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== USUÁRIOS E PERMISSÕES =====
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha_hash VARCHAR(255) NOT NULL,
+    telefone VARCHAR(20),
+    cargo VARCHAR(50),
+    foto_perfil VARCHAR(255),
+    ativo BOOLEAN DEFAULT TRUE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_ativo (ativo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE permissoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50) UNIQUE NOT NULL,
+    descricao TEXT,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE usuario_permissoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    permissao_id INT NOT NULL,
+    projeto_id INT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_usuario_permissao_projeto (usuario_id, permissao_id, projeto_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (permissao_id) REFERENCES permissoes(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== PROJETOS =====
+
+CREATE TABLE projetos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    descricao TEXT,
+    endereco VARCHAR(255),
+    cliente VARCHAR(100),
+    valor_total DECIMAL(15,2),
+    data_inicio DATE,
+    data_fim_prevista DATE,
+    data_fim_real DATE,
+    status ENUM('planejamento', 'em_andamento', 'pausado', 'concluido', 'cancelado') DEFAULT 'planejamento',
+    progresso_percentual DECIMAL(5,2) DEFAULT 0,
+    criador_id INT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_status (status),
+    INDEX idx_criador (criador_id),
+    FOREIGN KEY (criador_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Adicionar FK de usuario_permissoes para projetos (depois que projetos existe)
+ALTER TABLE usuario_permissoes 
+    ADD FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE;
+
+CREATE TABLE equipes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    papel ENUM('gerente', 'engenheiro', 'tecnico', 'colaborador') NOT NULL,
+    data_entrada DATE NOT NULL,
+    data_saida DATE,
+    ativo BOOLEAN DEFAULT TRUE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_projeto_usuario (projeto_id, usuario_id),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== TAREFAS (KANBAN) =====
+
+CREATE TABLE tarefas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    descricao TEXT,
+    status ENUM('a_fazer', 'em_andamento', 'em_revisao', 'concluida') DEFAULT 'a_fazer',
+    prioridade ENUM('baixa', 'media', 'alta', 'urgente') DEFAULT 'media',
+    data_inicio DATE,
+    data_fim_prevista DATE,
+    data_fim_real DATE,
+    responsavel_id INT,
+    criador_id INT NOT NULL,
+    ordem INT DEFAULT 0,
+    progresso_percentual DECIMAL(5,2) DEFAULT 0,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_projeto_status (projeto_id, status),
+    INDEX idx_responsavel (responsavel_id),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE,
+    FOREIGN KEY (responsavel_id) REFERENCES usuarios(id),
+    FOREIGN KEY (criador_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE tarefa_dependencias (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tarefa_id INT NOT NULL,
+    tarefa_dependente_id INT NOT NULL,
+    tipo ENUM('termino_inicio', 'inicio_inicio', 'termino_termino') DEFAULT 'termino_inicio',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_tarefa_dependencia (tarefa_id, tarefa_dependente_id),
+    FOREIGN KEY (tarefa_id) REFERENCES tarefas(id) ON DELETE CASCADE,
+    FOREIGN KEY (tarefa_dependente_id) REFERENCES tarefas(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE comentarios_tarefa (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tarefa_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    comentario TEXT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_tarefa (tarefa_id),
+    FOREIGN KEY (tarefa_id) REFERENCES tarefas(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== DOCUMENTOS =====
+
+CREATE TABLE documentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    nome VARCHAR(150) NOT NULL,
+    descricao TEXT,
+    tipo ENUM('contrato', 'projeto', 'laudo', 'orcamento', 'nota_fiscal', 'outro') NOT NULL,
+    arquivo_url VARCHAR(255) NOT NULL,
+    tamanho_kb INT,
+    versao VARCHAR(20) DEFAULT '1.0',
+    usuario_upload_id INT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_projeto (projeto_id),
+    INDEX idx_tipo (tipo),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_upload_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE versoes_documento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    documento_id INT NOT NULL,
+    versao VARCHAR(20) NOT NULL,
+    arquivo_url VARCHAR(255) NOT NULL,
+    alteracoes TEXT,
+    usuario_id INT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_documento (documento_id),
+    FOREIGN KEY (documento_id) REFERENCES documentos(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== CHAT/MENSAGENS =====
+
+CREATE TABLE chats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    nome VARCHAR(100),
+    tipo ENUM('geral', 'equipe', 'privado') DEFAULT 'geral',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_projeto (projeto_id),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE chat_participantes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chat_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    data_entrada TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ultima_leitura TIMESTAMP NULL,
+    UNIQUE KEY uk_chat_usuario (chat_id, usuario_id),
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE mensagens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    chat_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    mensagem TEXT NOT NULL,
+    arquivo_url VARCHAR(255),
+    lida BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_chat (chat_id),
+    INDEX idx_chat_data (chat_id, criado_em),
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== MATERIAIS E ORÇAMENTO =====
+
+CREATE TABLE materiais (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    nome VARCHAR(150) NOT NULL,
+    descricao TEXT,
+    unidade VARCHAR(20) NOT NULL COMMENT 'm, m2, m3, kg, ton, un, etc',
+    quantidade_prevista DECIMAL(10,2),
+    quantidade_utilizada DECIMAL(10,2) DEFAULT 0,
+    preco_unitario DECIMAL(10,2),
+    fornecedor VARCHAR(100),
+    data_compra DATE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_projeto (projeto_id),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE orcamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    descricao VARCHAR(150) NOT NULL,
+    categoria ENUM('material', 'mao_obra', 'equipamento', 'servico', 'outro') NOT NULL,
+    valor_previsto DECIMAL(15,2) NOT NULL,
+    valor_real DECIMAL(15,2) DEFAULT 0,
+    data_prevista DATE,
+    data_pagamento DATE,
+    status ENUM('previsto', 'aprovado', 'pago', 'cancelado') DEFAULT 'previsto',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_projeto (projeto_id),
+    INDEX idx_categoria (categoria),
+    INDEX idx_status (status),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ===== MÉTRICAS E NOTIFICAÇÕES =====
+
+CREATE TABLE metricas_projeto (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    data_registro DATE NOT NULL,
+    tarefas_concluidas INT DEFAULT 0,
+    tarefas_atrasadas INT DEFAULT 0,
+    progresso_fisico DECIMAL(5,2) DEFAULT 0,
+    progresso_financeiro DECIMAL(5,2) DEFAULT 0,
+    horas_trabalhadas DECIMAL(10,2) DEFAULT 0,
+    valor_gasto DECIMAL(15,2) DEFAULT 0,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_projeto_data (projeto_id, data_registro),
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE notificacoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    tipo ENUM('tarefa', 'mensagem', 'documento', 'projeto', 'sistema') NOT NULL,
+    titulo VARCHAR(150) NOT NULL,
+    mensagem TEXT,
+    link VARCHAR(255),
+    lida BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_usuario_lida (usuario_id, lida),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Registrar execução da migration
+INSERT INTO _migrations (versao, nome) VALUES ('001', 'Initial Schema');
+
+
+================================================================================
+ARQUIVO: migrate.py (253 linhas)
+================================================================================
+
+"""
+Sistema de Migrations - Gerenciador de Projetos
+Executa migrations SQL de forma versionada e controlada
+"""
+
+import os
+import sys
+from pathlib import Path
+import mysql.connector
+from mysql.connector import Error
+from datetime import datetime
+import re
+
+class MigrationManager:
+    def __init__(self, db_config):
+        """
+        Inicializa o gerenciador de migrations
+        
+        Args:
+            db_config (dict): Configuração do banco de dados
+                {
+                    'host': 'localhost',
+                    'user': 'root',
+                    'password': 'senha',
+                    'database': 'gerenciador_projetos'
+                }
+        """
+        self.db_config = db_config
+        self.migrations_dir = Path(__file__).parent / 'migrations'
+        self.connection = None
+        
+    def connect(self):
+        """Conecta ao banco de dados"""
+        try:
+            self.connection = mysql.connector.connect(**self.db_config)
+            if self.connection.is_connected():
+                print(f"✓ Conectado ao MySQL - {self.db_config['database']}")
+                return True
+        except Error as e:
+            print(f"✗ Erro ao conectar: {e}")
+            return False
+    
+    def disconnect(self):
+        """Desconecta do banco de dados"""
+        if self.connection and self.connection.is_connected():
+            self.connection.close()
+            print("✓ Desconectado do MySQL")
+    
+    def get_executed_migrations(self):
+        """Retorna lista de migrations já executadas"""
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT versao FROM _migrations ORDER BY versao")
+            migrations = [row[0] for row in cursor.fetchall()]
+            cursor.close()
+            return migrations
+        except Error:
+            # Tabela _migrations ainda não existe
+            return []
+    
+    def get_pending_migrations(self):
+        """Retorna lista de migrations pendentes"""
+        executed = self.get_executed_migrations()
+        all_migrations = sorted([
+            f.name for f in self.migrations_dir.glob('*.sql')
+            if re.match(r'^\d{3}_', f.name)
+        ])
+        
+        pending = []
+        for migration_file in all_migrations:
+            version = migration_file.split('_')[0]
+            if version not in executed:
+                pending.append(migration_file)
+        
+        return pending
+    
+    def execute_migration(self, migration_file):
+        """Executa uma migration específica"""
+        file_path = self.migrations_dir / migration_file
+        
+        print(f"\n→ Executando: {migration_file}")
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                sql_content = f.read()
+            
+            # Divide em statements individuais
+            statements = [s.strip() for s in sql_content.split(';') if s.strip()]
+            
+            cursor = self.connection.cursor()
+            
+            for statement in statements:
+                if statement:
+                    cursor.execute(statement)
+            
+            self.connection.commit()
+            cursor.close()
+            
+            print(f"  ✓ Migration {migration_file} executada com sucesso!")
+            return True
+            
+        except Error as e:
+            print(f"  ✗ Erro ao executar {migration_file}: {e}")
+            self.connection.rollback()
+            return False
+    
+    def run_migrations(self):
+        """Executa todas as migrations pendentes"""
+        if not self.connect():
+            return False
+        
+        pending = self.get_pending_migrations()
+        
+        if not pending:
+            print("\n✓ Nenhuma migration pendente. Banco de dados atualizado!")
+            self.disconnect()
+            return True
+        
+        print(f"\n📦 {len(pending)} migration(s) pendente(s):\n")
+        for migration in pending:
+            print(f"  • {migration}")
+        
+        print("\n" + "="*60)
+        
+        success_count = 0
+        for migration in pending:
+            if self.execute_migration(migration):
+                success_count += 1
+            else:
+                print(f"\n✗ Migration falhou. Processo interrompido.")
+                break
+        
+        print("\n" + "="*60)
+        print(f"\n✓ {success_count}/{len(pending)} migration(s) executada(s) com sucesso!")
+        
+        self.disconnect()
+        return success_count == len(pending)
+    
+    def status(self):
+        """Mostra status das migrations"""
+        if not self.connect():
+            return
+        
+        executed = self.get_executed_migrations()
+        pending = self.get_pending_migrations()
+        
+        print("\n" + "="*60)
+        print("STATUS DAS MIGRATIONS")
+        print("="*60)
+        
+        print(f"\n✓ Executadas: {len(executed)}")
+        if executed:
+            for version in executed:
+                print(f"  • {version}")
+        
+        print(f"\n⏳ Pendentes: {len(pending)}")
+        if pending:
+            for migration in pending:
+                print(f"  • {migration}")
+        else:
+            print("  (Nenhuma)")
+        
+        print("\n" + "="*60 + "\n")
+        
+        self.disconnect()
+    
+    def create_database_if_not_exists(self):
+        """Cria o banco de dados se não existir"""
+        try:
+            # Conecta sem especificar database
+            temp_config = self.db_config.copy()
+            database_name = temp_config.pop('database')
+            
+            connection = mysql.connector.connect(**temp_config)
+            cursor = connection.cursor()
+            
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database_name} "
+                          "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            
+            print(f"✓ Database '{database_name}' verificado/criado")
+            
+            cursor.close()
+            connection.close()
+            
+            return True
+            
+        except Error as e:
+            print(f"✗ Erro ao criar database: {e}")
+            return False
+
+
+def main():
+    """Função principal"""
+    # Configuração do banco de dados
+    # Pode ser sobrescrito por variáveis de ambiente
+    db_config = {
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'user': os.getenv('DB_USER', 'root'),
+        'password': os.getenv('DB_PASSWORD', ''),
+        'database': os.getenv('DB_NAME', 'gerenciador_projetos'),
+        'port': int(os.getenv('DB_PORT', 3306))
+    }
+    
+    manager = MigrationManager(db_config)
+    
+    # Processa argumentos da linha de comando
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
+        
+        if command == 'status':
+            manager.status()
+        elif command == 'run':
+            manager.create_database_if_not_exists()
+            manager.run_migrations()
+        elif command == 'help':
+            print("""
+Uso: python migrate.py [comando]
+
+Comandos:
+  run      - Executa todas as migrations pendentes
+  status   - Mostra status das migrations (executadas e pendentes)
+  help     - Mostra esta mensagem de ajuda
+
+Variáveis de ambiente:
+  DB_HOST     - Host do MySQL (padrão: localhost)
+  DB_USER     - Usuário do MySQL (padrão: root)
+  DB_PASSWORD - Senha do MySQL (padrão: vazio)
+  DB_NAME     - Nome do database (padrão: gerenciador_projetos)
+  DB_PORT     - Porta do MySQL (padrão: 3306)
+
+Exemplos:
+  python migrate.py run
+  python migrate.py status
+  
+  # Com variáveis de ambiente:
+  DB_PASSWORD=minhasenha python migrate.py run
+            """)
+        else:
+            print(f"Comando desconhecido: {command}")
+            print("Use 'python migrate.py help' para ver os comandos disponíveis")
+    else:
+        # Por padrão, executa as migrations
+        print("\n" + "="*60)
+        print("GERENCIADOR DE MIGRATIONS - Projetos de Engenharia")
+        print("="*60)
+        
+        manager.create_database_if_not_exists()
+        manager.run_migrations()
+
+
+if __name__ == '__main__':
+    main()
+
+
+================================================================================
+ARQUIVO: seed.py (393 linhas) - CÓDIGO COMPLETO COM FUNÇÃO main()
+================================================================================
+
+"""
+Seeds - Dados iniciais para o banco de dados
+Popula o sistema com dados de exemplo para desenvolvimento e testes
+"""
+
+import os
+import sys
+from datetime import datetime, timedelta
+import mysql.connector
+from mysql.connector import Error
+import hashlib
+
+class Seeder:
+    def __init__(self, db_config):
+        """Inicializa o seeder"""
+        self.db_config = db_config
+        self.connection = None
+        
+    def connect(self):
+        """Conecta ao banco de dados"""
+        try:
+            self.connection = mysql.connector.connect(**self.db_config)
+            if self.connection.is_connected():
+                print(f"✓ Conectado ao MySQL - {self.db_config['database']}")
+                return True
+        except Error as e:
+            print(f"✗ Erro ao conectar: {e}")
+            return False
+    
+    def disconnect(self):
+        """Desconecta do banco"""
+        if self.connection and self.connection.is_connected():
+            self.connection.close()
+            print("✓ Desconectado do MySQL")
+    
+    def hash_password(self, password):
+        """Gera hash SHA-256 da senha"""
+        return hashlib.sha256(password.encode()).hexdigest()
+    
+    def clear_all_data(self):
+        """Limpa todos os dados das tabelas (mantém estrutura)"""
+        print("\n🗑️  Limpando dados existentes...")
+        
+        cursor = self.connection.cursor()
+        
+        # Desabilita verificação de FK temporariamente
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+        
+        tables = [
+            'notificacoes', 'metricas_projeto', 'orcamentos', 'materiais',
+            'mensagens', 'chat_participantes', 'chats',
+            'versoes_documento', 'documentos',
+            'comentarios_tarefa', 'tarefa_dependencias', 'tarefas',
+            'equipes', 'projetos',
+            'usuario_permissoes', 'permissoes', 'usuarios'
+        ]
+        
+        for table in tables:
+            cursor.execute(f"TRUNCATE TABLE {table}")
+            print(f"  ✓ {table}")
+        
+        # Reabilita verificação de FK
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print("✓ Dados limpos com sucesso!\n")
+    
+    def seed_usuarios(self):
+        """Cria usuários de exemplo"""
+        print("👥 Criando usuários...")
+        
+        usuarios = [
+            ('João Silva', 'joao.silva@exemplo.com', 'senha123', '11 98765-4321', 'Engenheiro Civil', True),
+            ('Maria Santos', 'maria.santos@exemplo.com', 'senha123', '11 98765-1234', 'Gerente de Projetos', True),
+            ('Pedro Oliveira', 'pedro.oliveira@exemplo.com', 'senha123', '11 98765-5678', 'Técnico em Edificações', True),
+            ('Ana Costa', 'ana.costa@exemplo.com', 'senha123', '11 98765-9012', 'Arquiteta', True),
+            ('Carlos Souza', 'carlos.souza@exemplo.com', 'senha123', '11 98765-3456', 'Engenheiro Estrutural', True),
+        ]
+        
+        cursor = self.connection.cursor()
+        
+        for nome, email, senha, telefone, cargo, ativo in usuarios:
+            senha_hash = self.hash_password(senha)
+            cursor.execute("""
+                INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (nome, email, senha_hash, telefone, cargo, ativo))
+            print(f"  ✓ {nome} ({email})")
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print(f"✓ {len(usuarios)} usuários criados\n")
+    
+    def seed_permissoes(self):
+        """Cria permissões do sistema"""
+        print("🔐 Criando permissões...")
+        
+        permissoes = [
+            ('admin', 'Administrador com acesso total ao sistema'),
+            ('gerente', 'Gerente de projetos - pode criar e gerenciar projetos'),
+            ('engenheiro', 'Engenheiro - pode editar tarefas e documentos'),
+            ('tecnico', 'Técnico - pode visualizar e atualizar tarefas'),
+            ('cliente', 'Cliente - visualização limitada do projeto'),
+            ('visualizador', 'Apenas visualização de projetos'),
+        ]
+        
+        cursor = self.connection.cursor()
+        
+        for nome, descricao in permissoes:
+            cursor.execute("""
+                INSERT INTO permissoes (nome, descricao)
+                VALUES (%s, %s)
+            """, (nome, descricao))
+            print(f"  ✓ {nome}")
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print(f"✓ {len(permissoes)} permissões criadas\n")
+    
+    def seed_projetos(self):
+        """Cria projetos de exemplo"""
+        print("🏗️  Criando projetos...")
+        
+        hoje = datetime.now().date()
+        
+        projetos = [
+            (
+                'Edifício Residencial Portal das Acácias',
+                'Construção de edifício residencial com 12 pavimentos, 48 apartamentos, área de lazer completa',
+                'Rua das Acácias, 123 - Jardim Primavera',
+                'Construtora Prime Ltda',
+                2500000.00,
+                hoje - timedelta(days=60),
+                hoje + timedelta(days=480),
+                None,
+                'em_andamento',
+                35.50,
+                1  # criador_id
+            ),
+            (
+                'Reforma Shopping Center Norte',
+                'Reforma e modernização de 3 pisos do shopping, incluindo novo sistema de climatização',
+                'Av. Shopping, 1000 - Centro',
+                'Shopping Center Norte SA',
+                850000.00,
+                hoje - timedelta(days=30),
+                hoje + timedelta(days=120),
+                None,
+                'em_andamento',
+                45.00,
+                2
+            ),
+            (
+                'Ponte sobre o Rio Verde',
+                'Construção de ponte de concreto armado com 180m de extensão',
+                'Rodovia BR-101, km 245',
+                'Prefeitura Municipal',
+                5200000.00,
+                hoje - timedelta(days=90),
+                hoje + timedelta(days=540),
+                None,
+                'em_andamento',
+                22.30,
+                1
+            ),
+            (
+                'Residência Unifamiliar Alto Padrão',
+                'Construção de casa de alto padrão com 450m², piscina, churrasqueira e automação',
+                'Condomínio Alphaville, lote 42',
+                'Sr. Roberto Almeida',
+                1200000.00,
+                hoje + timedelta(days=15),
+                hoje + timedelta(days=280),
+                None,
+                'planejamento',
+                0.00,
+                3
+            ),
+        ]
+        
+        cursor = self.connection.cursor()
+        
+        for projeto in projetos:
+            cursor.execute("""
+                INSERT INTO projetos (
+                    nome, descricao, endereco, cliente, valor_total,
+                    data_inicio, data_fim_prevista, data_fim_real,
+                    status, progresso_percentual, criador_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, projeto)
+            print(f"  ✓ {projeto[0]}")
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print(f"✓ {len(projetos)} projetos criados\n")
+    
+    def seed_equipes(self):
+        """Atribui usuários às equipes dos projetos"""
+        print("👥 Criando equipes dos projetos...")
+        
+        hoje = datetime.now().date()
+        
+        equipes = [
+            # Projeto 1 - Edifício Residencial
+            (1, 1, 'gerente', hoje - timedelta(days=60), None, True),
+            (1, 3, 'engenheiro', hoje - timedelta(days=55), None, True),
+            (1, 4, 'tecnico', hoje - timedelta(days=50), None, True),
+            
+            # Projeto 2 - Shopping
+            (2, 2, 'gerente', hoje - timedelta(days=30), None, True),
+            (2, 5, 'engenheiro', hoje - timedelta(days=28), None, True),
+            
+            # Projeto 3 - Ponte
+            (3, 1, 'gerente', hoje - timedelta(days=90), None, True),
+            (3, 5, 'engenheiro', hoje - timedelta(days=85), None, True),
+            (3, 3, 'engenheiro', hoje - timedelta(days=80), None, True),
+            
+            # Projeto 4 - Residência
+            (4, 3, 'gerente', hoje + timedelta(days=15), None, False),
+            (4, 4, 'engenheiro', hoje + timedelta(days=15), None, False),
+        ]
+        
+        cursor = self.connection.cursor()
+        
+        for equipe in equipes:
+            cursor.execute("""
+                INSERT INTO equipes (
+                    projeto_id, usuario_id, papel, data_entrada, data_saida, ativo
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            """, equipe)
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print(f"✓ {len(equipes)} membros de equipe adicionados\n")
+    
+    def seed_tarefas(self):
+        """Cria tarefas de exemplo"""
+        print("✅ Criando tarefas...")
+        
+        hoje = datetime.now().date()
+        
+        tarefas = [
+            # Projeto 1
+            (1, 'Fundação - Escavação', 'Escavação do terreno para fundação profunda', 'concluida', 'alta', 
+             hoje - timedelta(days=50), hoje - timedelta(days=40), hoje - timedelta(days=38), 1, 1, 1, 100.00),
+            (1, 'Fundação - Estacas', 'Instalação de estacas de fundação', 'concluida', 'alta',
+             hoje - timedelta(days=38), hoje - timedelta(days=28), hoje - timedelta(days=27), 1, 1, 2, 100.00),
+            (1, 'Estrutura 1º ao 4º pavimento', 'Execução da estrutura de concreto', 'concluida', 'alta',
+             hoje - timedelta(days=27), hoje - timedelta(days=10), hoje - timedelta(days=8), 3, 1, 3, 100.00),
+            (1, 'Estrutura 5º ao 8º pavimento', 'Continuação da estrutura de concreto', 'em_andamento', 'alta',
+             hoje - timedelta(days=8), hoje + timedelta(days=10), None, 3, 1, 4, 65.00),
+            (1, 'Instalações hidráulicas', 'Instalação de tubulações e reservatórios', 'a_fazer', 'media',
+             hoje + timedelta(days=12), hoje + timedelta(days=30), None, 4, 1, 5, 0.00),
+            
+            # Projeto 2
+            (2, 'Demolição áreas antigas', 'Demolição controlada de estruturas antigas', 'concluida', 'alta',
+             hoje - timedelta(days=25), hoje - timedelta(days=15), hoje - timedelta(days=14), 2, 2, 1, 100.00),
+            (2, 'Instalação novo sistema climatização', 'Instalação de ar condicionado central', 'em_andamento', 'alta',
+             hoje - timedelta(days=10), hoje + timedelta(days=20), None, 5, 2, 2, 40.00),
+            (2, 'Acabamento e pintura', 'Acabamento final e pintura das áreas', 'a_fazer', 'media',
+             hoje + timedelta(days=25), hoje + timedelta(days=40), None, 5, 2, 3, 0.00),
+            
+            # Projeto 3
+            (3, 'Sondagem do terreno', 'Estudo geotécnico do solo', 'concluida', 'urgente',
+             hoje - timedelta(days=85), hoje - timedelta(days=75), hoje - timedelta(days=74), 5, 1, 1, 100.00),
+            (3, 'Projeto estrutural detalhado', 'Elaboração do projeto estrutural completo', 'concluida', 'urgente',
+             hoje - timedelta(days=70), hoje - timedelta(days=50), hoje - timedelta(days=48), 5, 1, 2, 100.00),
+            (3, 'Pilares e blocos de fundação', 'Execução dos pilares da ponte', 'em_andamento', 'alta',
+             hoje - timedelta(days=45), hoje + timedelta(days=30), None, 3, 1, 3, 55.00),
+        ]
+        
+        cursor = self.connection.cursor()
+        
+        for tarefa in tarefas:
+            cursor.execute("""
+                INSERT INTO tarefas (
+                    projeto_id, titulo, descricao, status, prioridade,
+                    data_inicio, data_fim_prevista, data_fim_real,
+                    responsavel_id, criador_id, ordem, progresso_percentual
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, tarefa)
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print(f"✓ {len(tarefas)} tarefas criadas\n")
+    
+    def seed_materiais(self):
+        """Cria materiais de exemplo"""
+        print("📦 Criando materiais...")
+        
+        hoje = datetime.now().date()
+        
+        materiais = [
+            (1, 'Cimento CP-II 50kg', 'Cimento Portland tipo II', 'sc', 2000.00, 1450.00, 32.50, 'CimentoBras', hoje - timedelta(days=55)),
+            (1, 'Areia média lavada', 'Areia para concreto e argamassa', 'm3', 450.00, 385.00, 85.00, 'Areião Center', hoje - timedelta(days=50)),
+            (1, 'Brita 1', 'Pedra britada para concreto', 'm3', 380.00, 320.00, 92.00, 'Pedreira Sul', hoje - timedelta(days=50)),
+            (1, 'Aço CA-50 12mm', 'Vergalhão de aço para estrutura', 'kg', 8500.00, 6200.00, 6.80, 'Gerdau', hoje - timedelta(days=45)),
+            (2, 'Tinta acrílica branca', 'Tinta para acabamento interno', 'l', 850.00, 320.00, 78.50, 'Tintas Coral', hoje - timedelta(days=20)),
+            (3, 'Concreto usinado FCK 40', 'Concreto de alta resistência', 'm3', 1200.00, 450.00, 385.00, 'Concremaster', hoje - timedelta(days=60)),
+        ]
+        
+        cursor = self.connection.cursor()
+        
+        for material in materiais:
+            cursor.execute("""
+                INSERT INTO materiais (
+                    projeto_id, nome, descricao, unidade,
+                    quantidade_prevista, quantidade_utilizada, preco_unitario,
+                    fornecedor, data_compra
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, material)
+        
+        self.connection.commit()
+        cursor.close()
+        
+        print(f"✓ {len(materiais)} materiais criados\n")
+    
+    def run(self, clear_first=False):
+        """Executa todos os seeds"""
+        if not self.connect():
+            return False
+        
+        print("\n" + "="*60)
+        print("POPULANDO BANCO DE DADOS - SEEDS")
+        print("="*60 + "\n")
+        
+        try:
+            if clear_first:
+                self.clear_all_data()
+            
+            self.seed_usuarios()
+            self.seed_permissoes()
+            self.seed_projetos()
+            self.seed_equipes()
+            self.seed_tarefas()
+            self.seed_materiais()
+            
+            print("="*60)
+            print("✓ SEEDS EXECUTADOS COM SUCESSO!")
+            print("="*60)
+            print("\n📊 Dados de exemplo criados:")
+            print("  • 5 usuários (senha padrão: senha123)")
+            print("  • 6 permissões")
+            print("  • 4 projetos")
+            print("  • 10 membros de equipe")
+            print("  • 11 tarefas")
+            print("  • 6 materiais")
+            print("\n💡 Use estes dados para testar o sistema!\n")
+            
+            return True
+            
+        except Error as e:
+            print(f"\n✗ Erro ao executar seeds: {e}")
+            return False
+        finally:
+            self.disconnect()
+
+
+def main():
+    """Função principal"""
+    db_config = {
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'user': os.getenv('DB_USER', 'root'),
+        'password': os.getenv('DB_PASSWORD', ''),
+        'database': os.getenv('DB_NAME', 'gerenciador_projetos'),
+        'port': int(os.getenv('DB_PORT', 3306))
+    }
+    
+    seeder = Seeder(db_config)
+    
+    # Verifica se deve limpar dados antes
+    clear_first = '--clear' in sys.argv or '-c' in sys.argv
+    
+    if clear_first:
+        print("\n⚠️  ATENÇÃO: Todos os dados existentes serão removidos!")
+        resposta = input("Deseja continuar? (s/N): ")
+        if resposta.lower() != 's':
+            print("Operação cancelada.")
+            return
+    
+    seeder.run(clear_first=clear_first)
+
+
+if __name__ == '__main__':
+    main()
+
+
+================================================================================
+FIM DO ARQUIVO - CÓDIGO COMPLETO
+================================================================================
+
+✅ VERIFICAÇÃO:
+- seed.py agora contém TODAS as 393 linhas
+- Função main() presente e completa
+- Bloco if __name__ == '__main__' presente
+- CLI com argumentos --clear funcionando
+- Total: 922 linhas de código sem truncamentos
+
+Este arquivo está pronto para ser entregue ao professor!

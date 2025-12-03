@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Gerenciador de Projetos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🏗️ Gerenciador</h1>
+            <p>Projetos de Engenharia Civil</p>
+        </div>
+
+        <div id="alert" class="alert" style="display: none;"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required 
+                       placeholder="seu@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required
+                       placeholder="••••••••">
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLogin">
+                Entrar
+            </button>
+
+            <div class="loading" id="loading">Entrando...</div>
+        </form>
+
+        <div class="register-link">
+            Não tem conta? <a href="register.html">Cadastre-se</a>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        const form = document.getElementById('loginForm');
+        const btnLogin = document.getElementById('btnLogin');
+        const loading = document.getElementById('loading');
+        const alert = document.getElementById('alert');
+
+        // Se já estiver logado, redirecionar
+        if (API.Auth.isAuthenticated()) {
+            window.location.href = 'projects/index.html';
+        }
+
+        function showAlert(message, type = 'error') {
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            btnLogin.disabled = true;
+            loading.classList.add('active');
+            alert.style.display = 'none';
+
+            try {
+                const response = await API.Auth.login(email, senha);
+                
+                showAlert('Login realizado com sucesso!', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'projects/index.html';
+                }, 1000);
+
+            } catch (error) {
+                showAlert(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+                btnLogin.disabled = false;
+                loading.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

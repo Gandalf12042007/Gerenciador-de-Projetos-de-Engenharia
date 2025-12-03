@@ -1,0 +1,25 @@
+# Backend - Gerenciador de Projetos de Engenharia
+# Dependências Python
+
+# Framework Web
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Banco de Dados
+mysql-connector-python==8.2.0
+
+# Autenticação e Segurança
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+
+# CORS e Middleware
+python-cors==1.0.0
+
+# Validação
+pydantic==2.5.0
+email-validator==2.1.0
+
+# Utilitários
+python-dateutil==2.8.2

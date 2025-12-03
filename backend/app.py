@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 
 # Importar rotas
-from routes import auth, projetos, tarefas
+from routes import auth, projetos, tarefas, equipes
 
 # Criar aplicação FastAPI
 app = FastAPI(
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(projetos.router)
 app.include_router(tarefas.router)
+app.include_router(equipes.router)
 
 
 @app.get("/")

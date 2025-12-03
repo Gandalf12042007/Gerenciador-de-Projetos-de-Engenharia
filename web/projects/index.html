@@ -11,6 +11,7 @@
     <h1>Projetos</h1>
     <div class="top-controls">
       <button id="newProjectBtn" class="btn primary">Criar novo projeto</button>
+      <button id="logoutBtn" class="btn" style="margin-left:10px;">Sair</button>
     </div>
   </header>
 
@@ -28,8 +29,11 @@
           Status:
           <select id="filter-status">
             <option value="all">Todos</option>
-            <option value="active">Ativo</option>
-            <option value="completed">Concluído</option>
+            <option value="planejamento">Planejamento</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="pausado">Pausado</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
           </select>
         </label>
 
@@ -47,6 +51,7 @@
     </section>
   </main>
 
+  <script src="../api-client.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

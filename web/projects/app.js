@@ -1,10 +1,60 @@
-// sample data
-const projects = [
-  { id: 1, name: 'Residencial Jardim', city: 'São Paulo, SP', progress: 58, manager: 'Eng. Joao', start: '2024-09-01', end: '2025-01-30', status: 'active', pendingTasks: 12, delayedTasks: 3 },
-  { id: 2, name: 'Prédio Comercial Alpha', city: 'Belo Horizonte, MG', progress: 72, manager: 'Eng. Maria', start: '2024-06-01', end: '2024-12-12', status: 'active', pendingTasks: 4, delayedTasks: 1 },
-  { id: 3, name: 'Pavimentação BR-99', city: 'Curitiba, PR', progress: 22, manager: 'Eng. Paulo', start: '2024-11-01', end: '2025-10-01', status: 'active', pendingTasks: 45, delayedTasks: 15 },
-  { id: 4, name: 'Reforma Escola Municipal', city: 'Campinas, SP', progress: 100, manager: 'Eng. Pedro', start: '2023-01-15', end: '2023-05-10', status: 'completed', pendingTasks: 0, delayedTasks: 0 }
-];
+// Estado global
+let projects = [];
+let loading = false;
+
+// Carregar projetos da API
+async function loadProjects() {
+  if (!API.Auth.isAuthenticated()) {
+    window.location.href = '../login.html';
+    return;
+  }
+  
+  loading = true;
+  showLoading(true);
+  
+  try {
+    const response = await API.Projetos.listar();
+    projects = response.map(p => ({
+      id: p.id,
+      name: p.nome,
+      city: p.localizacao || 'N/A',
+      progress: p.progresso || 0,
+      manager: p.cliente || 'N/A',
+      start: p.data_inicio ? new Date(p.data_inicio).toLocaleDateString('pt-BR') : 'N/A',
+      end: p.data_conclusao_prevista ? new Date(p.data_conclusao_prevista).toLocaleDateString('pt-BR') : 'N/A',
+      status: p.status,
+      pendingTasks: 0,
+      delayedTasks: 0
+    }));
+    applyFilters();
+  } catch (error) {
+    console.error('Erro ao carregar projetos:', error);
+    showAlert('Erro ao carregar projetos: ' + error.message, 'error');
+  } finally {
+    loading = false;
+    showLoading(false);
+  }
+}
+
+// Mostrar loading
+function showLoading(show) {
+  const container = document.getElementById('projectList');
+  if (show) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">Carregando projetos...</div>';
+  }
+}
+
+// Mostrar alerta
+function showAlert(message, type = 'info') {
+  const alert = document.createElement('div');
+  alert.className = `alert alert-${type}`;
+  alert.textContent = message;
+  alert.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 20px;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:9999;';
+  if (type === 'error') alert.style.background = '#fee';
+  if (type === 'success') alert.style.background = '#efe';
+  document.body.appendChild(alert);
+  setTimeout(() => alert.remove(), 5000);
+}
 
 // render
 function renderMetrics(list){
@@ -56,14 +106,54 @@ function applyFilters(){
 }
 
 // actions
-function viewProject(id){ alert('Abrir projeto: '+id); }
-function editProject(id){ alert('Editar projeto: '+id); }
+function viewProject(id){ 
+  window.location.href = `details.html?id=${id}`;
+}
+
+async function editProject(id){ 
+  // TODO: Implementar modal de edição
+  alert('Editar projeto: '+id);
+}
+
+async function deleteProject(id) {
+  if (!confirm('Tem certeza que deseja excluir este projeto?')) return;
+  
+  try {
+    await API.Projetos.deletar(id);
+    showAlert('Projeto excluído com sucesso!', 'success');
+    await loadProjects();
+  } catch (error) {
+    showAlert('Erro ao excluir projeto: ' + error.message, 'error');
+  }
+}
+
+async function createNewProject() {
+  // TODO: Implementar modal de criação
+  alert('Criar novo projeto - Em desenvolvimento');
+}
+
+function logout() {
+  API.Auth.logout();
+  window.location.href = '../login.html';
+}
 
 // wire events
 window.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('filter-status').addEventListener('change', applyFilters);
   document.getElementById('filter-q').addEventListener('input', applyFilters);
-  document.getElementById('clearFilters').addEventListener('click', ()=>{ document.getElementById('filter-q').value=''; document.getElementById('filter-status').value='all'; applyFilters(); });
-  document.getElementById('newProjectBtn').addEventListener('click', ()=>alert('Criar novo projeto'));
-  applyFilters();
+  document.getElementById('clearFilters').addEventListener('click', ()=>{ 
+    document.getElementById('filter-q').value=''; 
+    document.getElementById('filter-status').value='all'; 
+    applyFilters(); 
+  });
+  document.getElementById('newProjectBtn').addEventListener('click', createNewProject);
+  
+  // Botão de logout se existir
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+  
+  // Carregar projetos da API
+  loadProjects();
 });

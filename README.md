@@ -141,8 +141,8 @@ Este é um **protótipo funcional** com as features essenciais implementadas. A 
 ### 🔲 Planejadas
 
 #### Equipes
-- [ ] Gerenciar membros
-- [ ] Definir papéis (gerente, engenheiro, técnico)
+- [X] Gerenciar membros
+- [X] Definir papéis (gerente, engenheiro, técnico)
 - [ ] Controle de permissões
 
 #### Documentos
@@ -150,13 +150,7 @@ Este é um **protótipo funcional** com as features essenciais implementadas. A 
 - [ ] Versionamento
 - [ ] Preview de PDFs
 - [ ] Controle de acesso
-
-#### Chat
-- [ ] Mensagens em tempo real
-- [ ] Anexar arquivos
-- [ ] Menções (@usuario)
-- [ ] Histórico
-
+      
 #### Relatórios
 - [ ] Curva S (planejado vs realizado)
 - [ ] Gráficos de Gantt
@@ -421,12 +415,12 @@ Este projeto é desenvolvido para fins **acadêmicos e educacionais**.
 
 ---
 
-## 👨‍💻 Desenvolvedor
+## 👨‍💻 Desenvolvedores
 
 **Vicente de Souza**  
-Estudante de Engenharia  
-Email: vicentedesouza@email.com  
-GitHub: [@Gandalf12042007](https://github.com/Gandalf12042007)
+GitHub:https://github.com/Souza371
+**Francisco....
+GitHub:https://github.com/Gandalf12042007
 
 ---
 
@@ -441,4 +435,4 @@ GitHub: [@Gandalf12042007](https://github.com/Gandalf12042007)
 
 ---
 
-**⭐ Se este projeto foi útil, considere dar uma estrela no repositório!**
+**⭐ Se este projeto foi útil, considere dar uma estrela no repositório!** 

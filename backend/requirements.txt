@@ -14,9 +14,6 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-dotenv==1.0.0
 
-# CORS e Middleware
-python-cors==1.0.0
-
 # Validação
 pydantic==2.5.0
 email-validator==2.1.0

@@ -9,6 +9,7 @@
 Sistema web para gerenciamento completo de projetos de engenharia civil, desenvolvido como projeto acadêmico com foco em **arquitetura profissional, boas práticas e tecnologias modernas**.
 
 **Desenvolvedor:** Vicente de Souza  
+**Desenvolvedor:** Francisco.....
 **Data:** Dezembro 2025
 
 ---
@@ -419,7 +420,7 @@ Este projeto é desenvolvido para fins **acadêmicos e educacionais**.
 
 **Vicente de Souza**  
 GitHub:https://github.com/Souza371
-**Francisco....
+**Francisco**....
 GitHub:https://github.com/Gandalf12042007
 
 ---

@@ -16,7 +16,7 @@ database_dir = Path(__file__).parent.parent.parent / "database"
 sys.path.insert(0, str(database_dir))
 
 from db_helper import DatabaseHelper
-from backend.middleware.auth_middleware import get_current_active_user
+from middleware.auth_middleware import get_current_active_user
 
 router = APIRouter(prefix="/equipes", tags=["Equipes"])
 

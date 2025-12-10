@@ -3,9 +3,19 @@ Configurações da API - Gerenciador de Projetos
 """
 
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# ============================================
+# CONFIGURAÇÃO DE LOGGING
+# ============================================
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO"),
+    format='[%(asctime)s] %(levelname)-8s %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 
 class Settings:
@@ -32,6 +42,9 @@ class Settings:
     
     # CORS
     CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    
+    # Logging
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
     @property
     def db_config(self) -> dict:

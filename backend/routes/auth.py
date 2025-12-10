@@ -3,10 +3,12 @@ Rotas de Autenticação - Login e Registro
 """
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import timedelta
 import sys
 import os
+import re
+import logging
 
 # Adicionar path do database
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
@@ -14,6 +16,9 @@ from db_helper import DatabaseHelper
 
 from utils.auth import hash_password, verify_password, create_access_token
 from config import settings
+
+# Logger para auditoria de segurança
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
@@ -25,11 +30,22 @@ class LoginRequest(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    nome: str
-    email: EmailStr
-    senha: str
-    telefone: str = None
-    cargo: str = None
+    nome: str = Field(..., min_length=3, max_length=255, description="Nome completo (mín. 3 caracteres)")
+    email: EmailStr = Field(..., description="Email válido e único")
+    senha: str = Field(..., min_length=8, max_length=255, description="Senha com mín. 8 caracteres, 1 maiúscula, 1 número")
+    telefone: str = Field(None, max_length=20, description="Telefone opcional")
+    cargo: str = Field(None, max_length=50, description="Cargo/função")
+    
+    @staticmethod
+    def validate_password(senha: str) -> bool:
+        """Valida força da senha: mín 8 chars, 1 maiúscula, 1 número"""
+        if len(senha) < 8:
+            return False
+        if not re.search(r'[A-Z]', senha):  # Pelo menos 1 maiúscula
+            return False
+        if not re.search(r'[0-9]', senha):  # Pelo menos 1 número
+            return False
+        return True
 
 
 class TokenResponse(BaseModel):
@@ -74,8 +90,10 @@ async def login(credentials: LoginRequest):
             detail="Usuário desativado"
         )
     
-    # Verificar senha
-    if not verify_password(credentials.senha, usuario[2]):  # senha_hash
+    # Verificar senha (usuario[3] é a senha_hash)
+    if not verify_password(credentials.senha, usuario[3]):
+        # Log de tentativa falha (auditoria)
+        logger.warning(f"Tentativa de login falhou para email: {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha incorretos"
@@ -109,45 +127,83 @@ async def login(credentials: LoginRequest):
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: RegisterRequest):
     """
-    Registro de novo usuário
+    Registro de novo usuário com validações de segurança
     
     Returns:
         Mensagem de sucesso
+        
+    Raises:
+        HTTPException: Email já existe, senha fraca, erro ao inserir
     """
     db = DatabaseHelper()
     
-    # Verificar se email já existe
-    existing = db.execute_query(
-        "SELECT id FROM usuarios WHERE email = %s",
-        (user_data.email,),
-        fetch=True
-    )
-    
-    if existing and len(existing) > 0:
+    # Validar força da senha
+    if not RegisterRequest.validate_password(user_data.senha):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email já cadastrado"
+            detail="Senha fraca. Requisitos: mín. 8 caracteres, 1 maiúscula, 1 número"
         )
     
-    # Hash da senha
-    senha_hash = hash_password(user_data.senha)
+    # Validar nome (mínimo 3 caracteres)
+    if len(user_data.nome.strip()) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nome deve ter no mínimo 3 caracteres"
+        )
     
-    # Inserir usuário
+    # Verificar se email já existe (sem expor detalhes)
+    try:
+        existing = db.execute_query(
+            "SELECT id FROM usuarios WHERE email = %s",
+            (user_data.email,),
+            fetch=True
+        )
+        
+        if existing and len(existing) > 0:
+            # Log para auditoria
+            logger.warning(f"Tentativa de registro com email já existente: {user_data.email}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email já cadastrado no sistema"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao verificar email único: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao validar email"
+        )
+    
+    # Hash da senha (bcrypt com salt rounds automático)
+    try:
+        senha_hash = hash_password(user_data.senha)
+    except Exception as e:
+        logger.error(f"Erro ao gerar hash de senha: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao processar senha"
+        )
+    
+    # Inserir usuário com tratamento específico de erros
     try:
         db.execute_query(
             """
-            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
-            VALUES (%s, %s, %s, %s, %s, TRUE)
+            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo, data_criacao)
+            VALUES (%s, %s, %s, %s, %s, TRUE, NOW())
             """,
-            (user_data.nome, user_data.email, senha_hash, user_data.telefone, user_data.cargo)
+            (user_data.nome.strip(), user_data.email.lower(), senha_hash, user_data.telefone, user_data.cargo)
         )
         
-        return {"message": "Usuário cadastrado com sucesso"}
+        logger.info(f"Novo usuário registrado: {user_data.email}")
+        return {"message": "Usuário cadastrado com sucesso. Você pode fazer login agora."}
     
     except Exception as e:
+        # Não expor detalhes de erro ao cliente (segurança)
+        logger.error(f"Erro ao cadastrar usuário {user_data.email}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao cadastrar usuário: {str(e)}"
+            detail="Erro ao cadastrar usuário. Tente novamente mais tarde."
         )
 
 

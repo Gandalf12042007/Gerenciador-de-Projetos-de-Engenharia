@@ -9,6 +9,10 @@ from datetime import datetime, timedelta
 import mysql.connector
 from mysql.connector import Error
 import hashlib
+from dotenv import load_dotenv
+
+# Carregar variáveis do .env
+load_dotenv()
 
 class Seeder:
     def __init__(self, db_config):

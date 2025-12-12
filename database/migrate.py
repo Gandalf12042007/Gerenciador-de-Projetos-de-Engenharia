@@ -10,6 +10,10 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 import re
+from dotenv import load_dotenv
+
+# Carregar variáveis do .env
+load_dotenv()
 
 class MigrationManager:
     def __init__(self, db_config):

@@ -11,6 +11,10 @@ import time
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
+from dotenv import load_dotenv
+
+# Carregar variáveis do .env
+load_dotenv()
 
 class DatabaseValidator:
     """Validador completo do banco de dados"""

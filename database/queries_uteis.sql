@@ -306,3 +306,305 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- ===== FUNCTIONS ÚTEIS =====
+
+-- Function: Calcular dias de atraso de uma tarefa
+DELIMITER $$
+
+CREATE FUNCTION fn_calcular_atraso_tarefa(p_tarefa_id INT)
+RETURNS INT
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_atraso INT;
+    
+    SELECT DATEDIFF(CURRENT_DATE, data_fim_prevista)
+    INTO v_atraso
+    FROM tarefas
+    WHERE id = p_tarefa_id
+        AND status != 'concluida'
+        AND data_fim_prevista < CURRENT_DATE;
+    
+    RETURN COALESCE(v_atraso, 0);
+END$$
+
+DELIMITER ;
+
+-- Function: Calcular percentual de conclusão do projeto
+DELIMITER $$
+
+CREATE FUNCTION fn_percentual_conclusao_projeto(p_projeto_id INT)
+RETURNS DECIMAL(5,2)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_total INT;
+    DECLARE v_concluidas INT;
+    
+    SELECT 
+        COUNT(*),
+        COUNT(CASE WHEN status = 'concluida' THEN 1 END)
+    INTO v_total, v_concluidas
+    FROM tarefas
+    WHERE projeto_id = p_projeto_id;
+    
+    IF v_total = 0 THEN
+        RETURN 0.00;
+    END IF;
+    
+    RETURN ROUND((v_concluidas / v_total) * 100, 2);
+END$$
+
+DELIMITER ;
+
+-- Function: Calcular custo total do projeto (materiais + orçamento)
+DELIMITER $$
+
+CREATE FUNCTION fn_custo_total_projeto(p_projeto_id INT)
+RETURNS DECIMAL(15,2)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_materiais DECIMAL(15,2);
+    DECLARE v_orcamento DECIMAL(15,2);
+    
+    -- Custo com materiais
+    SELECT COALESCE(SUM(quantidade_utilizada * preco_unitario), 0)
+    INTO v_materiais
+    FROM materiais
+    WHERE projeto_id = p_projeto_id;
+    
+    -- Custo com orçamento pago
+    SELECT COALESCE(SUM(valor_real), 0)
+    INTO v_orcamento
+    FROM orcamentos
+    WHERE projeto_id = p_projeto_id AND status = 'pago';
+    
+    RETURN v_materiais + v_orcamento;
+END$$
+
+DELIMITER ;
+
+-- Function: Calcular produtividade do usuário (tarefas concluídas no mês)
+DELIMITER $$
+
+CREATE FUNCTION fn_produtividade_usuario(p_usuario_id INT)
+RETURNS INT
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_tarefas INT;
+    
+    SELECT COUNT(*)
+    INTO v_tarefas
+    FROM tarefas
+    WHERE responsavel_id = p_usuario_id
+        AND status = 'concluida'
+        AND data_fim_real >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY);
+    
+    RETURN v_tarefas;
+END$$
+
+DELIMITER ;
+
+-- Function: Verificar se usuário tem acesso ao projeto
+DELIMITER $$
+
+CREATE FUNCTION fn_usuario_tem_acesso(p_usuario_id INT, p_projeto_id INT)
+RETURNS BOOLEAN
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_acesso INT;
+    
+    SELECT COUNT(*)
+    INTO v_acesso
+    FROM equipes
+    WHERE usuario_id = p_usuario_id
+        AND projeto_id = p_projeto_id
+        AND ativo = TRUE;
+    
+    RETURN v_acesso > 0;
+END$$
+
+DELIMITER ;
+
+-- ===== PROCEDURES ADICIONAIS =====
+
+-- Procedure: Relatório completo do projeto
+DELIMITER $$
+
+CREATE PROCEDURE sp_relatorio_completo_projeto(IN p_projeto_id INT)
+BEGIN
+    -- Informações básicas
+    SELECT 
+        p.*,
+        u.nome AS criador_nome,
+        DATEDIFF(CURRENT_DATE, p.data_inicio) AS dias_decorridos,
+        DATEDIFF(p.data_fim_prevista, CURRENT_DATE) AS dias_restantes
+    FROM projetos p
+    JOIN usuarios u ON p.criador_id = u.id
+    WHERE p.id = p_projeto_id;
+    
+    -- Estatísticas de tarefas
+    SELECT 
+        COUNT(*) AS total_tarefas,
+        COUNT(CASE WHEN status = 'concluida' THEN 1 END) AS concluidas,
+        COUNT(CASE WHEN status = 'em_andamento' THEN 1 END) AS em_andamento,
+        COUNT(CASE WHEN status = 'a_fazer' THEN 1 END) AS pendentes,
+        COUNT(CASE WHEN data_fim_prevista < CURRENT_DATE AND status != 'concluida' THEN 1 END) AS atrasadas,
+        ROUND(AVG(progresso_percentual), 2) AS progresso_medio
+    FROM tarefas
+    WHERE projeto_id = p_projeto_id;
+    
+    -- Custos
+    SELECT 
+        fn_custo_total_projeto(p_projeto_id) AS custo_total,
+        SUM(valor_previsto) AS orcamento_previsto,
+        SUM(valor_real) AS orcamento_gasto
+    FROM orcamentos
+    WHERE projeto_id = p_projeto_id;
+    
+    -- Equipe
+    SELECT 
+        u.nome,
+        e.papel,
+        COUNT(t.id) AS tarefas_atribuidas,
+        COUNT(CASE WHEN t.status = 'concluida' THEN 1 END) AS tarefas_concluidas
+    FROM equipes e
+    JOIN usuarios u ON e.usuario_id = u.id
+    LEFT JOIN tarefas t ON t.responsavel_id = u.id AND t.projeto_id = p_projeto_id
+    WHERE e.projeto_id = p_projeto_id AND e.ativo = TRUE
+    GROUP BY u.id, u.nome, e.papel;
+END$$
+
+DELIMITER ;
+
+-- Procedure: Limpar notificações antigas (mais de 30 dias e lidas)
+DELIMITER $$
+
+CREATE PROCEDURE sp_limpar_notificacoes_antigas()
+BEGIN
+    DELETE FROM notificacoes
+    WHERE lida = TRUE
+        AND criado_em < DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY);
+    
+    SELECT ROW_COUNT() AS notificacoes_removidas;
+END$$
+
+DELIMITER ;
+
+-- Procedure: Gerar relatório de produtividade mensal
+DELIMITER $$
+
+CREATE PROCEDURE sp_relatorio_produtividade_mensal(IN p_mes INT, IN p_ano INT)
+BEGIN
+    SELECT 
+        u.nome AS usuario,
+        COUNT(DISTINCT t.projeto_id) AS projetos_participando,
+        COUNT(t.id) AS total_tarefas,
+        COUNT(CASE WHEN t.status = 'concluida' THEN 1 END) AS tarefas_concluidas,
+        ROUND(AVG(t.progresso_percentual), 2) AS progresso_medio,
+        COUNT(CASE WHEN t.data_fim_prevista < CURRENT_DATE AND t.status != 'concluida' THEN 1 END) AS tarefas_atrasadas,
+        ROUND(
+            COUNT(CASE WHEN t.status = 'concluida' AND t.data_fim_real <= t.data_fim_prevista THEN 1 END) / 
+            NULLIF(COUNT(CASE WHEN t.status = 'concluida' THEN 1 END), 0) * 100, 
+            2
+        ) AS taxa_pontualidade
+    FROM usuarios u
+    LEFT JOIN tarefas t ON u.id = t.responsavel_id 
+        AND MONTH(t.criado_em) = p_mes 
+        AND YEAR(t.criado_em) = p_ano
+    WHERE u.ativo = TRUE
+    GROUP BY u.id, u.nome
+    ORDER BY tarefas_concluidas DESC;
+END$$
+
+DELIMITER ;
+
+-- Procedure: Alertar tarefas próximas do prazo (3 dias)
+DELIMITER $$
+
+CREATE PROCEDURE sp_alertar_tarefas_proximas_prazo()
+BEGIN
+    SELECT 
+        p.nome AS projeto,
+        t.titulo AS tarefa,
+        t.prioridade,
+        u.nome AS responsavel,
+        u.email,
+        t.data_fim_prevista,
+        DATEDIFF(t.data_fim_prevista, CURRENT_DATE) AS dias_restantes
+    FROM tarefas t
+    JOIN projetos p ON t.projeto_id = p.id
+    JOIN usuarios u ON t.responsavel_id = u.id
+    WHERE t.status IN ('a_fazer', 'em_andamento')
+        AND t.data_fim_prevista BETWEEN CURRENT_DATE AND DATE_ADD(CURRENT_DATE, INTERVAL 3 DAY)
+    ORDER BY t.data_fim_prevista, t.prioridade DESC;
+END$$
+
+DELIMITER ;
+
+-- Procedure: Estatísticas gerais do sistema
+DELIMITER $$
+
+CREATE PROCEDURE sp_estatisticas_sistema()
+BEGIN
+    -- Projetos
+    SELECT 
+        'Projetos' AS categoria,
+        COUNT(*) AS total,
+        COUNT(CASE WHEN status = 'em_andamento' THEN 1 END) AS ativos,
+        COUNT(CASE WHEN status = 'concluido' THEN 1 END) AS concluidos,
+        ROUND(AVG(progresso_percentual), 2) AS progresso_medio
+    FROM projetos
+    
+    UNION ALL
+    
+    -- Tarefas
+    SELECT 
+        'Tarefas',
+        COUNT(*),
+        COUNT(CASE WHEN status IN ('em_andamento', 'em_revisao') THEN 1 END),
+        COUNT(CASE WHEN status = 'concluida' THEN 1 END),
+        ROUND(AVG(progresso_percentual), 2)
+    FROM tarefas
+    
+    UNION ALL
+    
+    -- Usuários
+    SELECT 
+        'Usuários',
+        COUNT(*),
+        COUNT(CASE WHEN ativo = TRUE THEN 1 END),
+        0,
+        0
+    FROM usuarios;
+    
+    -- Valor total em projetos
+    SELECT 
+        SUM(valor_total) AS valor_total_projetos,
+        SUM(fn_custo_total_projeto(id)) AS valor_gasto_total
+    FROM projetos
+    WHERE status IN ('em_andamento', 'planejamento');
+END$$
+
+DELIMITER ;
+
+-- Procedure: Backup de dados críticos (exportar para análise)
+DELIMITER $$
+
+CREATE PROCEDURE sp_dados_dashboard_completo()
+BEGIN
+    -- Projetos com estatísticas
+    SELECT * FROM vw_projetos_completo;
+    
+    -- Tarefas por usuário
+    SELECT * FROM vw_tarefas_usuario;
+    
+    -- Orçamento por projeto
+    SELECT * FROM vw_orcamento_projeto;
+END$$
+
+DELIMITER ;

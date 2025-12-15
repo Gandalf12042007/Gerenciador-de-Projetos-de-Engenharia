@@ -5,7 +5,10 @@ Desenvolvido por: Vicente de Souza
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 from config import settings
+from middleware.rate_limit import limiter, rate_limit_exception_handler
+from slowapi.errors import RateLimitExceeded
 
 # Importar rotas
 from routes import auth, projetos, tarefas, equipes, documentos, materiais, orcamentos, chat, metricas
@@ -18,6 +21,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Adicionar middleware de rate limiting
+app.state.limiter = limiter
+
+# Registrar handler de rate limiting
+app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
 # Configurar CORS
 app.add_middleware(

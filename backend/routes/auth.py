@@ -1,8 +1,9 @@
 """
 Rotas de Autenticação - Login e Registro
+Desenvolvido por: Vicente de Souza
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel, EmailStr, Field
 from datetime import timedelta
 import sys
@@ -15,6 +16,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database
 from db_helper import DatabaseHelper
 
 from utils.auth import hash_password, verify_password, create_access_token
+from utils.two_factor_auth import gerar_otp, enviar_otp_email, validar_otp, resend_otp
+from middleware.rate_limit import RateLimitDecorators
 from config import settings
 
 # Logger para auditoria de segurança
@@ -48,18 +51,23 @@ class RegisterRequest(BaseModel):
         return True
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user: dict
-
-
 class MessageResponse(BaseModel):
     message: str
 
 
+class OTPResponse(BaseModel):
+    message: str
+    requires_2fa: bool = False
+
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    codigo_otp: str = Field(..., min_length=6, max_length=6, description="Código OTP de 6 dígitos")
+
+
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: LoginRequest):
+@RateLimitDecorators.login
+async def login(credentials: LoginRequest, request: Request):
     """
     Login de usuário
     
@@ -99,33 +107,28 @@ async def login(credentials: LoginRequest):
             detail="Email ou senha incorretos"
         )
     
-    # Criar token JWT
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={
-            "user_id": usuario[0],
-            "email": usuario[2],
-            "nome": usuario[1],
-            "cargo": usuario[5]
-        },
-        expires_delta=access_token_expires
-    )
+    # ✅ Sprint 1: Integração de 2FA (Autenticação de Dois Fatores)
+    # Enviar OTP por email para autenticação adicional
+    logger.info(f"Enviando OTP para verificação de 2FA: {credentials.email}")
+    enviar_otp_email(credentials.email)
     
     return {
-        "access_token": access_token,
+        "access_token": "",  # Token vazio até validar OTP
         "token_type": "bearer",
         "user": {
             "id": usuario[0],
             "nome": usuario[1],
             "email": usuario[2],
             "telefone": usuario[4],
-            "cargo": usuario[5]
+            "cargo": usuario[5],
+            "requires_2fa": True
         }
     }
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: RegisterRequest):
+@RateLimitDecorators.register
+async def register(user_data: RegisterRequest, request: Request):
     """
     Registro de novo usuário com validações de segurança
     
@@ -196,7 +199,13 @@ async def register(user_data: RegisterRequest):
         )
         
         logger.info(f"Novo usuário registrado: {user_data.email}")
-        return {"message": "Usuário cadastrado com sucesso. Você pode fazer login agora."}
+        
+        # ✅ Sprint 1: Integração de 2FA (Autenticação de Dois Fatores)
+        # Enviar OTP por email para validação de cadastro
+        logger.info(f"Enviando OTP para confirmação de registro: {user_data.email}")
+        enviar_otp_email(user_data.email)
+        
+        return {"message": "Usuário cadastrado com sucesso. Verifique seu email para confirmar o cadastro."}
     
     except Exception as e:
         # Não expor detalhes de erro ao cliente (segurança)
@@ -207,7 +216,95 @@ async def register(user_data: RegisterRequest):
         )
 
 
-@router.post("/validate-token")
+@router.post("/verify-2fa")
+async def verify_2fa(otp_data: VerifyOTPRequest):
+    """
+    Verifica código OTP para autenticação de dois fatores
+    
+    Returns:
+        Token JWT após validação bem-sucedida
+    """
+    # Validar OTP
+    sucesso, mensagem = validar_otp(otp_data.email, otp_data.codigo_otp)
+    
+    if not sucesso:
+        logger.warning(f"Tentativa de validação 2FA falhou para: {otp_data.email} - {mensagem}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=mensagem
+        )
+    
+    # Buscar usuário para gerar token
+    db = DatabaseHelper()
+    usuario = db.execute_query(
+        "SELECT id, nome, email, cargo FROM usuarios WHERE email = %s",
+        (otp_data.email,),
+        fetch=True
+    )
+    
+    if not usuario or len(usuario) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado"
+        )
+    
+    usuario = usuario[0]
+    
+    # Criar token JWT após 2FA validado
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={
+            "user_id": usuario[0],
+            "email": usuario[2],
+            "nome": usuario[1],
+            "cargo": usuario[3],
+            "2fa_verified": True
+        },
+        expires_delta=access_token_expires
+    )
+    
+    logger.info(f"Autenticação 2FA bem-sucedida para: {otp_data.email}")
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": usuario[0],
+            "nome": usuario[1],
+            "email": usuario[2],
+            "cargo": usuario[3],
+            "2fa_verified": True
+        }
+    }
+
+
+@router.post("/resend-otp")
+async def resend_otp_endpoint(email_data: dict):
+    """
+    Reenvia código OTP para email
+    
+    Returns:
+        Mensagem de confirmação
+    """
+    email = email_data.get("email")
+    
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email é obrigatório"
+        )
+    
+    sucesso, mensagem = resend_otp(email)
+    
+    if not sucesso:
+        logger.warning(f"Erro ao reenviar OTP para: {email}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=mensagem
+        )
+    
+    logger.info(f"OTP reenviado com sucesso para: {email}")
+    return {"message": mensagem}
 async def validate_token(token: str):
     """
     Valida se token JWT é válido

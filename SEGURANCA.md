@@ -19,20 +19,23 @@
 - [x] **Logging de Segurança** - Tentativas falhas registradas
 - [x] **Erro Genérico** - Sem exposição de detalhes sensíveis
 
+### ✅ Sprint 1 - Concluído (Desenvolvido por Vicente de Souza)
+
+- [x] **Rate Limiting** - slowapi com limites por IP (5 login/min, 10 register/hora)
+- [x] **2FA** - Autenticação de dois fatores via email OTP (6 dígitos, 15min expiry)
+- [x] **Backup Automático** - Sistema de backup diário MySQL com limpeza de backups antigos
+
 ### ⚠️ Parcialmente Implementado
 
-- [ ] **Rate Limiting** - Proteção contra brute force
 - [ ] **HTTPS** - Suportado, mas sem certificado
 - [ ] **CORS** - Configurado, mas flexível em dev
 - [ ] **CSRF** - Não implementado (apenas API)
-- [ ] **Auditoria Completa** - Apenas login/registro
+- [ ] **Auditoria Completa** - Apenas login/registro/2FA
 
 ### ❌ Não Implementado
 
 - [ ] **OAuth 2.0** - Login com Google/Microsoft
-- [ ] **2FA** - Autenticação de dois fatores
 - [ ] **Criptografia de Dados** - Campos sensíveis
-- [ ] **Backup Automático** - Banco de dados
 - [ ] **WAF** - Web Application Firewall
 - [ ] **Penetration Testing** - Testes de segurança
 

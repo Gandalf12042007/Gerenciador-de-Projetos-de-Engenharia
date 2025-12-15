@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from config import settings
 from middleware.rate_limit import limiter, rate_limit_exception_handler
 from slowapi.errors import RateLimitExceeded
+from openapi_config import custom_openapi
 
 # Importar rotas
 from routes import auth, projetos, tarefas, equipes, documentos, materiais, orcamentos, chat, metricas
@@ -21,6 +22,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Customizar OpenAPI/Swagger com documentação detalhada
+app.openapi = lambda: custom_openapi(app)
 
 # Adicionar middleware de rate limiting
 app.state.limiter = limiter

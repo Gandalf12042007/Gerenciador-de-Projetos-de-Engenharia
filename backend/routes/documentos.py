@@ -1,19 +1,28 @@
 """
 Rotas para gerenciamento de documentos
 Permite upload, download, versionamento e organização de arquivos técnicos
+Com validações de segurança em uploads
 """
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from typing import List, Optional
 from datetime import datetime
 import os
 import uuid
+import logging
 from middleware.auth_middleware import get_current_user
+from utils.file_security import FileSecurityValidator, UploadSecurityManager
+
+# Logger para auditoria
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/documentos", tags=["Documentos"])
 
 # Diretório para armazenar uploads
 UPLOAD_DIR = "uploads/documentos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Gerenciador de segurança de uploads
+upload_manager = UploadSecurityManager(UPLOAD_DIR)
 
 @router.get("/{projeto_id}")
 async def listar_documentos(
@@ -72,27 +81,94 @@ async def upload_documento(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Faz upload de um novo documento
+    Faz upload de um novo documento com validações de segurança
     Categorias: plantas, rrt, diario, medicoes, fotos, relatorios, outros
+    Validações: tipo arquivo, tamanho máximo, magic bytes
     """
     from database.db_helper import get_db_connection
     
-    # Gerar nome único para arquivo
-    extensao = os.path.splitext(file.filename)[1]
-    nome_unico = f"{uuid.uuid4()}{extensao}"
+    # 1. VALIDAR TAMANHO (antes de ler arquivo)
+    max_tamanho = 100 * 1024 * 1024  # 100MB
+    if file.size and file.size > max_tamanho:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Arquivo excede tamanho máximo de 100MB"
+        )
+    
+    # 2. VALIDAR EXTENSÃO
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in FileSecurityValidator.ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Extensão '{ext}' não permitida. Extensões aceitas: {', '.join(FileSecurityValidator.ALLOWED_EXTENSIONS)}"
+        )
+    
+    # 3. LER ARQUIVO COM LIMITE
+    try:
+        conteudo = await file.read()
+        if len(conteudo) > max_tamanho:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Arquivo excede tamanho máximo de 100MB"
+            )
+    except Exception as e:
+        logger.error(f"Erro ao ler arquivo: {str(e)}")
+        raise HTTPException(status_code=400, detail="Erro ao processar arquivo")
+    
+    # 4. VALIDAR MIME TYPE
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type(file.filename)
+    if mime_type and mime_type not in FileSecurityValidator.ALLOWED_MIMETYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"MIME type '{mime_type}' não permitido"
+        )
+    
+    # 5. VALIDAR MAGIC BYTES (assinatura do arquivo)
+    if len(conteudo) > 8:
+        header = conteudo[:8]
+        arquivo_valido = False
+        
+        for magic, tipo_ext in FileSecurityValidator.MAGIC_BYTES.items():
+            if header.startswith(magic):
+                if tipo_ext == ext:
+                    arquivo_valido = True
+                else:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Arquivo disfarçado: extensão '{ext}' não corresponde ao tipo real"
+                    )
+        
+        if not arquivo_valido and mime_type not in FileSecurityValidator.ALLOWED_MIMETYPES:
+            logger.warning(f"Arquivo sem assinatura reconhecida: {file.filename}, MIME: {mime_type}")
+    
+    # 6. GERAR NOME ÚNICO E SANITIZADO
+    nome_sanitizado = FileSecurityValidator.sanitizar_nome_arquivo(file.filename)
+    nome_unico = f"{uuid.uuid4()}_{nome_sanitizado}"
     caminho_arquivo = os.path.join(UPLOAD_DIR, nome_unico)
     
-    # Salvar arquivo
-    with open(caminho_arquivo, "wb") as f:
-        conteudo = await file.read()
-        f.write(conteudo)
+    # 7. SALVAR ARQUIVO
+    try:
+        with open(caminho_arquivo, "wb") as f:
+            f.write(conteudo)
+        
+        tamanho_bytes = len(conteudo)
+        logger.info(f"Arquivo salvo: {nome_unico} ({tamanho_bytes} bytes) por {current_user['id']}")
+        
+    except Exception as e:
+        logger.error(f"Erro ao salvar arquivo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro ao salvar arquivo no servidor")
     
-    tamanho_bytes = len(conteudo)
-    
+    # 8. INSERIR NO BANCO
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     
     try:
+        # Validar categoria
+        categorias_validas = ['plantas', 'rrt', 'diario', 'medicoes', 'fotos', 'relatorios', 'outros']
+        if categoria not in categorias_validas:
+            categoria = 'outros'
+        
         # Inserir documento
         query = """
             INSERT INTO documentos 
@@ -119,13 +195,15 @@ async def upload_documento(
         ))
         
         conn.commit()
+        logger.info(f"Documento registrado no banco: {doc_id}")
         
         return {
             "success": True,
             "message": "Documento enviado com sucesso",
             "documento_id": doc_id,
             "nome": file.filename,
-            "tamanho": tamanho_bytes
+            "tamanho": tamanho_bytes,
+            "categoria": categoria
         }
         
     except Exception as e:
@@ -133,6 +211,7 @@ async def upload_documento(
         # Remover arquivo se houver erro
         if os.path.exists(caminho_arquivo):
             os.remove(caminho_arquivo)
+            logger.error(f"Arquivo removido devido a erro no banco: {nome_unico}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()

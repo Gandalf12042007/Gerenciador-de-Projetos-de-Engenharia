@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gerenciador de Projetos de Engenharia Civil">
+    <title>Gerenciador de Projetos - Engenharia Civil</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' fill='%234A90E2'>📐</text></svg>">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <div class="login-box">
+                <div class="logo">📐</div>
+                <h1>Gerenciador de Projetos</h1>
+                <p class="subtitle">Engenharia Civil</p>
+
+                <form id="login-form" class="form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input 
+                            type="email" 
+                            id="login-email" 
+                            placeholder="seu@email.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Senha</label>
+                        <input 
+                            type="password" 
+                            id="login-password" 
+                            placeholder="••••••••"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        Entrar
+                    </button>
+
+                    <p class="form-footer">
+                        Não tem conta? <a href="#" onclick="showRegisterScreen(event)">Criar conta</a>
+                    </p>
+                </form>
+
+                <div id="login-error" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Registro -->
+    <div id="register-screen" class="screen">
+        <div class="login-container">
+            <div class="login-box">
+                <div class="logo">📐</div>
+                <h1>Criar Conta</h1>
+                <p class="subtitle">Gerenciador de Projetos</p>
+
+                <form id="register-form" class="form">
+                    <div class="form-group">
+                        <label for="register-name">Nome Completo</label>
+                        <input 
+                            type="text" 
+                            id="register-name" 
+                            placeholder="Seu Nome"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input 
+                            type="email" 
+                            id="register-email" 
+                            placeholder="seu@email.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-password">Senha</label>
+                        <input 
+                            type="password" 
+                            id="register-password" 
+                            placeholder="Mín. 8 caracteres"
+                            required
+                        >
+                        <small>Mínimo 8 caracteres, 1 maiúscula, 1 número</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="register-cargo">Cargo</label>
+                        <select id="register-cargo" required>
+                            <option value="">Selecione um cargo</option>
+                            <option value="Engenheiro">Engenheiro</option>
+                            <option value="Gerente">Gerente de Projeto</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Cliente">Cliente</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        Criar Conta
+                    </button>
+
+                    <p class="form-footer">
+                        Já tem conta? <a href="#" onclick="showLoginScreen(event)">Fazer login</a>
+                    </p>
+                </form>
+
+                <div id="register-error" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela Principal (Dashboard) -->
+    <div id="main-screen" class="screen">
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div class="navbar-brand">
+                    <span class="logo-small">📐</span>
+                    <span class="brand-text">Projetos</span>
+                </div>
+                <div class="navbar-menu">
+                    <button class="menu-toggle" id="menu-toggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <div class="user-menu">
+                        <span id="user-name" class="user-name"></span>
+                        <button id="logout-btn" class="btn btn-danger btn-small">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-main">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <ul class="nav-list">
+                    <li><a href="#" onclick="showDashboard(event)" class="nav-link active" data-page="dashboard">📊 Dashboard</a></li>
+                    <li><a href="#" onclick="showProjects(event)" class="nav-link" data-page="projects">📋 Projetos</a></li>
+                    <li><a href="#" onclick="showTasks(event)" class="nav-link" data-page="tasks">✅ Tarefas</a></li>
+                    <li><a href="#" onclick="showDocuments(event)" class="nav-link" data-page="documents">📄 Documentos</a></li>
+                    <li><a href="#" onclick="showTeam(event)" class="nav-link" data-page="team">👥 Equipes</a></li>
+                    <li><a href="#" onclick="showMetrics(event)" class="nav-link" data-page="metrics">📈 Métricas</a></li>
+                </ul>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page active">
+                    <div class="page-header">
+                        <h2>Dashboard</h2>
+                        <p class="page-subtitle">Bem-vindo ao seu painel</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-projects">0</div>
+                            <div class="stat-label">Projetos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-tasks">0</div>
+                            <div class="stat-label">Tarefas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-documents">0</div>
+                            <div class="stat-label">Documentos</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-progress">0%</div>
+                            <div class="stat-label">Progresso Médio</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <h3>Projetos Recentes</h3>
+                            <div id="recent-projects" class="list"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Tarefas Pendentes</h3>
+                            <div id="pending-tasks" class="list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Page -->
+                <div id="projects-page" class="page">
+                    <div class="page-header">
+                        <h2>Projetos</h2>
+                        <button class="btn btn-success" onclick="showNewProjectModal()">+ Novo Projeto</button>
+                    </div>
+
+                    <div id="projects-list" class="projects-grid"></div>
+                </div>
+
+                <!-- Tasks Page -->
+                <div id="tasks-page" class="page">
+                    <div class="page-header">
+                        <h2>Tarefas</h2>
+                        <button class="btn btn-success" onclick="showNewTaskModal()">+ Nova Tarefa</button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <select id="project-filter" class="filter-select">
+                            <option value="">Todos os Projetos</option>
+                        </select>
+                        <select id="status-filter" class="filter-select">
+                            <option value="">Todos os Status</option>
+                            <option value="A fazer">A fazer</option>
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Concluído">Concluído</option>
+                        </select>
+                    </div>
+
+                    <div id="tasks-kanban" class="kanban-board">
+                        <div class="kanban-column">
+                            <h3>A fazer</h3>
+                            <div class="kanban-tasks" id="tasks-todo"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <h3>Em andamento</h3>
+                            <div class="kanban-tasks" id="tasks-doing"></div>
+                        </div>
+                        <div class="kanban-column">
+                            <h3>Concluído</h3>
+                            <div class="kanban-tasks" id="tasks-done"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Page -->
+                <div id="documents-page" class="page">
+                    <div class="page-header">
+                        <h2>Documentos</h2>
+                        <button class="btn btn-success" onclick="showUploadModal()">+ Upload Documento</button>
+                    </div>
+
+                    <div id="documents-list" class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Arquivo</th>
+                                    <th>Projeto</th>
+                                    <th>Tamanho</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="documents-tbody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Team Page -->
+                <div id="team-page" class="page">
+                    <div class="page-header">
+                        <h2>Equipes</h2>
+                    </div>
+
+                    <div id="teams-list" class="teams-grid"></div>
+                </div>
+
+                <!-- Metrics Page -->
+                <div id="metrics-page" class="page">
+                    <div class="page-header">
+                        <h2>Métricas</h2>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <h3>Tempo Médio por Projeto</h3>
+                            <div id="metric-time" class="metric-value">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Taxa de Conclusão</h3>
+                            <div id="metric-completion" class="metric-value">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Membros da Equipe</h3>
+                            <div id="metric-members" class="metric-value">-</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal: Novo Projeto -->
+    <div id="project-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('project-modal')">&times;</span>
+            <h2>Novo Projeto</h2>
+            <form id="project-form" class="form">
+                <div class="form-group">
+                    <label for="project-name">Nome</label>
+                    <input type="text" id="project-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="project-description">Descrição</label>
+                    <textarea id="project-description" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="project-cliente">Cliente</label>
+                    <input type="text" id="project-cliente">
+                </div>
+                <div class="form-group">
+                    <label for="project-orcamento">Orçamento (R$)</label>
+                    <input type="number" id="project-orcamento" step="0.01">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Criar Projeto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Nova Tarefa -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('task-modal')">&times;</span>
+            <h2>Nova Tarefa</h2>
+            <form id="task-form" class="form">
+                <div class="form-group">
+                    <label for="task-title">Título</label>
+                    <input type="text" id="task-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-projeto">Projeto</label>
+                    <select id="task-projeto" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Descrição</label>
+                    <textarea id="task-description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-priority">Prioridade</label>
+                    <select id="task-priority">
+                        <option value="Baixa">Baixa</option>
+                        <option value="Média" selected>Média</option>
+                        <option value="Alta">Alta</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Criar Tarefa</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Upload Documento -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('upload-modal')">&times;</span>
+            <h2>Upload de Documento</h2>
+            <form id="upload-form" class="form">
+                <div class="form-group">
+                    <label for="upload-projeto">Projeto</label>
+                    <select id="upload-projeto" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="upload-file">Arquivo</label>
+                    <input type="file" id="upload-file" required accept=".pdf,.docx,.xlsx,.jpg,.png,.zip">
+                    <small>Máximo 100MB. Formatos: PDF, DOCX, XLSX, JPG, PNG, ZIP</small>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Fazer Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Carregando...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="api-client.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

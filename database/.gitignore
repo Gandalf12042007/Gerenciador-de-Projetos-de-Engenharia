@@ -1,0 +1,17 @@
+# Arquivos de ambiente com credenciais
+.env
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Backups de banco
+*.sql.backup
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log

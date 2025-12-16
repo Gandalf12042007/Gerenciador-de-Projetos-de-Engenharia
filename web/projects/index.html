@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projetos — Gerenciador de Projetos de Engenharia</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Projetos</h1>
+    <div class="top-controls">
+      <button id="newProjectBtn" class="btn primary">Criar novo projeto</button>
+      <button id="logoutBtn" class="btn" style="margin-left:10px;">Sair</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="dashboard">
+      <div class="metrics">
+        <div class="metric">Obras ativas<br><strong id="count-active">0</strong></div>
+        <div class="metric">Tarefas pendentes<br><strong id="count-pending">0</strong></div>
+        <div class="metric">Tarefas atrasadas<br><strong id="count-delayed">0</strong></div>
+        <div class="metric">% Progresso médio<br><strong id="avg-progress">0%</strong></div>
+      </div>
+
+      <div class="filters">
+        <label>
+          Status:
+          <select id="filter-status">
+            <option value="all">Todos</option>
+            <option value="planejamento">Planejamento</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="pausado">Pausado</option>
+            <option value="concluido">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </label>
+
+        <label>
+          Procurar:
+          <input id="filter-q" placeholder="Nome do projeto, cidade..." />
+        </label>
+
+        <button id="clearFilters" class="btn">Limpar</button>
+      </div>
+    </section>
+
+    <section class="project-list" id="projectList">
+      <!-- Cards will be rendered here -->
+    </section>
+  </main>
+
+  <script src="../api-client.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

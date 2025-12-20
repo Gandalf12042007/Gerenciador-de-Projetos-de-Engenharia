@@ -1,11 +1,29 @@
 # Arquivos de ambiente com credenciais
 .env
 
+# Variantes de ambiente (exceto exemplo)
+.env.*
+!.env.example
+
 # Cache Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+.env/
+
+# Ferramentas/IDE
+.vscode/
+.idea/
+
+# SO
+Thumbs.db
+.DS_Store
 
 # Backups de banco
 *.sql.backup
@@ -15,3 +33,9 @@ __pycache__/
 
 # Logs
 *.log
+
+# Test/Type/Coverage caches
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/

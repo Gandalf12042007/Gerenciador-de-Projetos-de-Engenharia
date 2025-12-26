@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database
 from db_helper import DatabaseHelper
 
 from middleware.auth_middleware import get_current_active_user
+from middleware.permissions import permission_manager
 
 router = APIRouter(prefix="/tarefas", tags=["Tarefas"])
 
@@ -49,8 +50,17 @@ async def listar_tarefas_projeto(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Lista tarefas de um projeto
+    Lista tarefas de um projeto (apenas membros)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar se usuário é membro do projeto
+    if not permission_manager.is_project_member(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
+        )
+    
     db = DatabaseHelper()
     
     if status:
@@ -109,8 +119,17 @@ async def criar_tarefa(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Cria nova tarefa
+    Cria nova tarefa (apenas membros do projeto)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar se usuário é membro do projeto
+    if not permission_manager.is_project_member(user_id, tarefa.projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
+        )
+    
     db = DatabaseHelper()
     
     try:
@@ -151,13 +170,14 @@ async def atualizar_tarefa(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Atualiza tarefa existente
+    Atualiza tarefa existente (apenas membros do projeto)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
     db = DatabaseHelper()
     
-    # Verificar se tarefa existe
+    # Verificar se tarefa existe e obter projeto_id
     existing = db.execute_query(
-        "SELECT id FROM tarefas WHERE id = %s",
+        "SELECT projeto_id FROM tarefas WHERE id = %s",
         (tarefa_id,),
         fetch=True
     )
@@ -166,6 +186,15 @@ async def atualizar_tarefa(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tarefa não encontrada"
+        )
+    
+    projeto_id = existing[0][0]
+    
+    # Verificar se usuário é membro do projeto
+    if not permission_manager.is_project_member(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
         )
     
     # Construir query
@@ -202,9 +231,42 @@ async def deletar_tarefa(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Deleta tarefa
+    Deleta tarefa (apenas membros do projeto)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
     db = DatabaseHelper()
+    
+    # Verificar se tarefa existe e obter projeto_id
+    existing = db.execute_query(
+        "SELECT projeto_id FROM tarefas WHERE id = %s",
+        (tarefa_id,),
+        fetch=True
+    )
+    
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada"
+        )
+    
+    projeto_id = existing[0][0]
+    
+    # Verificar se usuário é membro do projeto
+    if not permission_manager.is_project_member(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
+        )
+    
+    try:
+        db.execute_query("DELETE FROM tarefas WHERE id = %s", (tarefa_id,))
+        return {"message": "Tarefa deletada com sucesso"}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao deletar tarefa: {str(e)}"
+        )
     
     try:
         db.execute_query("DELETE FROM tarefas WHERE id = %s", (tarefa_id,))

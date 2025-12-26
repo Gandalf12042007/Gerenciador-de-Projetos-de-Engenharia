@@ -14,6 +14,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database
 from db_helper import DatabaseHelper
 
 from middleware.auth_middleware import get_current_active_user
+from middleware.permissions import permission_manager
+from utils.permissions_decorators import verify_project_access, verify_project_modify, verify_project_delete
 
 router = APIRouter(prefix="/projetos", tags=["Projetos"])
 
@@ -66,35 +68,41 @@ async def listar_projetos(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Lista todos os projetos
+    Lista projetos do usuário (onde é membro da equipe)
     
     Query params:
         status: Filtrar por status (opcional)
     """
     db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
     
+    # Listar apenas projetos onde usuário é membro da equipe
     if status:
         projetos = db.execute_query(
             """
-            SELECT id, nome, descricao, endereco, cliente, valor_total,
-                   data_inicio, data_fim_prevista, data_fim_real, status,
-                   progresso_percentual, criador_id, criado_em, atualizado_em
-            FROM projetos
-            WHERE status = %s
-            ORDER BY criado_em DESC
+            SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
+                   p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
+                   p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
+            FROM projetos p
+            INNER JOIN equipes e ON p.id = e.projeto_id
+            WHERE e.usuario_id = %s AND e.ativo = TRUE AND p.status = %s
+            ORDER BY p.criado_em DESC
             """,
-            (status,),
+            (user_id, status),
             fetch=True
         )
     else:
         projetos = db.execute_query(
             """
-            SELECT id, nome, descricao, endereco, cliente, valor_total,
-                   data_inicio, data_fim_prevista, data_fim_real, status,
-                   progresso_percentual, criador_id, criado_em, atualizado_em
-            FROM projetos
-            ORDER BY criado_em DESC
+            SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
+                   p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
+                   p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
+            FROM projetos p
+            INNER JOIN equipes e ON p.id = e.projeto_id
+            WHERE e.usuario_id = %s AND e.ativo = TRUE
+            ORDER BY p.criado_em DESC
             """,
+            (user_id,),
             fetch=True
         )
     
@@ -125,8 +133,17 @@ async def buscar_projeto(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Busca projeto por ID
+    Busca projeto por ID (apenas membros da equipe)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar se usuário tem acesso ao projeto
+    if not permission_manager.is_project_member(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
+        )
+    
     db = DatabaseHelper()
     
     projeto = db.execute_query(
@@ -199,6 +216,17 @@ async def criar_projeto(
             fetch=False
         )
         
+        # Adicionar criador à equipe como gerente
+        from datetime import date as dt_date
+        db.execute_query(
+            """
+            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo)
+            VALUES (%s, %s, 'gerente', %s, TRUE)
+            """,
+            (result, current_user["user_id"], dt_date.today()),
+            fetch=False
+        )
+        
         return {"message": "Projeto criado com sucesso", "id": result}
     
     except Exception as e:
@@ -215,8 +243,17 @@ async def atualizar_projeto(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Atualiza projeto existente
+    Atualiza projeto existente (apenas gerente ou criador)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar permissão (apenas gerente ou dono)
+    if not permission_manager.can_modify_project(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas gerentes do projeto podem modificá-lo"
+        )
+    
     db = DatabaseHelper()
     
     # Verificar se projeto existe
@@ -267,8 +304,17 @@ async def deletar_projeto(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Deleta projeto
+    Deleta projeto (apenas criador)
     """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar permissão (apenas criador pode deletar)
+    if not permission_manager.can_delete_project(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas o criador do projeto pode deletá-lo"
+        )
+    
     db = DatabaseHelper()
     
     # Verificar se projeto existe

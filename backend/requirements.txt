@@ -29,3 +29,6 @@ schedule==1.2.0
 
 # Utilitários
 python-dateutil==2.8.2
+
+# Health Check (Docker)
+requests==2.31.0

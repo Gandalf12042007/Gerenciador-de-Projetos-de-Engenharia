@@ -81,12 +81,13 @@ Este é um **protótipo funcional** com as features essenciais implementadas. A 
 ## 🛠️ Tecnologias
 
 ### Backend
-- **Python 3.8+** - Linguagem principal
+- **Python 3.11** - Linguagem principal
 - **FastAPI** - Framework web moderno e rápido
 - **MySQL 8.0+** - Banco de dados relacional
 - **JWT** - Autenticação via tokens
 - **Bcrypt** - Hash de senhas
 - **Uvicorn** - Servidor ASGI
+- **Docker** - Containerização
 
 ### Frontend
 - **HTML5/CSS3** - Estrutura e estilo
@@ -98,6 +99,11 @@ Este é um **protótipo funcional** com as features essenciais implementadas. A 
 - **MySQL Connector** - Driver Python
 - **Connection Pooling** - Gerenciamento de conexões
 - **Migrations** - Controle de versão do schema
+
+### DevOps
+- **Docker & Docker Compose** - Ambiente de desenvolvimento
+- **GitHub Actions** - CI/CD
+- **Railway/Render** - Deploy em produção
 
 ### DevOps
 - **Git/GitHub** - Controle de versão
@@ -162,18 +168,57 @@ Este é um **protótipo funcional** com as features essenciais implementadas. A 
 
 ## 📦 Instalação
 
-### Pré-requisitos
-- Python 3.8+
-- MySQL 8.0+
+### 🐳 **Opção 1: Docker (RECOMENDADO - Mais Fácil)**
+
+#### Pré-requisitos
+- Docker Desktop instalado ([Download](https://www.docker.com/products/docker-desktop))
 - Git
 
-### 1. Clone o repositório
+#### Passos
+
+1. **Clone o repositório**
 ```bash
 git clone https://github.com/Gandalf12042007/Gerenciador-de-Projetos-de-Engenharia.git
 cd Gerenciador-de-Projetos-de-Engenharia
 ```
 
-### 2. Configure o Banco de Dados
+2. **Inicie os containers**
+```bash
+docker-compose up -d
+```
+
+Pronto! O sistema está rodando:
+- **Backend API:** http://localhost:8000
+- **Documentação Swagger:** http://localhost:8000/docs
+- **PhpMyAdmin:** http://localhost:8080 (user: root, pass: root_password_123)
+- **Frontend:** Abra `web/login.html` no navegador
+
+3. **Ver logs (opcional)**
+```bash
+docker-compose logs -f backend
+```
+
+4. **Parar containers**
+```bash
+docker-compose down
+```
+
+---
+
+### 💻 **Opção 2: Instalação Manual (Windows/Linux)**
+
+#### Pré-requisitos
+- Python 3.11+
+- MySQL 8.0+
+- Git
+
+#### 1. Clone o repositório
+```bash
+git clone https://github.com/Gandalf12042007/Gerenciador-de-Projetos-de-Engenharia.git
+cd Gerenciador-de-Projetos-de-Engenharia
+```
+
+#### 2. Configure o Banco de Dados
 ```bash
 # Crie o database no MySQL
 mysql -u root -p
@@ -189,22 +234,18 @@ python migrate.py
 python seed.py
 ```
 
-### 3. Configure o Backend
+#### 3. Configure o Backend
 ```bash
 cd backend
 
 # Instale as dependências
 pip install -r requirements.txt
 
-# Crie o arquivo .env
-copy .env.example .env
-
-# Edite o .env com suas credenciais do MySQL
-# DB_PASSWORD=sua_senha_aqui
-# SECRET_KEY=sua_chave_secreta_jwt
+# Crie o arquivo .env (ajuste as credenciais)
+# Copie do docker-compose.yml as variáveis de ambiente
 ```
 
-### 4. Execute a API
+#### 4. Execute a API
 ```bash
 python app.py
 ```
@@ -214,10 +255,9 @@ A API estará disponível em:
 - **Docs:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
 
-### 5. Abra o Frontend
+#### 5. Abra o Frontend
+Abra `web/login.html` diretamente no navegador ou use:
 ```bash
-# Abra web/login.html no navegador
-# Ou use um servidor local:
 cd web
 python -m http.server 8080
 ```

@@ -60,6 +60,14 @@ class OTPResponse(BaseModel):
     requires_2fa: bool = False
 
 
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: int
+    nome: str
+    email: str
+
+
 class VerifyOTPRequest(BaseModel):
     email: EmailStr
     codigo_otp: str = Field(..., min_length=6, max_length=6, description="Código OTP de 6 dígitos")
@@ -74,56 +82,53 @@ async def login(credentials: LoginRequest, request: Request):
     Returns:
         Token JWT e dados do usuário
     """
-    db = DatabaseHelper()
-    
-    # Buscar usuário por email
-    usuario = db.execute_query(
-        "SELECT id, nome, email, senha_hash, telefone, cargo, ativo FROM usuarios WHERE email = %s",
-        (credentials.email,),
-        fetch=True
-    )
-    
-    if not usuario or len(usuario) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou senha incorretos"
-        )
-    
-    usuario = usuario[0]
-    
-    # Verificar se usuário está ativo
-    if not usuario[6]:  # ativo
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuário desativado"
-        )
-    
-    # Verificar senha (usuario[3] é a senha_hash)
-    if not verify_password(credentials.senha, usuario[3]):
-        # Log de tentativa falha (auditoria)
-        logger.warning(f"Tentativa de login falhou para email: {credentials.email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou senha incorretos"
-        )
-    
-    # ✅ Sprint 1: Integração de 2FA (Autenticação de Dois Fatores)
-    # Enviar OTP por email para autenticação adicional
-    logger.info(f"Enviando OTP para verificação de 2FA: {credentials.email}")
-    enviar_otp_email(credentials.email)
-    
-    return {
-        "access_token": "",  # Token vazio até validar OTP
-        "token_type": "bearer",
-        "user": {
-            "id": usuario[0],
-            "nome": usuario[1],
-            "email": usuario[2],
-            "telefone": usuario[4],
-            "cargo": usuario[5],
-            "requires_2fa": True
+    # Usuários de teste hardcoded (sem banco de dados)
+    USUARIOS_TESTE = {
+        "teste01@gmail.com": {
+            "id": 1,
+            "nome": "Vicente de Souza", 
+            "email": "teste01@gmail.com",
+            "senha": "Teste123@",
+            "telefone": "11 99999-0001",
+            "cargo": "Administrador",
+            "ativo": True
+        },
+        "francisco@gmail.com": {
+            "id": 2,
+            "nome": "Francisco",
+            "email": "francisco@gmail.com", 
+            "senha": "Teste123@",
+            "telefone": "11 99999-0002",
+            "cargo": "Desenvolvedor",
+            "ativo": True
         }
     }
+    
+    # Verificar se é usuário de teste
+    if credentials.email in USUARIOS_TESTE:
+        user_teste = USUARIOS_TESTE[credentials.email]
+        if credentials.senha == user_teste["senha"] and user_teste["ativo"]:
+            # Criar token
+            access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"user_id": user_teste["id"], "email": user_teste["email"], "nome": user_teste["nome"]},
+                expires_delta=access_token_expires
+            )
+            
+            logger.info(f"Login bem-sucedido (teste): {credentials.email}")
+            
+            return TokenResponse(
+                access_token=access_token,
+                user_id=user_teste["id"],
+                nome=user_teste["nome"],
+                email=user_teste["email"]
+            )
+    
+    # Se não encontrou usuário de teste
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Email ou senha incorretos"
+    )
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)

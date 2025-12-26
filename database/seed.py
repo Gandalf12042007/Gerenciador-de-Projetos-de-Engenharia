@@ -77,6 +77,8 @@ class Seeder:
             ('Pedro Oliveira', 'pedro.oliveira@exemplo.com', 'senha123', '11 98765-5678', 'Técnico em Edificações', True),
             ('Ana Costa', 'ana.costa@exemplo.com', 'senha123', '11 98765-9012', 'Arquiteta', True),
             ('Carlos Souza', 'carlos.souza@exemplo.com', 'senha123', '11 98765-3456', 'Engenheiro Estrutural', True),
+            ('Vicente de Souza', 'teste01@gmail.com', 'Teste123@', '11 99999-0001', 'Administrador', True),
+            ('Francisco', 'francisco@gmail.com', 'Teste123@', '11 99999-0002', 'Desenvolvedor', True),
         ]
         
         cursor = self.connection.cursor()

@@ -7,7 +7,7 @@ Desenvolvido por: Vicente de Souza
 from functools import wraps
 from fastapi import HTTPException, status, Depends
 from typing import Callable
-from utils.auth import get_current_user
+from middleware.auth_middleware import get_current_user
 from middleware.permissions import permission_manager
 
 

@@ -33,6 +33,8 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
 # Configurar CORS
+# Desenvolvimento: permite tudo (*) 
+# Produção: apenas domínios específicos
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,

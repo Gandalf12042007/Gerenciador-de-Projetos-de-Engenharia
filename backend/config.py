@@ -34,14 +34,21 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
     
     # API
-    API_PORT: int = int(os.getenv("API_PORT", 8000))
+    API_PORT: int = int(os.getenv("PORT", os.getenv("API_PORT", 8000)))
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
     API_TITLE: str = "API - Gerenciador de Projetos de Engenharia"
     API_VERSION: str = "1.0.0"
     API_DESCRIPTION: str = "API REST para gerenciamento de projetos de engenharia civil"
     
+    # Environment
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
+    
     # CORS
-    CORS_ORIGINS: list = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    CORS_ORIGINS: list = (
+        ["*"] if os.getenv("ENVIRONMENT") == "development"
+        else os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8080").split(",")
+    )
     
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

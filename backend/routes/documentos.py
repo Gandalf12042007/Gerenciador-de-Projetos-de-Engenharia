@@ -249,10 +249,8 @@ async def criar_nova_versao(
             FROM versoes_documento
             WHERE documento_id = %s
         """, (documento_id,))
-        
         result = cursor.fetchone()
         nova_versao = (result['ultima_versao'] or 0) + 1
-        
         # Criar nova versão
         query = """
             INSERT INTO versoes_documento
@@ -264,22 +262,28 @@ async def criar_nova_versao(
             documento_id, nova_versao, caminho_arquivo,
             tamanho_bytes, current_user['id'], comentario
         ))
-        
         # Atualizar documento principal
         cursor.execute("""
             UPDATE documentos
             SET caminho_arquivo = %s, tamanho_bytes = %s
             WHERE id = %s
         """, (caminho_arquivo, tamanho_bytes, documento_id))
-        
         conn.commit()
-        
+        # Auditoria
+        from backend.utils.audit import registrar_auditoria
+        detalhes = f"Nova versão {nova_versao} criada. Comentário: {comentario}"
+        registrar_auditoria(
+            usuario_id=current_user['id'],
+            entidade="documento",
+            entidade_id=documento_id,
+            acao="nova_versao",
+            detalhes=detalhes
+        )
         return {
             "success": True,
             "message": f"Versão {nova_versao} criada com sucesso",
             "versao": nova_versao
         }
-        
     except Exception as e:
         conn.rollback()
         if os.path.exists(caminho_arquivo):
@@ -343,24 +347,28 @@ async def deletar_documento(
             UNION
             SELECT caminho_arquivo FROM versoes_documento WHERE documento_id = %s
         """, (documento_id, documento_id))
-        
         arquivos = cursor.fetchall()
-        
         # Deletar do banco
         cursor.execute("DELETE FROM documentos WHERE id = %s", (documento_id,))
         conn.commit()
-        
+        # Auditoria
+        from backend.utils.audit import registrar_auditoria
+        registrar_auditoria(
+            usuario_id=current_user['id'],
+            entidade="documento",
+            entidade_id=documento_id,
+            acao="deletar",
+            detalhes="Documento e versões removidos"
+        )
         # Deletar arquivos físicos
         for arquivo in arquivos:
             caminho = arquivo['caminho_arquivo']
             if os.path.exists(caminho):
                 os.remove(caminho)
-        
         return {
             "success": True,
             "message": "Documento deletado com sucesso"
         }
-        
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kanban de Tarefas — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="kanban.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Kanban de Tarefas</h1>
+    <button id="addTaskBtn" class="btn primary">Nova Tarefa</button>
+    <button id="docsBtn" class="btn">Documentos</button>
+    <button id="chatBtn" class="btn">Chat</button>
+    <button id="backBtn" class="btn">Voltar</button>
+  </header>
+  <main class="kanban-container">
+    <div class="kanban-board" id="kanbanBoard">
+      <!-- Colunas e tarefas serão renderizadas aqui -->
+    </div>
+  </main>
+  <div id="taskModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeTaskModal">&times;</span>
+      <h2 id="modalTaskTitle">Nova Tarefa</h2>
+      <form id="taskForm">
+        <input type="hidden" id="taskId" />
+        <div class="form-group">
+          <label for="taskTitle">Título</label>
+          <input type="text" id="taskTitle" required />
+        </div>
+        <div class="form-group">
+          <label for="taskDesc">Descrição</label>
+          <textarea id="taskDesc"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="taskStatus">Status</label>
+          <select id="taskStatus">
+            <option value="todo">A Fazer</option>
+            <option value="doing">Em Andamento</option>
+            <option value="done">Concluída</option>
+          </select>
+        </div>
+        <button type="submit" class="btn primary" id="saveTaskBtn">Salvar</button>
+      </form>
+    </div>
+  </div>
+  <script src="kanban.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const project = params.get('project');
+    document.getElementById('docsBtn').onclick = () => window.location.href = `docs.html?project=${project}`;
+    document.getElementById('chatBtn').onclick = () => window.location.href = `chat.html?project=${project}`;
+  });
+</script>
+</body>
+</html>

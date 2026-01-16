@@ -1,0 +1,25 @@
+/* Métricas - Estilos */
+.metrics-container {
+  padding: 24px;
+  background: #f7f8fa;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.charts {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+canvas {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin-bottom: 24px;
+  padding: 12px;
+}
+.btn { padding: 8px 16px; border: none; border-radius: 5px; background: #4A90E2; color: #fff; cursor: pointer; font-weight: 500; }
+.btn.primary { background: #3578e5; }
+.btn:hover { background: #3578e5; }

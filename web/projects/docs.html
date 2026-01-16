@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Documentos — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Documentos do Projeto</h1>
+    <button id="addDocBtn" class="btn primary">Novo Documento</button>
+    <button id="kanbanBtn" class="btn">Kanban</button>
+    <button id="chatBtn" class="btn">Chat</button>
+    <button id="backBtn" class="btn">Voltar</button>
+  </header>
+  <main class="docs-container">
+    <table class="docs-table" id="docsTable">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Versão</th>
+          <th>Enviado por</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Linhas de documentos -->
+      </tbody>
+    </table>
+  </main>
+  <div id="docModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeDocModal">&times;</span>
+      <h2 id="modalDocTitle">Novo Documento</h2>
+      <form id="docForm" enctype="multipart/form-data">
+        <input type="hidden" id="docId" />
+        <div class="form-group">
+          <label for="docName">Nome</label>
+          <input type="text" id="docName" required />
+        </div>
+        <div class="form-group">
+          <label for="docCategory">Categoria</label>
+          <select id="docCategory">
+            <option value="plantas">Plantas</option>
+            <option value="rrt">RRT</option>
+            <option value="diario">Diário de Obra</option>
+            <option value="medicoes">Medições</option>
+            <option value="fotos">Fotos</option>
+            <option value="relatorios">Relatórios</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="docFile">Arquivo</label>
+          <input type="file" id="docFile" />
+        </div>
+        <button type="submit" class="btn primary" id="saveDocBtn">Salvar</button>
+      </form>
+    </div>
+  </div>
+  <script src="docs.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const project = params.get('project');
+    document.getElementById('kanbanBtn').onclick = () => window.location.href = `kanban.html?project=${project}`;
+    document.getElementById('chatBtn').onclick = () => window.location.href = `chat.html?project=${project}`;
+  });
+</script>
+</body>
+</html>

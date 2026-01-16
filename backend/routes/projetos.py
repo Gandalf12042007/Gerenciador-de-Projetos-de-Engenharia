@@ -1,3 +1,53 @@
+from fastapi.responses import StreamingResponse, JSONResponse
+import csv
+# Endpoint para admins consultarem/exportarem logs de auditoria
+@router.get("/audit/logs")
+async def consultar_auditoria(
+    projeto_id: int = None,
+    usuario_id: int = None,
+    data_inicio: str = None,
+    data_fim: str = None,
+    formato: str = "json",
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Consulta/exporta logs de auditoria (apenas admins)
+    """
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Apenas administradores podem consultar logs de auditoria")
+    from database.db_helper import get_db_connection
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = "SELECT a.*, u.nome as usuario_nome FROM audit_trail a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE 1=1"
+        params = []
+        if projeto_id:
+            query += " AND (a.entidade = 'projeto' AND a.entidade_id = %s)"
+            params.append(projeto_id)
+        if usuario_id:
+            query += " AND a.usuario_id = %s"
+            params.append(usuario_id)
+        if data_inicio:
+            query += " AND a.criado_em >= %s"
+            params.append(data_inicio)
+        if data_fim:
+            query += " AND a.criado_em <= %s"
+            params.append(data_fim)
+        query += " ORDER BY a.criado_em DESC"
+        cursor.execute(query, tuple(params))
+        logs = cursor.fetchall()
+        if formato == "csv":
+            def iter_csv():
+                header = ["id", "usuario_id", "usuario_nome", "entidade", "entidade_id", "acao", "detalhes", "ip", "user_agent", "criado_em"]
+                yield ",".join(header) + "\n"
+                for l in logs:
+                    row = [str(l.get(h, "")) if l.get(h, "") is not None else "" for h in header]
+                    yield ",".join(row) + "\n"
+            return StreamingResponse(iter_csv(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=audit_logs.csv"})
+        return JSONResponse(content=logs)
+    finally:
+        cursor.close()
+        conn.close()
 """
 Rotas de Projetos - CRUD
 """
@@ -14,6 +64,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database
 from db_helper import DatabaseHelper
 
 from middleware.auth_middleware import get_current_active_user
+from utils.audit import registrar_auditoria
 from middleware.permissions import permission_manager
 from utils.permissions_decorators import verify_project_access, verify_project_modify, verify_project_delete
 
@@ -216,6 +267,16 @@ async def criar_projeto(
             fetch=False
         )
         
+        # Auditoria
+        registrar_auditoria(
+            usuario_id=current_user["user_id"],
+            entidade="projeto",
+            entidade_id=result,
+            acao="criar",
+            detalhes=f"Projeto criado: {projeto.nome}",
+            ip=None,  # Pode ser extraído do request se necessário
+            user_agent=None
+        )
         # Adicionar criador à equipe como gerente
         from datetime import date as dt_date
         db.execute_query(
@@ -289,8 +350,17 @@ async def atualizar_projeto(
     
     try:
         db.execute_query(query, tuple(params))
+        # Auditoria
+        from backend.utils.audit import registrar_auditoria
+        detalhes = f"Campos atualizados: {', '.join(projeto.dict(exclude_unset=True).keys())}"
+        registrar_auditoria(
+            usuario_id=user_id,
+            entidade="projeto",
+            entidade_id=projeto_id,
+            acao="atualizar",
+            detalhes=detalhes
+        )
         return {"message": "Projeto atualizado com sucesso"}
-    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -332,8 +402,16 @@ async def deletar_projeto(
     
     try:
         db.execute_query("DELETE FROM projetos WHERE id = %s", (projeto_id,))
+        # Auditoria
+        from backend.utils.audit import registrar_auditoria
+        registrar_auditoria(
+            usuario_id=user_id,
+            entidade="projeto",
+            entidade_id=projeto_id,
+            acao="deletar",
+            detalhes="Projeto removido"
+        )
         return {"message": "Projeto deletado com sucesso"}
-    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

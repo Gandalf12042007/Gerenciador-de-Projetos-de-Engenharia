@@ -36,7 +36,9 @@ class EquipeUpdate(BaseModel):
 class MembroEquipe(BaseModel):
     id: int
     projeto_id: int
+import secrets
     projeto_nome: str
+from datetime import datetime, timedelta
     usuario_id: int
     usuario_nome: str
     usuario_email: str
@@ -58,6 +60,15 @@ async def listar_membros_projeto(
     projeto_id: int,
     ativo: Optional[bool] = None,
     current_user: dict = Depends(get_current_active_user)
+class ConviteEquipeCreate(BaseModel):
+    projeto_id: int
+    email_convidado: str
+    papel: str  # gerente, engenheiro, tecnico, colaborador
+    expiracao_horas: Optional[int] = 48
+
+class ConviteAceitar(BaseModel):
+    token: str
+    usuario_id: int
 ):
     """
     Lista todos os membros de um projeto
@@ -253,6 +264,95 @@ async def atualizar_membro(
 ):
     """
     Atualiza dados de um membro da equipe (papel, status, data_saida)
+    # Endpoint para enviar convite
+@router.post("/convite", status_code=201)
+async def enviar_convite_equipes(
+    convite: ConviteEquipeCreate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Envia convite para membro por e-mail (gera token, salva convite)
+    """
+    db = DatabaseHelper()
+    if not db.connect():
+        raise HTTPException(status_code=500, detail="Erro ao conectar no banco de dados")
+    try:
+        # Verificar se projeto existe
+        cursor = db.connection.cursor(dictionary=True)
+        cursor.execute("SELECT id FROM projetos WHERE id = %s", (convite.projeto_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Projeto não encontrado")
+        # Gerar token único
+        token = secrets.token_urlsafe(32)
+        expiracao = datetime.utcnow() + timedelta(hours=convite.expiracao_horas or 48)
+        # Inserir convite
+        cursor.execute(
+            """
+            INSERT INTO convites_equipes (projeto_id, email_convidado, papel, token, expiracao)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (convite.projeto_id, convite.email_convidado, convite.papel, token, expiracao)
+        )
+        db.connection.commit()
+        # Simular envio de e-mail (log)
+        print(f"[CONVITE] Enviado para {convite.email_convidado}: Token={token}")
+        return {"message": "Convite enviado com sucesso", "token": token}
+    except Exception as e:
+        db.connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao enviar convite: {str(e)}")
+    finally:
+        db.disconnect()
+
+    # Endpoint para aceitar convite
+@router.post("/aceitar-convite", status_code=201)
+async def aceitar_convite_equipes(
+    dados: ConviteAceitar = Body(...)
+):
+    """
+    Aceita convite de equipe usando token
+    """
+    db = DatabaseHelper()
+    if not db.connect():
+        raise HTTPException(status_code=500, detail="Erro ao conectar no banco de dados")
+    try:
+        cursor = db.connection.cursor(dictionary=True)
+        # Buscar convite válido
+        cursor.execute(
+            """
+            SELECT * FROM convites_equipes WHERE token = %s AND aceito = FALSE AND cancelado = FALSE AND expiracao > NOW()
+            """,
+            (dados.token,)
+        )
+        convite = cursor.fetchone()
+        if not convite:
+            raise HTTPException(status_code=400, detail="Convite inválido, expirado ou já aceito/cancelado")
+        # Verificar se usuário já é membro
+        cursor.execute(
+            "SELECT id FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = TRUE",
+            (convite['projeto_id'], dados.usuario_id)
+        )
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Usuário já é membro ativo deste projeto")
+        # Adicionar membro à equipe
+        cursor.execute(
+            """
+            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo)
+            VALUES (%s, %s, %s, %s, TRUE)
+            """,
+            (convite['projeto_id'], dados.usuario_id, convite['papel'], datetime.utcnow().date())
+        )
+        # Marcar convite como aceito
+        cursor.execute(
+            "UPDATE convites_equipes SET aceito = TRUE, aceito_em = NOW() WHERE id = %s",
+            (convite['id'],)
+        )
+        db.connection.commit()
+        return {"message": "Convite aceito e membro adicionado à equipe"}
+    except Exception as e:
+        db.connection.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao aceitar convite: {str(e)}")
+    finally:
+        db.disconnect()
     
     Args:
         membro_id: ID do membro na equipe

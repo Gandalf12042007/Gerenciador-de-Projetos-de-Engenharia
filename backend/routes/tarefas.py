@@ -216,8 +216,17 @@ async def atualizar_tarefa(
     
     try:
         db.execute_query(query, tuple(params))
+        # Auditoria
+        from backend.utils.audit import registrar_auditoria
+        detalhes = f"Campos atualizados: {', '.join(tarefa.dict(exclude_unset=True).keys())}"
+        registrar_auditoria(
+            usuario_id=user_id,
+            entidade="tarefa",
+            entidade_id=tarefa_id,
+            acao="atualizar",
+            detalhes=detalhes
+        )
         return {"message": "Tarefa atualizada com sucesso"}
-    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -260,8 +269,16 @@ async def deletar_tarefa(
     
     try:
         db.execute_query("DELETE FROM tarefas WHERE id = %s", (tarefa_id,))
+        # Auditoria
+        from backend.utils.audit import registrar_auditoria
+        registrar_auditoria(
+            usuario_id=user_id,
+            entidade="tarefa",
+            entidade_id=tarefa_id,
+            acao="deletar",
+            detalhes="Tarefa removida"
+        )
         return {"message": "Tarefa deletada com sucesso"}
-    
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

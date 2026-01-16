@@ -1,3 +1,35 @@
+/* Modal Projeto */
+.modal {
+	position: fixed;
+	z-index: 10000;
+	left: 0; top: 0; width: 100vw; height: 100vh;
+	background: rgba(0,0,0,0.3);
+	display: flex; align-items: center; justify-content: center;
+}
+.modal-content {
+	background: #fff;
+	padding: 32px 24px 24px 24px;
+	border-radius: 10px;
+	min-width: 320px;
+	max-width: 95vw;
+	box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+	position: relative;
+}
+.modal-content h2 { margin-top: 0; }
+.close {
+	position: absolute;
+	right: 16px;
+	top: 12px;
+	font-size: 2rem;
+	color: #888;
+	cursor: pointer;
+}
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; margin-bottom: 4px; font-weight: 500; }
+.form-group input, .form-group select {
+	width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;
+	font-size: 1rem;
+}
 * { box-sizing: border-box; }
 body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #222; background: #f5f7fa; }
 .topbar{ display:flex; justify-content:space-between; align-items:center; background:#1f2937; color:#fff; padding:14px 18px}

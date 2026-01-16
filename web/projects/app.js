@@ -106,13 +106,71 @@ function applyFilters(){
 }
 
 // actions
-function viewProject(id){ 
-  window.location.href = `details.html?id=${id}`;
+function viewProject(id){
+  window.location.href = `kanban.html?project=${id}`;
 }
 
-async function editProject(id){ 
-  // TODO: Implementar modal de edição
-  alert('Editar projeto: '+id);
+
+async function editProject(id){
+  const project = projects.find(p => p.id === id);
+  if (!project) return;
+  openProjectModal('Editar Projeto', project);
+}
+
+function openProjectModal(title, project = null) {
+  document.getElementById('modalTitle').innerText = title;
+  document.getElementById('projectModal').style.display = 'flex';
+  document.getElementById('projectId').value = project ? project.id : '';
+  document.getElementById('projectName').value = project ? project.name : '';
+  document.getElementById('projectCity').value = project ? project.city : '';
+  document.getElementById('projectManager').value = project ? project.manager : '';
+  document.getElementById('projectStart').value = project && project.start && project.start !== 'N/A' ? formatDateForInput(project.start) : '';
+  document.getElementById('projectEnd').value = project && project.end && project.end !== 'N/A' ? formatDateForInput(project.end) : '';
+  document.getElementById('projectStatus').value = project ? project.status : 'planejamento';
+  document.getElementById('projectProgress').value = project ? project.progress : 0;
+}
+
+function closeProjectModal() {
+  document.getElementById('projectModal').style.display = 'none';
+}
+
+function formatDateForInput(dateStr) {
+  // Converte dd/mm/yyyy para yyyy-mm-dd
+  const [d, m, y] = dateStr.split('/');
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('closeProjectModal').onclick = closeProjectModal;
+  document.getElementById('projectModal').onclick = (e) => { if (e.target === e.currentTarget) closeProjectModal(); };
+  document.getElementById('projectForm').onsubmit = saveProjectHandler;
+});
+
+async function saveProjectHandler(e) {
+  e.preventDefault();
+  const id = document.getElementById('projectId').value;
+  const data = {
+    nome: document.getElementById('projectName').value,
+    localizacao: document.getElementById('projectCity').value,
+    cliente: document.getElementById('projectManager').value,
+    data_inicio: document.getElementById('projectStart').value,
+    data_conclusao_prevista: document.getElementById('projectEnd').value,
+    status: document.getElementById('projectStatus').value,
+    progresso: parseInt(document.getElementById('projectProgress').value) || 0
+  };
+  try {
+    if (id) {
+      await API.Projetos.atualizar(id, data);
+      showAlert('Projeto atualizado com sucesso!', 'success');
+    } else {
+      await API.Projetos.criar(data);
+      showAlert('Projeto criado com sucesso!', 'success');
+    }
+    closeProjectModal();
+    await loadProjects();
+  } catch (error) {
+    showAlert('Erro ao salvar projeto: ' + error.message, 'error');
+  }
 }
 
 async function deleteProject(id) {
@@ -128,8 +186,7 @@ async function deleteProject(id) {
 }
 
 async function createNewProject() {
-  // TODO: Implementar modal de criação
-  alert('Criar novo projeto - Em desenvolvimento');
+  openProjectModal('Novo Projeto');
 }
 
 function logout() {

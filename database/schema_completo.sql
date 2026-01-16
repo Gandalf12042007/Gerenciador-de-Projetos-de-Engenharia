@@ -1,3 +1,18 @@
+-- ===== AUDIT TRAIL =====
+CREATE TABLE audit_trail (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    entidade VARCHAR(50) NOT NULL,
+    entidade_id INT,
+    acao VARCHAR(30) NOT NULL,
+    detalhes TEXT,
+    ip VARCHAR(45),
+    user_agent VARCHAR(255),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_usuario (usuario_id),
+    INDEX idx_entidade (entidade, entidade_id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- =====================================================
 -- SCHEMA COMPLETO - Gerenciador de Projetos de Engenharia
 -- Desenvolvedor: Vicente de Souza
@@ -94,6 +109,23 @@ CREATE TABLE equipes (
     UNIQUE KEY uk_projeto_usuario (projeto_id, usuario_id),
     FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ===== CONVITES DE EQUIPE =====
+CREATE TABLE convites_equipes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    projeto_id INT NOT NULL,
+    email_convidado VARCHAR(100) NOT NULL,
+    papel ENUM('gerente', 'engenheiro', 'tecnico', 'colaborador') NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    expiracao TIMESTAMP NOT NULL,
+    aceito BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    aceito_em TIMESTAMP NULL,
+    cancelado BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_token (token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ===== TAREFAS (KANBAN) =====

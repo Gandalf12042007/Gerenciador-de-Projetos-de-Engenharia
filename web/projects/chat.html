@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat do Projeto — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Chat do Projeto</h1>
+    <button id="kanbanBtn" class="btn">Kanban</button>
+    <button id="docsBtn" class="btn">Documentos</button>
+    <button id="backBtn" class="btn">Voltar</button>
+  </header>
+  <main class="chat-container">
+    <div id="chatMessages" class="chat-messages"></div>
+    <form id="chatForm" class="chat-form">
+      <input type="text" id="chatInput" placeholder="Digite uma mensagem..." autocomplete="off" required />
+      <button type="submit" class="btn primary">Enviar</button>
+    </form>
+  </main>
+  <script src="chat.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const project = params.get('project');
+      document.getElementById('kanbanBtn').onclick = () => window.location.href = `kanban.html?project=${project}`;
+      document.getElementById('docsBtn').onclick = () => window.location.href = `docs.html?project=${project}`;
+      document.getElementById('backBtn').onclick = () => window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

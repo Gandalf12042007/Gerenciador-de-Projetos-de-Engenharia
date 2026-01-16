@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Métricas do Projeto — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="metrics.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Métricas do Projeto</h1>
+    <button id="kanbanBtn" class="btn">Kanban</button>
+    <button id="docsBtn" class="btn">Documentos</button>
+    <button id="chatBtn" class="btn">Chat</button>
+    <button id="exportLogsBtn" class="btn">Exportar Logs</button>
+    <button id="backBtn" class="btn">Voltar</button>
+  </header>
+  <main class="metrics-container">
+    <div class="charts">
+      <canvas id="progressChart" width="350" height="200"></canvas>
+      <canvas id="tasksChart" width="350" height="200"></canvas>
+      <canvas id="docsChart" width="350" height="200"></canvas>
+    </div>
+  </main>
+  <script src="metrics.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const project = params.get('project');
+      document.getElementById('kanbanBtn').onclick = () => window.location.href = `kanban.html?project=${project}`;
+      document.getElementById('docsBtn').onclick = () => window.location.href = `docs.html?project=${project}`;
+      document.getElementById('chatBtn').onclick = () => window.location.href = `chat.html?project=${project}`;
+      document.getElementById('backBtn').onclick = () => window.location.href = 'index.html';
+      document.getElementById('exportLogsBtn').onclick = exportUserLogs;
+    });
+  </script>
+</body>
+</html>

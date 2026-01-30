@@ -86,11 +86,11 @@ async def login(credentials: LoginRequest, request: Request):
     """
     # Usuários de teste hardcoded (sem banco de dados)
     USUARIOS_TESTE = {
-        "teste01@gmail.com": {
+        "vicentedesouza762@gmail.com": {
             "id": 1,
             "nome": "Vicente de Souza", 
-            "email": "teste01@gmail.com",
-            "senha": "Teste123@",
+            "email": "vicentedesouza762@gmail.com",
+            "senha": "Abacaxi371",
             "telefone": "11 99999-0001",
             "cargo": "Administrador",
             "ativo": True

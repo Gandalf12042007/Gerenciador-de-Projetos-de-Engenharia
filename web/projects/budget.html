@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orçamento — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .budget-container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .summary-card h3 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .summary-card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .summary-card .value.positive { color: #28a745; }
+    .summary-card .value.negative { color: #dc3545; }
+    .summary-card .value.warning { color: #ffc107; }
+    .summary-card .value.info { color: #667eea; }
+    
+    .budget-table {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .budget-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .budget-table th, .budget-table td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .budget-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #555;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+    
+    .budget-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .budget-table .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .budget-table .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .btn-edit { background: #667eea; color: white; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn-pay { background: #28a745; color: white; }
+    
+    .categoria-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .cat-mao_de_obra { background: #cce5ff; color: #004085; }
+    .cat-materiais { background: #d4edda; color: #155724; }
+    .cat-equipamentos { background: #fff3cd; color: #856404; }
+    .cat-servicos { background: #e2d5f1; color: #5a2d82; }
+    .cat-impostos { background: #f8d7da; color: #721c24; }
+    .cat-outros { background: #e0e0e0; color: #555; }
+    
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .status-previsto { background: #fff3cd; color: #856404; }
+    .status-pago { background: #d4edda; color: #155724; }
+    .status-atrasado { background: #f8d7da; color: #721c24; }
+    
+    .filter-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-bar select {
+      padding: 10px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-content h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    
+    .modal-content .close {
+      float: right;
+      font-size: 28px;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .form-row .form-group {
+      flex: 1;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+    }
+    
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: 15px;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    
+    .progress-bar .fill {
+      height: 100%;
+      background: #667eea;
+      transition: width 0.3s;
+    }
+    
+    .progress-bar .fill.over-budget {
+      background: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>💰 Orçamento do Projeto</h1>
+    <button id="addBudgetBtn" class="btn primary">+ Novo Item</button>
+    <button id="kanbanBtn" class="btn">Kanban</button>
+    <button id="materialsBtn" class="btn">Materiais</button>
+    <button id="docsBtn" class="btn">Documentos</button>
+    <button id="backBtn" class="btn">Voltar</button>
+  </header>
+  
+  <main class="budget-container">
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h3>Total Previsto</h3>
+        <div class="value info" id="totalPrevisto">R$ 0,00</div>
+      </div>
+      <div class="summary-card">
+        <h3>Total Gasto</h3>
+        <div class="value" id="totalGasto">R$ 0,00</div>
+        <div class="progress-bar">
+          <div class="fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="summary-card">
+        <h3>Saldo Disponível</h3>
+        <div class="value positive" id="saldoDisponivel">R$ 0,00</div>
+      </div>
+      <div class="summary-card">
+        <h3>Itens Atrasados</h3>
+        <div class="value warning" id="itensAtrasados">0</div>
+      </div>
+    </div>
+    
+    <div class="filter-bar">
+      <select id="filterCategoria">
+        <option value="">Todas as Categorias</option>
+        <option value="mao_de_obra">Mão de Obra</option>
+        <option value="materiais">Materiais</option>
+        <option value="equipamentos">Equipamentos</option>
+        <option value="servicos">Serviços</option>
+        <option value="impostos">Impostos</option>
+        <option value="outros">Outros</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">Todos os Status</option>
+        <option value="previsto">Previsto</option>
+        <option value="pago">Pago</option>
+        <option value="atrasado">Atrasado</option>
+      </select>
+    </div>
+    
+    <div class="budget-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Previsto</th>
+            <th>Gasto</th>
+            <th>Diferença</th>
+            <th>Data Prevista</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="budgetTableBody">
+          <!-- Itens serão renderizados aqui -->
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div class="icon">💰</div>
+      <h3>Nenhum item no orçamento</h3>
+      <p>Adicione itens para controlar os custos do projeto.</p>
+    </div>
+  </main>
+  
+  <!-- Modal Novo/Editar Item -->
+  <div id="budgetModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeBudgetModal">&times;</span>
+      <h2 id="modalBudgetTitle">Novo Item</h2>
+      <form id="budgetForm">
+        <input type="hidden" id="budgetId" />
+        <div class="form-group">
+          <label for="budgetDescricao">Descrição *</label>
+          <input type="text" id="budgetDescricao" required placeholder="Ex: Fundação - Concreto armado">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="budgetCategoria">Categoria *</label>
+            <select id="budgetCategoria" required>
+              <option value="mao_de_obra">Mão de Obra</option>
+              <option value="materiais">Materiais</option>
+              <option value="equipamentos">Equipamentos</option>
+              <option value="servicos">Serviços</option>
+              <option value="impostos">Impostos</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="budgetDataPrevista">Data Prevista</label>
+            <input type="date" id="budgetDataPrevista">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="budgetValorPrevisto">Valor Previsto (R$) *</label>
+            <input type="number" id="budgetValorPrevisto" step="0.01" min="0" required placeholder="0,00">
+          </div>
+          <div class="form-group">
+            <label for="budgetValorGasto">Valor Gasto (R$)</label>
+            <input type="number" id="budgetValorGasto" step="0.01" min="0" placeholder="0,00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="budgetDataPagamento">Data do Pagamento</label>
+          <input type="date" id="budgetDataPagamento">
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;margin-top:10px;">Salvar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../api-client.js"></script>
+  <script src="budget.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const project = params.get('project');
+      document.getElementById('kanbanBtn').onclick = () => window.location.href = `kanban.html?project=${project}`;
+      document.getElementById('materialsBtn').onclick = () => window.location.href = `materials.html?project=${project}`;
+      document.getElementById('docsBtn').onclick = () => window.location.href = `docs.html?project=${project}`;
+      document.getElementById('backBtn').onclick = () => window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

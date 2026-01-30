@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Materiais — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .materials-container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .summary-card h3 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    .summary-card .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .summary-card .value.money {
+      color: #2a7;
+    }
+    
+    .materials-table {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .materials-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .materials-table th, .materials-table td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .materials-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #555;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+    
+    .materials-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .materials-table .actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .materials-table .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+    }
+    
+    .btn-edit { background: #667eea; color: white; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn-stock { background: #28a745; color: white; }
+    
+    .categoria-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .cat-cimento { background: #e0e0e0; color: #555; }
+    .cat-areia { background: #fff3cd; color: #856404; }
+    .cat-brita { background: #d4edda; color: #155724; }
+    .cat-aco { background: #cce5ff; color: #004085; }
+    .cat-madeira { background: #f8d7da; color: #721c24; }
+    .cat-eletrico { background: #fff3cd; color: #856404; }
+    .cat-hidraulico { background: #d1ecf1; color: #0c5460; }
+    .cat-acabamento { background: #e2d5f1; color: #5a2d82; }
+    .cat-outros { background: #f5f5f5; color: #666; }
+    
+    .filter-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .filter-bar select, .filter-bar input {
+      padding: 10px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .modal-content h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    
+    .modal-content .close {
+      float: right;
+      font-size: 28px;
+      cursor: pointer;
+      color: #999;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+    
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .form-row .form-group {
+      flex: 1;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #888;
+    }
+    
+    .empty-state .icon {
+      font-size: 64px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>📦 Materiais do Projeto</h1>
+    <button id="addMaterialBtn" class="btn primary">+ Novo Material</button>
+    <button id="kanbanBtn" class="btn">Kanban</button>
+    <button id="docsBtn" class="btn">Documentos</button>
+    <button id="budgetBtn" class="btn">Orçamento</button>
+    <button id="backBtn" class="btn">Voltar</button>
+  </header>
+  
+  <main class="materials-container">
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h3>Total de Materiais</h3>
+        <div class="value" id="totalMateriais">0</div>
+      </div>
+      <div class="summary-card">
+        <h3>Valor em Estoque</h3>
+        <div class="value money" id="valorEstoque">R$ 0,00</div>
+      </div>
+      <div class="summary-card">
+        <h3>Valor Utilizado</h3>
+        <div class="value money" id="valorUsado">R$ 0,00</div>
+      </div>
+    </div>
+    
+    <div class="filter-bar">
+      <select id="filterCategoria">
+        <option value="">Todas as Categorias</option>
+        <option value="cimento">Cimento</option>
+        <option value="areia">Areia</option>
+        <option value="brita">Brita</option>
+        <option value="aco">Aço</option>
+        <option value="madeira">Madeira</option>
+        <option value="eletrico">Elétrico</option>
+        <option value="hidraulico">Hidráulico</option>
+        <option value="acabamento">Acabamento</option>
+        <option value="outros">Outros</option>
+      </select>
+      <input type="text" id="searchMaterial" placeholder="Buscar material...">
+    </div>
+    
+    <div class="materials-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Unidade</th>
+            <th>Preço Unit.</th>
+            <th>Estoque</th>
+            <th>Usado</th>
+            <th>Fornecedor</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="materialsTableBody">
+          <!-- Materiais serão renderizados aqui -->
+        </tbody>
+      </table>
+    </div>
+    
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <div class="icon">📦</div>
+      <h3>Nenhum material cadastrado</h3>
+      <p>Adicione materiais para controlar o estoque do projeto.</p>
+    </div>
+  </main>
+  
+  <!-- Modal Novo/Editar Material -->
+  <div id="materialModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeMaterialModal">&times;</span>
+      <h2 id="modalMaterialTitle">Novo Material</h2>
+      <form id="materialForm">
+        <input type="hidden" id="materialId" />
+        <div class="form-group">
+          <label for="materialNome">Nome do Material *</label>
+          <input type="text" id="materialNome" required placeholder="Ex: Cimento CP-II">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="materialCategoria">Categoria *</label>
+            <select id="materialCategoria" required>
+              <option value="cimento">Cimento</option>
+              <option value="areia">Areia</option>
+              <option value="brita">Brita</option>
+              <option value="aco">Aço</option>
+              <option value="madeira">Madeira</option>
+              <option value="eletrico">Elétrico</option>
+              <option value="hidraulico">Hidráulico</option>
+              <option value="acabamento">Acabamento</option>
+              <option value="outros">Outros</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="materialUnidade">Unidade *</label>
+            <select id="materialUnidade" required>
+              <option value="un">Unidade (un)</option>
+              <option value="kg">Quilograma (kg)</option>
+              <option value="m">Metro (m)</option>
+              <option value="m2">Metro² (m²)</option>
+              <option value="m3">Metro³ (m³)</option>
+              <option value="sc">Saco (sc)</option>
+              <option value="lt">Litro (lt)</option>
+              <option value="pc">Peça (pc)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="materialPreco">Preço Unitário (R$) *</label>
+          <input type="number" id="materialPreco" step="0.01" min="0" required placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label for="materialFornecedor">Fornecedor</label>
+          <input type="text" id="materialFornecedor" placeholder="Nome do fornecedor">
+        </div>
+        <div class="form-group">
+          <label for="materialDescricao">Descrição</label>
+          <textarea id="materialDescricao" rows="3" placeholder="Observações sobre o material..."></textarea>
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;margin-top:10px;">Salvar</button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Modal Atualizar Estoque -->
+  <div id="stockModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeStockModal">&times;</span>
+      <h2>Atualizar Estoque</h2>
+      <form id="stockForm">
+        <input type="hidden" id="stockMaterialId" />
+        <p id="stockMaterialName" style="font-weight:bold;margin-bottom:20px;"></p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="stockQuantidade">Quantidade</label>
+            <input type="number" id="stockQuantidade" step="0.01" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="stockOperacao">Operação</label>
+            <select id="stockOperacao" required>
+              <option value="entrada">+ Entrada</option>
+              <option value="saida">- Saída (Uso)</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn primary" style="width:100%;margin-top:10px;">Confirmar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../api-client.js"></script>
+  <script src="materials.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const project = params.get('project');
+      document.getElementById('kanbanBtn').onclick = () => window.location.href = `kanban.html?project=${project}`;
+      document.getElementById('docsBtn').onclick = () => window.location.href = `docs.html?project=${project}`;
+      document.getElementById('budgetBtn').onclick = () => window.location.href = `budget.html?project=${project}`;
+      document.getElementById('backBtn').onclick = () => window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

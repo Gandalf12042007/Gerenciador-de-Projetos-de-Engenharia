@@ -80,8 +80,10 @@ function projectCardHtml(p){
       </div>
       <div style="margin-top:8px">Progresso: <strong>${p.progress}%</strong></div>
       <div class="links">
-        <button class="btn" onclick="viewProject(${p.id})">Abrir</button>
-        <button class="btn" onclick="editProject(${p.id})">Editar</button>
+        <button class="btn" onclick="viewProject(${p.id})">📋 Tarefas</button>
+        <button class="btn" onclick="viewMaterials(${p.id})">📦 Materiais</button>
+        <button class="btn" onclick="viewBudget(${p.id})">💰 Orçamento</button>
+        <button class="btn" onclick="editProject(${p.id})">✏️ Editar</button>
       </div>
     </article>
   `;
@@ -109,6 +111,14 @@ function applyFilters(){
 // actions
 function viewProject(id){
   window.location.href = `kanban.html?project=${id}`;
+}
+
+function viewMaterials(id){
+  window.location.href = `materials.html?project=${id}`;
+}
+
+function viewBudget(id){
+  window.location.href = `budget.html?project=${id}`;
 }
 
 
@@ -210,6 +220,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
+  }
+  
+  // Botão de perfil
+  const profileBtn = document.getElementById('profileBtn');
+  if (profileBtn) {
+    profileBtn.addEventListener('click', () => {
+      window.location.href = '../profile.html';
+    });
   }
   
   // Carregar projetos da API

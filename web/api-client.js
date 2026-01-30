@@ -9,6 +9,17 @@ class ApiClient {
     constructor() {
         this.token = localStorage.getItem('access_token');
         this.user = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        // Se não marcou "manter conectado" e é uma nova sessão, limpa dados
+        const keepLoggedIn = localStorage.getItem('keep_logged_in');
+        const sessionOnly = sessionStorage.getItem('session_only');
+        
+        // Se a sessão anterior era "session_only" e estamos em uma nova aba/sessão
+        if (!keepLoggedIn && !sessionOnly && this.token) {
+            // Verifica se é uma nova sessão do navegador
+            // Se não há sessionStorage marcada, é uma nova sessão
+            sessionStorage.setItem('current_session', 'true');
+        }
     }
 
     /**
@@ -142,6 +153,9 @@ class ApiClient {
         this.user = {};
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
+        localStorage.removeItem('keep_logged_in');
+        sessionStorage.removeItem('session_only');
+        sessionStorage.removeItem('current_session');
     }
 
     /**

@@ -11,13 +11,14 @@ async function loadDocs() {
   if (!projectId) return;
   try {
     const response = await API.Documentos.listar(projectId);
-    docs = response.map(d => ({
+    const docsData = response.data || response || [];
+    docs = docsData.map(d => ({
       id: d.id,
-      nome: d.nome,
-      categoria: d.categoria,
+      nome: d.nome || d.nome_original,
+      categoria: d.categoria || d.tipo || 'geral',
       versao: d.versao || 1,
-      criado_por: d.criado_por_nome || 'N/A',
-      data: d.data_criacao || '',
+      criado_por: d.criado_por_nome || d.usuario_nome || 'N/A',
+      data: d.data_criacao || d.created_at || '',
       url: d.url || '',
     }));
     renderDocs();

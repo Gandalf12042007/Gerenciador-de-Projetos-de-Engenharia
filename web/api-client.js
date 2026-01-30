@@ -3,7 +3,7 @@
  * Comunica com o backend FastAPI
  */
 
-const API_URL = 'http://localhost:8000/api'; // Ajuste conforme necessário
+const API_URL = 'http://localhost:8000'; // Sem prefixo /api - backend não usa
 
 class ApiClient {
     constructor() {
@@ -182,6 +182,29 @@ class ApiClient {
         });
     }
 
+    // ============ GERENCIAMENTO DE SENHA ============
+
+    /**
+     * Solicita reset de senha (esqueci minha senha)
+     */
+    async forgotPassword(email) {
+        return this.post('/auth/forgot-password', { email });
+    }
+
+    /**
+     * Redefine senha usando token
+     */
+    async resetPassword(token, nova_senha) {
+        return this.post('/auth/reset-password', { token, nova_senha });
+    }
+
+    /**
+     * Altera senha do usuário logado
+     */
+    async changePassword(senha_atual, nova_senha) {
+        return this.put('/auth/change-password', { senha_atual, nova_senha });
+    }
+
     // ============ PROJETOS ============
 
     async getProjetos(skip = 0, limit = 100) {
@@ -206,16 +229,14 @@ class ApiClient {
 
     // ============ TAREFAS ============
 
-    async getTarefas(skip = 0, limit = 100) {
-        return this.get(`/tarefas?skip=${skip}&limit=${limit}`);
-    }
-
-    async getTarefaById(id) {
-        return this.get(`/tarefas/${id}`);
+    async getTarefasByProjeto(projeto_id, status = null) {
+        let url = `/tarefas/projeto/${projeto_id}`;
+        if (status) url += `?status=${status}`;
+        return this.get(url);
     }
 
     async createTarefa(dados) {
-        return this.post('/tarefas', dados);
+        return this.post('/tarefas/', dados);
     }
 
     async updateTarefa(id, dados) {
@@ -226,18 +247,10 @@ class ApiClient {
         return this.delete(`/tarefas/${id}`);
     }
 
-    async getTarefasByProjeto(projeto_id) {
-        return this.get(`/projetos/${projeto_id}/tarefas`);
-    }
-
     // ============ DOCUMENTOS ============
 
-    async getDocumentos(skip = 0, limit = 100) {
-        return this.get(`/documentos?skip=${skip}&limit=${limit}`);
-    }
-
     async getDocumentosByProjeto(projeto_id) {
-        return this.get(`/projetos/${projeto_id}/documentos`);
+        return this.get(`/documentos/${projeto_id}`);
     }
 
     async uploadDocumento(projeto_id, file) {
@@ -248,39 +261,46 @@ class ApiClient {
         return this.delete(`/documentos/${id}`);
     }
 
-    async downloadDocumento(id) {
+    async getVersoes(documento_id) {
+        return this.get(`/documentos/${documento_id}/versoes`);
+    }
+
+    downloadDocumentoUrl(id) {
         return `${API_URL}/documentos/${id}/download`;
     }
 
     // ============ EQUIPES ============
 
-    async getEquipes(skip = 0, limit = 100) {
-        return this.get(`/equipes?skip=${skip}&limit=${limit}`);
+    async getEquipesByProjeto(projeto_id) {
+        return this.get(`/equipes/projeto/${projeto_id}`);
     }
 
-    async getEquipeById(id) {
-        return this.get(`/equipes/${id}`);
+    async addMemberToTeam(dados) {
+        // dados: { projeto_id, usuario_id, papel, data_entrada }
+        return this.post('/equipes/', dados);
     }
 
-    async addMemberToTeam(equipe_id, usuario_id, funcao) {
-        return this.post(`/equipes/${equipe_id}/members`, {
-            usuario_id,
-            funcao,
-        });
+    async updateMember(membro_id, dados) {
+        return this.put(`/equipes/${membro_id}`, dados);
     }
 
-    async removeMemberFromTeam(equipe_id, usuario_id) {
-        return this.delete(`/equipes/${equipe_id}/members/${usuario_id}`);
+    async removeMemberFromTeam(membro_id) {
+        return this.delete(`/equipes/${membro_id}`);
+    }
+
+    async enviarConvite(dados) {
+        // dados: { projeto_id, email_convidado, papel }
+        return this.post('/equipes/convite', dados);
     }
 
     // ============ MATERIAIS ============
 
-    async getMateriais(skip = 0, limit = 100) {
-        return this.get(`/materiais?skip=${skip}&limit=${limit}`);
+    async getMateriaisByProjeto(projeto_id) {
+        return this.get(`/materiais/${projeto_id}`);
     }
 
-    async createMaterial(dados) {
-        return this.post('/materiais', dados);
+    async createMaterial(projeto_id, dados) {
+        return this.post(`/materiais/${projeto_id}`, dados);
     }
 
     async updateMaterial(id, dados) {
@@ -293,12 +313,16 @@ class ApiClient {
 
     // ============ ORÇAMENTOS ============
 
-    async getOrcamentos(skip = 0, limit = 100) {
-        return this.get(`/orcamentos?skip=${skip}&limit=${limit}`);
+    async getOrcamentosByProjeto(projeto_id) {
+        return this.get(`/orcamentos/${projeto_id}`);
     }
 
-    async createOrcamento(dados) {
-        return this.post('/orcamentos', dados);
+    async getResumoOrcamento(projeto_id) {
+        return this.get(`/orcamentos/${projeto_id}/resumo`);
+    }
+
+    async createOrcamento(projeto_id, dados) {
+        return this.post(`/orcamentos/${projeto_id}`, dados);
     }
 
     async updateOrcamento(id, dados) {
@@ -309,26 +333,30 @@ class ApiClient {
         return this.delete(`/orcamentos/${id}`);
     }
 
+    async registrarPagamento(orcamento_id, dados) {
+        return this.post(`/orcamentos/${orcamento_id}/registrar-pagamento`, dados);
+    }
+
     // ============ CHAT ============
 
     async sendMessage(projeto_id, conteudo) {
-        return this.post(`/chat/${projeto_id}/messages`, {
+        return this.post(`/chat/${projeto_id}/mensagens`, {
             conteudo,
         });
     }
 
     async getMessages(projeto_id, skip = 0, limit = 50) {
-        return this.get(`/chat/${projeto_id}/messages?skip=${skip}&limit=${limit}`);
+        return this.get(`/chat/${projeto_id}/mensagens?skip=${skip}&limit=${limit}`);
     }
 
     // ============ MÉTRICAS ============
 
-    async getMetricas() {
-        return this.get('/metricas');
+    async getMetricas(projeto_id) {
+        return this.get(`/metricas/${projeto_id}/dashboard`);
     }
 
-    async getMetricasTimeline() {
-        return this.get('/metricas/timeline');
+    async getMetricasTimeline(projeto_id) {
+        return this.get(`/metricas/${projeto_id}/timeline`);
     }
 
     // ============ HEALTH CHECK ============
@@ -340,17 +368,66 @@ class ApiClient {
 
 // Instância global do cliente API
 const api = new ApiClient();
-    
-    if (!publicPages.includes(currentPath) && !AuthAPI.isAuthenticated()) {
-        window.location.href = '/login.html';
-    }
-});
 
-// Exportar APIs
-window.API = {
-    Auth: AuthAPI,
-    Projetos: ProjetosAPI,
-    Tarefas: TarefasAPI,
-    TokenManager,
-    UserManager
+// ============ CAMADA DE COMPATIBILIDADE ============
+// Para manter compatibilidade com os arquivos em projects/
+// que usam API.Auth, API.Projetos, API.Tarefas, API.Documentos
+
+const API = {
+    Auth: {
+        isAuthenticated: () => api.isAuthenticated(),
+        login: (email, senha) => api.login(email, senha),
+        logout: () => api.logout(),
+        getUser: () => api.user,
+        getToken: () => api.token
+    },
+    Projetos: {
+        listar: () => api.getProjetos(),
+        obter: (id) => api.getProjetoById(id),
+        criar: (dados) => api.createProjeto(dados),
+        atualizar: (id, dados) => api.updateProjeto(id, dados),
+        deletar: (id) => api.deleteProjeto(id)
+    },
+    Tarefas: {
+        listar: (projeto_id) => api.getTarefasByProjeto(projeto_id),
+        criar: (projeto_id, dados) => api.createTarefa({ ...dados, projeto_id }),
+        atualizar: (id, dados) => api.updateTarefa(id, dados),
+        deletar: (id) => api.deleteTarefa(id)
+    },
+    Documentos: {
+        listar: (projeto_id) => api.getDocumentosByProjeto(projeto_id),
+        criar: (projeto_id, formData) => api.uploadDocumento(projeto_id, formData.get('file')),
+        atualizar: (id, formData) => api.put(`/documentos/${id}`, formData),
+        deletar: (id) => api.deleteDocumento(id),
+        download: (id) => Promise.resolve(api.downloadDocumentoUrl(id))
+    },
+    Equipes: {
+        listarPorProjeto: (projeto_id) => api.getEquipesByProjeto(projeto_id),
+        adicionar: (dados) => api.addMemberToTeam(dados),
+        atualizar: (id, dados) => api.updateMember(id, dados),
+        remover: (id) => api.removeMemberFromTeam(id)
+    },
+    Materiais: {
+        listarPorProjeto: (projeto_id) => api.getMateriaisByProjeto(projeto_id),
+        criar: (projeto_id, dados) => api.createMaterial(projeto_id, dados),
+        atualizar: (id, dados) => api.updateMaterial(id, dados),
+        deletar: (id) => api.deleteMaterial(id)
+    },
+    Orcamentos: {
+        listarPorProjeto: (projeto_id) => api.getOrcamentosByProjeto(projeto_id),
+        criar: (projeto_id, dados) => api.createOrcamento(projeto_id, dados),
+        atualizar: (id, dados) => api.updateOrcamento(id, dados),
+        deletar: (id) => api.deleteOrcamento(id)
+    },
+    Chat: {
+        enviar: (projeto_id, conteudo) => api.sendMessage(projeto_id, conteudo),
+        listar: (projeto_id, skip, limit) => api.getMessages(projeto_id, skip, limit)
+    },
+    Metricas: {
+        dashboard: (projeto_id) => api.getMetricas(projeto_id)
+    }
 };
+
+// Exportar para uso global
+window.api = api;
+window.API = API;

@@ -21,12 +21,20 @@ logging.basicConfig(
 class Settings:
     """Configurações da aplicação"""
     
-    # Banco de Dados
+    # Tipo de Banco de Dados (mysql ou sqlite)
+    DB_TYPE: str = os.getenv("DB_TYPE", "sqlite").lower()
+    
+    # Banco de Dados MySQL
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
     DB_USER: str = os.getenv("DB_USER", "root")
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
     DB_NAME: str = os.getenv("DB_NAME", "gerenciador_projetos")
     DB_PORT: int = int(os.getenv("DB_PORT", 3306))
+    
+    # Banco de Dados SQLite
+    SQLITE_PATH: str = os.getenv("SQLITE_PATH", os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "database", "gerenciador.db"
+    ))
     
     # Segurança JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "chave-desenvolvimento-insegura-mude-em-producao")
@@ -56,15 +64,30 @@ class Settings:
     @property
     def db_config(self) -> dict:
         """Retorna configuração do banco de dados"""
-        return {
-            'host': self.DB_HOST,
-            'user': self.DB_USER,
-            'password': self.DB_PASSWORD,
-            'database': self.DB_NAME,
-            'port': self.DB_PORT,
-            'charset': 'utf8mb4',
-            'collation': 'utf8mb4_unicode_ci'
-        }
+        if self.DB_TYPE == "mysql":
+            return {
+                'host': self.DB_HOST,
+                'user': self.DB_USER,
+                'password': self.DB_PASSWORD,
+                'database': self.DB_NAME,
+                'port': self.DB_PORT,
+                'charset': 'utf8mb4',
+                'collation': 'utf8mb4_unicode_ci'
+            }
+        else:
+            return {
+                'database': self.SQLITE_PATH
+            }
+    
+    @property
+    def is_sqlite(self) -> bool:
+        """Verifica se está usando SQLite"""
+        return self.DB_TYPE == "sqlite"
+    
+    @property
+    def is_mysql(self) -> bool:
+        """Verifica se está usando MySQL"""
+        return self.DB_TYPE == "mysql"
 
 
 settings = Settings()

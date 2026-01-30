@@ -162,9 +162,16 @@ async function handleLogin(event) {
         showLoading(true);
         const response = await api.login(email, password);
 
+        // Backend retorna: { access_token, token_type, user_id, nome, email }
+        const user = {
+            id: response.user_id,
+            nome: response.nome,
+            email: response.email
+        };
+
         // Salvar autenticação
-        api.setAuth(response.access_token, response.user);
-        currentUser = response.user;
+        api.setAuth(response.access_token, user);
+        currentUser = user;
 
         // Limpar formulário
         document.getElementById('login-form').reset();
@@ -225,20 +232,39 @@ async function loadDashboardData() {
 
         // Carregar projetos
         const projetosResponse = await api.getProjetos();
-        projetos = projetosResponse.data || projetosResponse;
+        projetos = projetosResponse.data || projetosResponse || [];
 
-        // Carregar tarefas
-        const tarefasResponse = await api.getTarefas();
-        tarefas = tarefasResponse.data || tarefasResponse;
+        // Inicializar contadores
+        let totalTarefas = 0;
+        let totalDocumentos = 0;
+        tarefas = [];
+        documentos = [];
 
-        // Carregar documentos
-        const documentosResponse = await api.getDocumentos();
-        documentos = documentosResponse.data || documentosResponse;
+        // Carregar tarefas e documentos de cada projeto
+        for (const projeto of projetos.slice(0, 5)) {
+            try {
+                const tarefasProjeto = await api.getTarefasByProjeto(projeto.id);
+                const tarefasData = tarefasProjeto.data || tarefasProjeto || [];
+                tarefas = tarefas.concat(tarefasData);
+                totalTarefas += tarefasData.length;
+            } catch (e) {
+                console.warn(`Erro ao carregar tarefas do projeto ${projeto.id}`);
+            }
+
+            try {
+                const docsProjeto = await api.getDocumentosByProjeto(projeto.id);
+                const docsData = docsProjeto.data || docsProjeto || [];
+                documentos = documentos.concat(docsData);
+                totalDocumentos += docsData.length;
+            } catch (e) {
+                console.warn(`Erro ao carregar documentos do projeto ${projeto.id}`);
+            }
+        }
 
         // Atualizar estatísticas
         document.getElementById('stat-projects').textContent = projetos.length;
-        document.getElementById('stat-tasks').textContent = tarefas.length;
-        document.getElementById('stat-documents').textContent = documentos.length;
+        document.getElementById('stat-tasks').textContent = totalTarefas;
+        document.getElementById('stat-documents').textContent = totalDocumentos;
 
         // Calcular progresso médio
         const progresso = projetos.length > 0
@@ -363,8 +389,25 @@ function editProject(id) {
 async function loadTasks() {
     try {
         showLoading(true);
-        const response = await api.getTarefas();
-        tarefas = response.data || response;
+        
+        // Carregar projetos primeiro
+        const projetosResponse = await api.getProjetos();
+        const projetosData = projetosResponse.data || projetosResponse || [];
+        
+        // Carregar tarefas de todos os projetos
+        tarefas = [];
+        for (const projeto of projetosData) {
+            try {
+                const tarefasProjeto = await api.getTarefasByProjeto(projeto.id);
+                const tarefasData = tarefasProjeto.data || tarefasProjeto || [];
+                // Adicionar nome do projeto para referência
+                tarefasData.forEach(t => t.projeto_nome = projeto.nome);
+                tarefas = tarefas.concat(tarefasData);
+            } catch (e) {
+                console.warn(`Erro ao carregar tarefas do projeto ${projeto.id}`);
+            }
+        }
+        
         renderKanbanBoard();
     } catch (error) {
         showToast(error.message, 'error');
@@ -396,9 +439,10 @@ async function loadProjectsForFilters() {
 }
 
 function renderKanbanBoard() {
-    const todoTasks = tarefas.filter(t => t.status === 'A fazer');
-    const doingTasks = tarefas.filter(t => t.status === 'Em andamento');
-    const doneTasks = tarefas.filter(t => t.status === 'Concluído');
+    // Backend usa: a_fazer, em_execucao, concluida
+    const todoTasks = tarefas.filter(t => t.status === 'a_fazer' || t.status === 'A fazer');
+    const doingTasks = tarefas.filter(t => t.status === 'em_execucao' || t.status === 'Em andamento');
+    const doneTasks = tarefas.filter(t => t.status === 'concluida' || t.status === 'Concluído');
 
     document.getElementById('tasks-todo').innerHTML = todoTasks.map(renderTaskCard).join('');
     document.getElementById('tasks-doing').innerHTML = doingTasks.map(renderTaskCard).join('');
@@ -455,8 +499,8 @@ async function handleCreateTask(event) {
             titulo,
             projeto_id,
             descricao,
-            prioridade,
-            status: 'A fazer',
+            prioridade: prioridade.toLowerCase(), // backend usa minusculo
+            status: 'a_fazer', // backend usa a_fazer
         });
 
         document.getElementById('task-form').reset();
@@ -474,8 +518,23 @@ async function handleCreateTask(event) {
 async function loadDocuments() {
     try {
         showLoading(true);
-        const response = await api.getDocumentos();
-        documentos = response.data || response;
+        
+        // Carregar projetos primeiro
+        const projetosResponse = await api.getProjetos();
+        const projetosData = projetosResponse.data || projetosResponse || [];
+        
+        // Carregar documentos de todos os projetos
+        documentos = [];
+        for (const projeto of projetosData) {
+            try {
+                const docsProjeto = await api.getDocumentosByProjeto(projeto.id);
+                const docsData = docsProjeto.data || docsProjeto || [];
+                docsData.forEach(d => d.projeto_nome = projeto.nome);
+                documentos = documentos.concat(docsData);
+            } catch (e) {
+                console.warn(`Erro ao carregar documentos do projeto ${projeto.id}`);
+            }
+        }
 
         const tbody = document.getElementById('documents-tbody');
         tbody.innerHTML = documentos.map(doc => `
@@ -483,12 +542,12 @@ async function loadDocuments() {
                 <td>
                     <strong>${doc.nome_original || doc.nome}</strong>
                 </td>
-                <td>${doc.projeto_id || '-'}</td>
+                <td>${doc.projeto_nome || doc.projeto_id || '-'}</td>
                 <td>${formatBytes(doc.tamanho || 0)}</td>
-                <td>${new Date(doc.data_criacao).toLocaleDateString('pt-BR')}</td>
+                <td>${new Date(doc.data_criacao || doc.created_at).toLocaleDateString('pt-BR')}</td>
                 <td>
                     <div class="table-actions">
-                        <a href="${api.downloadDocumento(doc.id)}" class="btn btn-small" download>Download</a>
+                        <a href="${api.downloadDocumentoUrl(doc.id)}" class="btn btn-small" download>Download</a>
                         <button class="btn btn-danger btn-small" onclick="deleteDocument(${doc.id})">Deletar</button>
                     </div>
                 </td>
@@ -551,26 +610,44 @@ async function deleteDocument(id) {
 async function loadTeams() {
     try {
         showLoading(true);
-        const response = await api.getEquipes();
-        const equipesData = response.data || response;
+        
+        // Carregar projetos primeiro
+        const projetosResponse = await api.getProjetos();
+        const projetosData = projetosResponse.data || projetosResponse || [];
 
         const grid = document.getElementById('teams-list');
-        grid.innerHTML = equipesData.map(equipe => `
-            <div class="team-card">
-                <div class="team-name">👥 ${equipe.nome || 'Equipe sem nome'}</div>
-                <div class="team-members">
-                    ${(equipe.membros || []).map(membro => `
-                        <div class="member-item">
-                            <div class="member-avatar">${(membro.nome || 'U')[0].toUpperCase()}</div>
-                            <div>
-                                <strong>${membro.nome || 'Usuário'}</strong>
-                                <div style="font-size: 0.8rem; color: #999;">${membro.funcao || 'Membro'}</div>
+        let teamsHtml = '';
+        
+        // Carregar membros de cada projeto
+        for (const projeto of projetosData) {
+            try {
+                const membros = await api.getEquipesByProjeto(projeto.id);
+                const membrosData = membros.data || membros || [];
+                
+                if (membrosData.length > 0) {
+                    teamsHtml += `
+                        <div class="team-card">
+                            <div class="team-name">👥 ${projeto.nome}</div>
+                            <div class="team-members">
+                                ${membrosData.map(membro => `
+                                    <div class="member-item">
+                                        <div class="member-avatar">${(membro.usuario_nome || 'U')[0].toUpperCase()}</div>
+                                        <div>
+                                            <strong>${membro.usuario_nome || 'Usuário'}</strong>
+                                            <div style="font-size: 0.8rem; color: #999;">${membro.papel || 'Membro'}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
+                    `;
+                }
+            } catch (e) {
+                console.warn(`Erro ao carregar equipe do projeto ${projeto.id}`);
+            }
+        }
+        
+        grid.innerHTML = teamsHtml || '<p>Nenhuma equipe encontrada</p>';
     } catch (error) {
         showToast(error.message, 'error');
     } finally {
@@ -585,23 +662,39 @@ async function loadMetrics() {
 
         // Dados básicos do dashboard
         const projetosResponse = await api.getProjetos();
-        const projetosData = projetosResponse.data || projetosResponse;
+        const projetosData = projetosResponse.data || projetosResponse || [];
 
-        const tarefasResponse = await api.getTarefas();
-        const tarefasData = tarefasResponse.data || tarefasResponse;
+        // Carregar tarefas de todos os projetos
+        let tarefasData = [];
+        for (const projeto of projetosData) {
+            try {
+                const tarefasProjeto = await api.getTarefasByProjeto(projeto.id);
+                const dados = tarefasProjeto.data || tarefasProjeto || [];
+                tarefasData = tarefasData.concat(dados);
+            } catch (e) {
+                console.warn(`Erro ao carregar tarefas do projeto ${projeto.id}`);
+            }
+        }
 
         // Calcular métricas
         const totalTarefas = tarefasData.length;
-        const tarefasConcluidas = tarefasData.filter(t => t.status === 'Concluído').length;
+        const tarefasConcluidas = tarefasData.filter(t => t.status === 'concluida' || t.status === 'Concluído').length;
         const taxaConclusao = totalTarefas > 0 ? Math.round((tarefasConcluidas / totalTarefas) * 100) : 0;
 
         // Tempo médio (simulado)
         const tempoMedio = '12.5 dias';
 
         // Membros
-        const equipesResponse = await api.getEquipes();
-        const equipesData = equipesResponse.data || equipesResponse;
-        const totalMembros = equipesData.reduce((sum, e) => sum + (e.membros?.length || 0), 0);
+        let totalMembros = 0;
+        for (const projeto of projetosData.slice(0, 5)) {
+            try {
+                const membros = await api.getEquipesByProjeto(projeto.id);
+                const membrosData = membros.data || membros || [];
+                totalMembros += membrosData.length;
+            } catch (e) {
+                console.warn(`Erro ao carregar equipe do projeto ${projeto.id}`);
+            }
+        }
 
         document.getElementById('metric-time').textContent = tempoMedio;
         document.getElementById('metric-completion').textContent = taxaConclusao + '%';

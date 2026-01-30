@@ -1,7 +1,19 @@
 // Chat do Projeto - WebSocket + Log
 let projectId = null;
-let user = API.Auth.getUser ? API.Auth.getUser() : { nome: 'Você' };
+let user = null;
 let ws = null;
+
+function getUser() {
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    try {
+      return JSON.parse(userStr);
+    } catch (e) {
+      return { nome: 'Você' };
+    }
+  }
+  return { nome: 'Você' };
+}
 
 function getProjectIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -10,7 +22,8 @@ function getProjectIdFromUrl() {
 
 function connectWebSocket() {
   if (!projectId) return;
-  ws = new WebSocket(`ws://localhost:8000/api/chat/${projectId}`);
+  // URL sem /api - backend não usa prefixo
+  ws = new WebSocket(`ws://localhost:8000/chat/${projectId}/ws`);
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     addMessage(msg, msg.usuario === user.nome);
@@ -18,9 +31,11 @@ function connectWebSocket() {
   };
   ws.onopen = () => logAction('conexao_chat', 'Conectado ao chat');
   ws.onclose = () => logAction('desconexao_chat', 'Desconectado do chat');
+  ws.onerror = (err) => console.error('WebSocket error:', err);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  user = getUser();
   projectId = getProjectIdFromUrl();
   if (!projectId) {
     alert('Projeto não especificado!');
@@ -28,8 +43,24 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   connectWebSocket();
+  loadMessages();
   document.getElementById('chatForm').onsubmit = sendMessageHandler;
 });
+
+async function loadMessages() {
+  try {
+    const messages = await API.Chat.listar(projectId, 0, 50);
+    const messagesData = messages.data || messages || [];
+    messagesData.forEach(msg => {
+      addMessage({
+        usuario: msg.usuario_nome || msg.remetente || 'Anônimo',
+        texto: msg.conteudo || msg.mensagem
+      }, false);
+    });
+  } catch (e) {
+    console.warn('Erro ao carregar mensagens:', e);
+  }
+}
 
 function addMessage(msg, isMe) {
   const div = document.createElement('div');

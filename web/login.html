@@ -172,6 +172,12 @@
             <div class="loading" id="loading">Entrando...</div>
         </form>
 
+        <div class="forgot-password" style="text-align: center; margin-top: 15px;">
+            <a href="forgot-password.html" style="color: #667eea; text-decoration: none; font-size: 14px;">
+                Esqueci minha senha
+            </a>
+        </div>
+
         <div class="register-link">
             Não tem conta? <a href="register.html">Cadastre-se</a>
         </div>
@@ -182,20 +188,20 @@
         const form = document.getElementById('loginForm');
         const btnLogin = document.getElementById('btnLogin');
         const loading = document.getElementById('loading');
-        const alert = document.getElementById('alert');
+        const alertDiv = document.getElementById('alert');
 
         // Se já estiver logado, redirecionar
-        if (API.Auth.isAuthenticated()) {
+        if (api.isAuthenticated()) {
             window.location.href = 'projects/index.html';
         }
 
         function showAlert(message, type = 'error') {
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            alert.style.display = 'block';
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
             
             setTimeout(() => {
-                alert.style.display = 'none';
+                alertDiv.style.display = 'none';
             }, 5000);
         }
 
@@ -207,10 +213,19 @@
 
             btnLogin.disabled = true;
             loading.classList.add('active');
-            alert.style.display = 'none';
+            alertDiv.style.display = 'none';
 
             try {
-                const response = await API.Auth.login(email, senha);
+                const response = await api.login(email, senha);
+                
+                // Backend retorna: { access_token, token_type, user_id, nome, email }
+                const user = {
+                    id: response.user_id,
+                    nome: response.nome,
+                    email: response.email
+                };
+                
+                api.setAuth(response.access_token, user);
                 
                 showAlert('Login realizado com sucesso!', 'success');
                 

@@ -36,15 +36,16 @@
         <div class="form-group">
           <label for="taskStatus">Status</label>
           <select id="taskStatus">
-            <option value="todo">A Fazer</option>
-            <option value="doing">Em Andamento</option>
-            <option value="done">Concluída</option>
+            <option value="a_fazer">A Fazer</option>
+            <option value="em_execucao">Em Andamento</option>
+            <option value="concluida">Concluída</option>
           </select>
         </div>
         <button type="submit" class="btn primary" id="saveTaskBtn">Salvar</button>
       </form>
     </div>
   </div>
+  <script src="../api-client.js"></script>
   <script src="kanban.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {

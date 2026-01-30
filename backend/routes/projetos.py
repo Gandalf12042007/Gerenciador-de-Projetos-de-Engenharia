@@ -1,63 +1,15 @@
-from fastapi.responses import StreamingResponse, JSONResponse
-import csv
-# Endpoint para admins consultarem/exportarem logs de auditoria
-@router.get("/audit/logs")
-async def consultar_auditoria(
-    projeto_id: int = None,
-    usuario_id: int = None,
-    data_inicio: str = None,
-    data_fim: str = None,
-    formato: str = "json",
-    current_user: dict = Depends(get_current_active_user)
-):
-    """
-    Consulta/exporta logs de auditoria (apenas admins)
-    """
-    if not current_user.get("is_admin", False):
-        raise HTTPException(status_code=403, detail="Apenas administradores podem consultar logs de auditoria")
-    from database.db_helper import get_db_connection
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        query = "SELECT a.*, u.nome as usuario_nome FROM audit_trail a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE 1=1"
-        params = []
-        if projeto_id:
-            query += " AND (a.entidade = 'projeto' AND a.entidade_id = %s)"
-            params.append(projeto_id)
-        if usuario_id:
-            query += " AND a.usuario_id = %s"
-            params.append(usuario_id)
-        if data_inicio:
-            query += " AND a.criado_em >= %s"
-            params.append(data_inicio)
-        if data_fim:
-            query += " AND a.criado_em <= %s"
-            params.append(data_fim)
-        query += " ORDER BY a.criado_em DESC"
-        cursor.execute(query, tuple(params))
-        logs = cursor.fetchall()
-        if formato == "csv":
-            def iter_csv():
-                header = ["id", "usuario_id", "usuario_nome", "entidade", "entidade_id", "acao", "detalhes", "ip", "user_agent", "criado_em"]
-                yield ",".join(header) + "\n"
-                for l in logs:
-                    row = [str(l.get(h, "")) if l.get(h, "") is not None else "" for h in header]
-                    yield ",".join(row) + "\n"
-            return StreamingResponse(iter_csv(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=audit_logs.csv"})
-        return JSONResponse(content=logs)
-    finally:
-        cursor.close()
-        conn.close()
 """
 Rotas de Projetos - CRUD
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date
 import sys
 import os
+import csv
 
 # Adicionar path do database
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
@@ -115,20 +67,20 @@ class ProjetoResponse(BaseModel):
 
 @router.get("/", response_model=List[ProjetoResponse])
 async def listar_projetos(
-    status: Optional[str] = None,
+    status_filter: Optional[str] = None,
     current_user: dict = Depends(get_current_active_user)
 ):
     """
     Lista projetos do usuário (onde é membro da equipe)
     
     Query params:
-        status: Filtrar por status (opcional)
+        status_filter: Filtrar por status (opcional)
     """
     db = DatabaseHelper()
     user_id = current_user.get("user_id") or current_user.get("id")
     
     # Listar apenas projetos onde usuário é membro da equipe
-    if status:
+    if status_filter:
         projetos = db.execute_query(
             """
             SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
@@ -136,10 +88,10 @@ async def listar_projetos(
                    p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
             FROM projetos p
             INNER JOIN equipes e ON p.id = e.projeto_id
-            WHERE e.usuario_id = %s AND e.ativo = TRUE AND p.status = %s
+            WHERE e.usuario_id = %s AND e.ativo = 1 AND p.status = %s
             ORDER BY p.criado_em DESC
             """,
-            (user_id, status),
+            (user_id, status_filter),
             fetch=True
         )
     else:
@@ -150,32 +102,88 @@ async def listar_projetos(
                    p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
             FROM projetos p
             INNER JOIN equipes e ON p.id = e.projeto_id
-            WHERE e.usuario_id = %s AND e.ativo = TRUE
+            WHERE e.usuario_id = %s AND e.ativo = 1
             ORDER BY p.criado_em DESC
             """,
             (user_id,),
             fetch=True
         )
     
-    return [
-        {
-            "id": p[0],
-            "nome": p[1],
-            "descricao": p[2],
-            "endereco": p[3],
-            "cliente": p[4],
-            "valor_total": float(p[5]) if p[5] else None,
-            "data_inicio": p[6],
-            "data_fim_prevista": p[7],
-            "data_fim_real": p[8],
-            "status": p[9],
-            "progresso_percentual": float(p[10]),
-            "criador_id": p[11],
-            "criado_em": str(p[12]),
-            "atualizado_em": str(p[13])
-        }
-        for p in projetos
-    ]
+    # Os resultados já vêm como dicionários do db_helper
+    result = []
+    for p in projetos or []:
+        result.append({
+            "id": p['id'],
+            "nome": p['nome'],
+            "descricao": p.get('descricao'),
+            "endereco": p.get('endereco'),
+            "cliente": p.get('cliente'),
+            "valor_total": float(p['valor_total']) if p.get('valor_total') else None,
+            "data_inicio": p.get('data_inicio'),
+            "data_fim_prevista": p.get('data_fim_prevista'),
+            "data_fim_real": p.get('data_fim_real'),
+            "status": p['status'],
+            "progresso_percentual": float(p.get('progresso_percentual', 0)),
+            "criador_id": p['criador_id'],
+            "criado_em": str(p['criado_em']),
+            "atualizado_em": str(p['atualizado_em'])
+        })
+    return result
+
+
+@router.get("/audit/logs")
+async def consultar_auditoria(
+    projeto_id: int = None,
+    usuario_id: int = None,
+    data_inicio: str = None,
+    data_fim: str = None,
+    formato: str = "json",
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Consulta/exporta logs de auditoria (apenas admins)
+    """
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Apenas administradores podem consultar logs de auditoria")
+    
+    from database.db_helper import get_db_connection
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        query = "SELECT a.*, u.nome as usuario_nome FROM audit_trail a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE 1=1"
+        params = []
+        
+        if projeto_id:
+            query += " AND (a.entidade = 'projeto' AND a.entidade_id = %s)"
+            params.append(projeto_id)
+        if usuario_id:
+            query += " AND a.usuario_id = %s"
+            params.append(usuario_id)
+        if data_inicio:
+            query += " AND a.criado_em >= %s"
+            params.append(data_inicio)
+        if data_fim:
+            query += " AND a.criado_em <= %s"
+            params.append(data_fim)
+        
+        query += " ORDER BY a.criado_em DESC"
+        cursor.execute(query, tuple(params))
+        logs = cursor.fetchall()
+        
+        if formato == "csv":
+            def iter_csv():
+                header = ["id", "usuario_id", "usuario_nome", "entidade", "entidade_id", "acao", "detalhes", "ip", "user_agent", "criado_em"]
+                yield ",".join(header) + "\n"
+                for l in logs:
+                    row = [str(l.get(h, "")) if l.get(h, "") is not None else "" for h in header]
+                    yield ",".join(row) + "\n"
+            return StreamingResponse(iter_csv(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=audit_logs.csv"})
+        
+        return JSONResponse(content=logs)
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @router.get("/{projeto_id}", response_model=ProjetoResponse)
@@ -197,7 +205,7 @@ async def buscar_projeto(
     
     db = DatabaseHelper()
     
-    projeto = db.execute_query(
+    projetos = db.execute_query(
         """
         SELECT id, nome, descricao, endereco, cliente, valor_total,
                data_inicio, data_fim_prevista, data_fim_real, status,
@@ -209,28 +217,28 @@ async def buscar_projeto(
         fetch=True
     )
     
-    if not projeto:
+    if not projetos:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Projeto não encontrado"
         )
     
-    p = projeto[0]
+    p = projetos[0]
     return {
-        "id": p[0],
-        "nome": p[1],
-        "descricao": p[2],
-        "endereco": p[3],
-        "cliente": p[4],
-        "valor_total": float(p[5]) if p[5] else None,
-        "data_inicio": p[6],
-        "data_fim_prevista": p[7],
-        "data_fim_real": p[8],
-        "status": p[9],
-        "progresso_percentual": float(p[10]),
-        "criador_id": p[11],
-        "criado_em": str(p[12]),
-        "atualizado_em": str(p[13])
+        "id": p['id'],
+        "nome": p['nome'],
+        "descricao": p.get('descricao'),
+        "endereco": p.get('endereco'),
+        "cliente": p.get('cliente'),
+        "valor_total": float(p['valor_total']) if p.get('valor_total') else None,
+        "data_inicio": p.get('data_inicio'),
+        "data_fim_prevista": p.get('data_fim_prevista'),
+        "data_fim_real": p.get('data_fim_real'),
+        "status": p['status'],
+        "progresso_percentual": float(p.get('progresso_percentual', 0)),
+        "criador_id": p['criador_id'],
+        "criado_em": str(p['criado_em']),
+        "atualizado_em": str(p['atualizado_em'])
     }
 
 
@@ -245,7 +253,8 @@ async def criar_projeto(
     db = DatabaseHelper()
     
     try:
-        result = db.execute_query(
+        # Inserir projeto
+        projeto_id = db.execute_insert(
             """
             INSERT INTO projetos (
                 nome, descricao, endereco, cliente, valor_total,
@@ -259,36 +268,26 @@ async def criar_projeto(
                 projeto.endereco,
                 projeto.cliente,
                 projeto.valor_total,
-                projeto.data_inicio,
-                projeto.data_fim_prevista,
+                str(projeto.data_inicio) if projeto.data_inicio else None,
+                str(projeto.data_fim_prevista) if projeto.data_fim_prevista else None,
                 projeto.status,
-                current_user["user_id"]
-            ),
-            fetch=False
+                current_user.get("user_id") or current_user.get("id")
+            )
         )
         
-        # Auditoria
-        registrar_auditoria(
-            usuario_id=current_user["user_id"],
-            entidade="projeto",
-            entidade_id=result,
-            acao="criar",
-            detalhes=f"Projeto criado: {projeto.nome}",
-            ip=None,  # Pode ser extraído do request se necessário
-            user_agent=None
-        )
+        user_id = current_user.get("user_id") or current_user.get("id")
+        
         # Adicionar criador à equipe como gerente
         from datetime import date as dt_date
-        db.execute_query(
+        db.execute_insert(
             """
             INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo)
-            VALUES (%s, %s, 'gerente', %s, TRUE)
+            VALUES (%s, %s, 'gerente', %s, 1)
             """,
-            (result, current_user["user_id"], dt_date.today()),
-            fetch=False
+            (projeto_id, user_id, str(dt_date.today()))
         )
         
-        return {"message": "Projeto criado com sucesso", "id": result}
+        return {"message": "Projeto criado com sucesso", "id": projeto_id}
     
     except Exception as e:
         raise HTTPException(
@@ -336,6 +335,9 @@ async def atualizar_projeto(
     
     for field, value in projeto.dict(exclude_unset=True).items():
         updates.append(f"{field} = %s")
+        # Converter datas para string
+        if isinstance(value, date):
+            value = str(value)
         params.append(value)
     
     if not updates:
@@ -350,16 +352,6 @@ async def atualizar_projeto(
     
     try:
         db.execute_query(query, tuple(params))
-        # Auditoria
-        from backend.utils.audit import registrar_auditoria
-        detalhes = f"Campos atualizados: {', '.join(projeto.dict(exclude_unset=True).keys())}"
-        registrar_auditoria(
-            usuario_id=user_id,
-            entidade="projeto",
-            entidade_id=projeto_id,
-            acao="atualizar",
-            detalhes=detalhes
-        )
         return {"message": "Projeto atualizado com sucesso"}
     except Exception as e:
         raise HTTPException(
@@ -402,15 +394,6 @@ async def deletar_projeto(
     
     try:
         db.execute_query("DELETE FROM projetos WHERE id = %s", (projeto_id,))
-        # Auditoria
-        from backend.utils.audit import registrar_auditoria
-        registrar_auditoria(
-            usuario_id=user_id,
-            entidade="projeto",
-            entidade_id=projeto_id,
-            acao="deletar",
-            detalhes="Projeto removido"
-        )
         return {"message": "Projeto deletado com sucesso"}
     except Exception as e:
         raise HTTPException(

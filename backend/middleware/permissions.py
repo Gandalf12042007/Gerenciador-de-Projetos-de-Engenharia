@@ -4,9 +4,13 @@ Verificação de acesso a projetos e recursos
 Desenvolvido por: Vicente de Souza
 """
 
-import mysql.connector
+import sys
+import os
 from typing import Optional, Dict, List
-from config import settings
+
+# Adicionar path do database
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
+from db_helper import get_db_connection
 
 
 class PermissionManager:
@@ -27,11 +31,11 @@ class PermissionManager:
     }
     
     def __init__(self):
-        self.db_config = settings.db_config
+        pass  # Usando db_helper, não precisa de config
     
     def _get_connection(self):
-        """Cria conexão com banco de dados"""
-        return mysql.connector.connect(**self.db_config)
+        """Cria conexão com banco de dados (compatível MySQL/SQLite)"""
+        return get_db_connection()
     
     def is_project_member(self, user_id: int, project_id: int) -> bool:
         """
@@ -49,14 +53,15 @@ class PermissionManager:
         
         try:
             query = """
-                SELECT COUNT(*) 
+                SELECT COUNT(*) as cnt
                 FROM equipes 
                 WHERE projeto_id = %s 
                   AND usuario_id = %s 
-                  AND ativo = TRUE
+                  AND ativo = 1
             """
             cursor.execute(query, (project_id, user_id))
-            count = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            count = result['cnt'] if isinstance(result, dict) else result[0]
             return count > 0
         finally:
             cursor.close()
@@ -82,12 +87,12 @@ class PermissionManager:
                 FROM equipes 
                 WHERE projeto_id = %s 
                   AND usuario_id = %s 
-                  AND ativo = TRUE
+                  AND ativo = 1
                 LIMIT 1
             """
             cursor.execute(query, (project_id, user_id))
             result = cursor.fetchone()
-            return result[0] if result else None
+            return result['papel'] if isinstance(result, dict) else (result[0] if result else None)
         finally:
             cursor.close()
             conn.close()
@@ -135,12 +140,13 @@ class PermissionManager:
         
         try:
             query = """
-                SELECT COUNT(*) 
+                SELECT COUNT(*) as cnt
                 FROM projetos 
                 WHERE id = %s AND criador_id = %s
             """
             cursor.execute(query, (project_id, user_id))
-            count = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            count = result['cnt'] if isinstance(result, dict) else result[0]
             return count > 0
         finally:
             cursor.close()
@@ -215,7 +221,7 @@ class PermissionManager:
                     (p.criador_id = %s) as is_owner
                 FROM projetos p
                 INNER JOIN equipes e ON p.id = e.projeto_id
-                WHERE e.usuario_id = %s AND e.ativo = TRUE
+                WHERE e.usuario_id = %s AND e.ativo = 1
                 ORDER BY e.data_entrada DESC
             """
             cursor.execute(query, (user_id, user_id))

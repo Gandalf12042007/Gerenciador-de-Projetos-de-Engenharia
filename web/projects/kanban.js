@@ -2,10 +2,11 @@
 let tasks = [];
 let projectId = null;
 
+// Backend usa: a_fazer, em_execucao, concluida
 const columns = [
-  { key: 'todo', label: 'A Fazer' },
-  { key: 'doing', label: 'Em Andamento' },
-  { key: 'done', label: 'Concluída' }
+  { key: 'a_fazer', label: 'A Fazer' },
+  { key: 'em_execucao', label: 'Em Andamento' },
+  { key: 'concluida', label: 'Concluída' }
 ];
 
 function getProjectIdFromUrl() {
@@ -17,7 +18,8 @@ async function loadTasks() {
   if (!projectId) return;
   try {
     const response = await API.Tarefas.listar(projectId);
-    tasks = response.map(t => ({
+    const tarefasData = response.data || response || [];
+    tasks = tarefasData.map(t => ({
       id: t.id,
       title: t.titulo,
       desc: t.descricao,
@@ -103,7 +105,7 @@ function openTaskModal(title, task = null) {
   document.getElementById('taskId').value = task ? task.id : '';
   document.getElementById('taskTitle').value = task ? task.title : '';
   document.getElementById('taskDesc').value = task ? task.desc : '';
-  document.getElementById('taskStatus').value = task ? task.status : 'todo';
+  document.getElementById('taskStatus').value = task ? task.status : 'a_fazer';
 }
 
 function closeTaskModal() {

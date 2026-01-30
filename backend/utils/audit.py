@@ -1,6 +1,11 @@
 from datetime import datetime
 from typing import Optional
-from database.db_helper import get_db_connection
+import sys
+import os
+
+# Adicionar path do database
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
+from db_helper import get_db_connection
 
 def registrar_auditoria(usuario_id: int, entidade: str, entidade_id: Optional[int], acao: str, detalhes: str = None, ip: str = None, user_agent: str = None):
     conn = get_db_connection()

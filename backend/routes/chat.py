@@ -1,54 +1,16 @@
-import csv
-from fastapi.responses import StreamingResponse, JSONResponse
-# Endpoint para exportar logs do chat (apenas admin)
-@router.get("/{projeto_id}/exportar-logs")
-async def exportar_logs_chat(
-    projeto_id: int,
-    formato: str = "csv",
-    current_user: dict = Depends(get_current_user)
-):
-    """
-    Exporta logs do chat do projeto em CSV ou JSON (apenas admin)
-    """
-    from database.db_helper import get_db_connection
-    # Verificar se usuário é admin (ajuste conforme seu sistema de permissões)
-    if not current_user.get("is_admin", False):
-        raise HTTPException(status_code=403, detail="Apenas administradores podem exportar logs")
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    try:
-        cursor.execute("""
-            SELECT m.id, m.chat_id, m.autor_id, u.nome as autor_nome, m.conteudo, m.enviada_em
-            FROM mensagens m
-            LEFT JOIN usuarios u ON m.autor_id = u.id
-            LEFT JOIN chats c ON m.chat_id = c.id
-            WHERE c.projeto_id = %s
-            ORDER BY m.enviada_em
-        """, (projeto_id,))
-        mensagens = cursor.fetchall()
-        if formato == "json":
-            return JSONResponse(content=mensagens)
-        # CSV
-        def iter_csv():
-            header = ["id", "chat_id", "autor_id", "autor_nome", "conteudo", "enviada_em"]
-            yield ",".join(header) + "\n"
-            for m in mensagens:
-                row = [str(m[h]) if m[h] is not None else "" for h in header]
-                yield ",".join(row) + "\n"
-        return StreamingResponse(iter_csv(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=chat_{projeto_id}_logs.csv"})
-    finally:
-        cursor.close()
-        conn.close()
 """
 Rotas para chat interno
 Sistema de mensagens por projeto com histórico e participantes
 """
+import csv
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.responses import StreamingResponse, JSONResponse
 from typing import Optional
 from pydantic import BaseModel
 from middleware.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
 
 # WebSocket manager para múltiplos projetos (rooms)
 class ConnectionManager:
@@ -72,7 +34,14 @@ class ConnectionManager:
             for connection in self.active_connections[projeto_id]:
                 await connection.send_json(message)
 
+
 manager = ConnectionManager()
+
+
+class MensagemCreate(BaseModel):
+    conteudo: str
+    mencoes: Optional[list[int]] = None  # IDs de usuários mencionados
+
 
 # WebSocket endpoint para chat em tempo real por projeto
 @router.websocket("/ws/{projeto_id}")
@@ -95,14 +64,14 @@ async def websocket_chat(websocket: WebSocket, projeto_id: int):
                 else:
                     chat_id = chat['id']
                 # Adicionar participante
-                cursor.execute("INSERT IGNORE INTO chat_participantes (chat_id, usuario_id, juntou_em) VALUES (%s, %s, NOW())", (chat_id, data['autor_id']))
+                cursor.execute("INSERT OR IGNORE INTO chat_participantes (chat_id, usuario_id, juntou_em) VALUES (%s, %s, NOW())", (chat_id, data['autor_id']))
                 # Inserir mensagem
                 cursor.execute("INSERT INTO mensagens (chat_id, autor_id, conteudo, enviada_em) VALUES (%s, %s, %s, NOW())", (chat_id, data['autor_id'], data['conteudo']))
                 mensagem_id = cursor.lastrowid
                 # Notificações de menção
                 if data.get('mencoes'):
                     for usuario_id in data['mencoes']:
-                        cursor.execute("INSERT INTO notificacoes (usuario_id, tipo, conteudo, lida, criada_em) VALUES (%s, 'mencao', %s, FALSE, NOW())", (usuario_id, f"Você foi mencionado em uma mensagem do projeto {projeto_id}"))
+                        cursor.execute("INSERT INTO notificacoes (usuario_id, tipo, conteudo, lida, criada_em) VALUES (%s, 'mencao', %s, 0, NOW())", (usuario_id, f"Você foi mencionado em uma mensagem do projeto {projeto_id}"))
                 conn.commit()
                 # Broadcast para todos do projeto
                 await manager.broadcast(projeto_id, {
@@ -121,9 +90,49 @@ async def websocket_chat(websocket: WebSocket, projeto_id: int):
     except WebSocketDisconnect:
         manager.disconnect(projeto_id, websocket)
 
-class MensagemCreate(BaseModel):
-    conteudo: str
-    mencoes: Optional[list[int]] = None  # IDs de usuários mencionados
+
+@router.get("/{projeto_id}/exportar-logs")
+async def exportar_logs_chat(
+    projeto_id: int,
+    formato: str = "csv",
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Exporta logs do chat do projeto em CSV ou JSON (apenas admin)
+    """
+    from database.db_helper import get_db_connection
+    # Verificar se usuário é admin (ajuste conforme seu sistema de permissões)
+    if not current_user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Apenas administradores podem exportar logs")
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT m.id, m.chat_id, m.autor_id, u.nome as autor_nome, m.conteudo, m.enviada_em
+            FROM mensagens m
+            LEFT JOIN usuarios u ON m.autor_id = u.id
+            LEFT JOIN chats c ON m.chat_id = c.id
+            WHERE c.projeto_id = %s
+            ORDER BY m.enviada_em
+        """, (projeto_id,))
+        mensagens = cursor.fetchall()
+        
+        if formato == "json":
+            return JSONResponse(content=mensagens)
+        
+        # CSV
+        def iter_csv():
+            header = ["id", "chat_id", "autor_id", "autor_nome", "conteudo", "enviada_em"]
+            yield ",".join(header) + "\n"
+            for m in mensagens:
+                row = [str(m.get(h, "")) if m.get(h) is not None else "" for h in header]
+                yield ",".join(row) + "\n"
+        return StreamingResponse(iter_csv(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=chat_{projeto_id}_logs.csv"})
+    finally:
+        cursor.close()
+        conn.close()
+
 
 @router.get("/{projeto_id}/mensagens")
 async def listar_mensagens(
@@ -219,7 +228,7 @@ async def enviar_mensagem(
         
         # Adicionar usuário como participante se não estiver
         cursor.execute("""
-            INSERT IGNORE INTO chat_participantes (chat_id, usuario_id, juntou_em)
+            INSERT OR IGNORE INTO chat_participantes (chat_id, usuario_id, juntou_em)
             VALUES (%s, %s, NOW())
         """, (chat_id, current_user['id']))
         
@@ -237,7 +246,7 @@ async def enviar_mensagem(
                 cursor.execute("""
                     INSERT INTO notificacoes 
                     (usuario_id, tipo, conteudo, lida, criada_em)
-                    VALUES (%s, 'mencao', %s, FALSE, NOW())
+                    VALUES (%s, 'mencao', %s, 0, NOW())
                 """, (
                     usuario_id,
                     f"{current_user['nome']} mencionou você em uma mensagem"

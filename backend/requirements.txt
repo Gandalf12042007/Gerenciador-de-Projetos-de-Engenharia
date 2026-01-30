@@ -7,7 +7,9 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
 # Banco de Dados
-mysql-connector-python==8.2.0
+# SQLite já vem embutido no Python (não precisa instalar)
+# MySQL é opcional - instale apenas se usar DB_TYPE=mysql
+# mysql-connector-python==8.2.0
 
 # Autenticação e Segurança
 python-jose[cryptography]==3.3.0

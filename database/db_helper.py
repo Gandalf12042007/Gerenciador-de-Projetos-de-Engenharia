@@ -1,12 +1,13 @@
 """
 Database Helper - Gerenciador de Projetos
 Classe auxiliar para conexão e operações com o banco de dados
+Suporta MySQL e SQLite (configurável via DB_TYPE no .env)
 """
 
 import os
+import re
+import sqlite3
 from typing import List, Dict, Any, Optional
-import mysql.connector
-from mysql.connector import Error, pooling
 from contextlib import contextmanager
 import logging
 
@@ -14,18 +15,169 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Detectar tipo de banco
+DB_TYPE = os.getenv('DB_TYPE', 'sqlite').lower()
+
+# Import condicional do MySQL
+if DB_TYPE == 'mysql':
+    try:
+        import mysql.connector
+        from mysql.connector import Error as MySQLError, pooling
+        MYSQL_AVAILABLE = True
+    except ImportError:
+        MYSQL_AVAILABLE = False
+        logger.warning("mysql-connector-python não instalado. Usando SQLite.")
+else:
+    MYSQL_AVAILABLE = False
+
+
+def convert_query_placeholders(query: str, to_sqlite: bool) -> str:
+    """
+    Converte placeholders de query entre MySQL (%s) e SQLite (?)
+    
+    Args:
+        query: Query SQL original
+        to_sqlite: Se True, converte %s -> ?
+    """
+    if to_sqlite:
+        # Converte %s para ? (SQLite)
+        return query.replace('%s', '?')
+    return query
+
+
+def convert_sql_functions(query: str, to_sqlite: bool) -> str:
+    """
+    Converte funções SQL específicas entre MySQL e SQLite
+    """
+    if to_sqlite:
+        # NOW() -> datetime('now', 'localtime')
+        query = re.sub(r'\bNOW\(\)', "datetime('now', 'localtime')", query, flags=re.IGNORECASE)
+        # CURDATE() -> date('now', 'localtime')
+        query = re.sub(r'\bCURDATE\(\)', "date('now', 'localtime')", query, flags=re.IGNORECASE)
+        # INSERT IGNORE -> INSERT OR IGNORE
+        query = re.sub(r'\bINSERT\s+IGNORE\b', 'INSERT OR IGNORE', query, flags=re.IGNORECASE)
+        # IFNULL já funciona em ambos, mas COALESCE é mais portável
+    return query
+
+
+def adapt_query(query: str, is_sqlite: bool) -> str:
+    """Adapta query para o banco de dados atual"""
+    if is_sqlite:
+        query = convert_sql_functions(query, True)
+        query = convert_query_placeholders(query, True)
+    return query
+
+
+class SQLiteConnection:
+    """Wrapper para conexão SQLite com interface similar ao MySQL"""
+    
+    def __init__(self, connection: sqlite3.Connection):
+        self._conn = connection
+        self._conn.row_factory = sqlite3.Row
+    
+    def cursor(self, dictionary: bool = False):
+        """Retorna cursor (dictionary é ignorado, usamos Row)"""
+        return SQLiteCursor(self._conn.cursor())
+    
+    def commit(self):
+        self._conn.commit()
+    
+    def rollback(self):
+        self._conn.rollback()
+    
+    def close(self):
+        self._conn.close()
+    
+    def is_connected(self):
+        try:
+            self._conn.execute("SELECT 1")
+            return True
+        except:
+            return False
+
+
+class SQLiteCursor:
+    """Wrapper para cursor SQLite com interface similar ao MySQL"""
+    
+    def __init__(self, cursor: sqlite3.Cursor):
+        self._cursor = cursor
+        self._lastrowid = None
+    
+    def execute(self, query: str, params: tuple = None):
+        """Executa query adaptando para SQLite"""
+        adapted_query = adapt_query(query, True)
+        self._cursor.execute(adapted_query, params or ())
+        self._lastrowid = self._cursor.lastrowid
+    
+    def executemany(self, query: str, data: list):
+        """Executa múltiplas queries"""
+        adapted_query = adapt_query(query, True)
+        self._cursor.executemany(adapted_query, data)
+    
+    def fetchone(self):
+        row = self._cursor.fetchone()
+        return dict(row) if row else None
+    
+    def fetchall(self):
+        rows = self._cursor.fetchall()
+        return [dict(row) for row in rows]
+    
+    @property
+    def lastrowid(self):
+        return self._lastrowid or self._cursor.lastrowid
+    
+    @property
+    def rowcount(self):
+        return self._cursor.rowcount
+    
+    def close(self):
+        self._cursor.close()
+
 
 class DatabaseHelper:
-    """Helper para operações no banco de dados"""
+    """Helper para operações no banco de dados - Suporta MySQL e SQLite"""
     
     def __init__(self, pool_name="gerenciador_pool", pool_size=5):
         """
-        Inicializa o helper com connection pool
+        Inicializa o helper
         
         Args:
-            pool_name: Nome do pool de conexões
-            pool_size: Tamanho do pool (padrão: 5)
+            pool_name: Nome do pool de conexões (MySQL)
+            pool_size: Tamanho do pool (MySQL)
         """
+        self.db_type = os.getenv('DB_TYPE', 'sqlite').lower()
+        self.is_sqlite = self.db_type == 'sqlite'
+        self.pool = None
+        self.sqlite_path = None
+        
+        if self.is_sqlite or not MYSQL_AVAILABLE:
+            self._init_sqlite()
+        else:
+            self._init_mysql(pool_name, pool_size)
+    
+    def _init_sqlite(self):
+        """Inicializa conexão SQLite"""
+        self.is_sqlite = True
+        self.sqlite_path = os.getenv('SQLITE_PATH', os.path.join(
+            os.path.dirname(__file__), 'gerenciador.db'
+        ))
+        
+        # Criar diretório se não existir
+        db_dir = os.path.dirname(self.sqlite_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
+        
+        # Testar conexão
+        try:
+            conn = sqlite3.connect(self.sqlite_path)
+            conn.close()
+            logger.info(f"✓ SQLite configurado: {self.sqlite_path}")
+        except Exception as e:
+            logger.error(f"✗ Erro ao configurar SQLite: {e}")
+            raise
+    
+    def _init_mysql(self, pool_name: str, pool_size: int):
+        """Inicializa pool de conexões MySQL"""
         self.config = {
             'host': os.getenv('DB_HOST', 'localhost'),
             'user': os.getenv('DB_USER', 'root'),
@@ -42,15 +194,15 @@ class DatabaseHelper:
                 pool_size=pool_size,
                 **self.config
             )
-            logger.info(f"✓ Connection pool criado: {pool_name} (size: {pool_size})")
-        except Error as e:
-            logger.error(f"✗ Erro ao criar connection pool: {e}")
+            logger.info(f"✓ MySQL Connection pool criado: {pool_name} (size: {pool_size})")
+        except MySQLError as e:
+            logger.error(f"✗ Erro ao criar connection pool MySQL: {e}")
             raise
     
     @contextmanager
     def get_connection(self):
         """
-        Context manager para obter conexão do pool
+        Context manager para obter conexão
         
         Uso:
             with db.get_connection() as conn:
@@ -59,14 +211,21 @@ class DatabaseHelper:
         """
         conn = None
         try:
-            conn = self.pool.get_connection()
+            if self.is_sqlite:
+                raw_conn = sqlite3.connect(self.sqlite_path)
+                conn = SQLiteConnection(raw_conn)
+            else:
+                conn = self.pool.get_connection()
             yield conn
-        except Error as e:
+        except Exception as e:
             logger.error(f"Erro na conexão: {e}")
             raise
         finally:
-            if conn and conn.is_connected():
-                conn.close()
+            if conn:
+                if self.is_sqlite:
+                    conn.close()
+                elif conn.is_connected():
+                    conn.close()
     
     def execute_query(self, query: str, params: tuple = None, fetch: bool = False) -> Optional[List[Dict]]:
         """
@@ -93,7 +252,7 @@ class DatabaseHelper:
                     conn.commit()
                     return None
                     
-            except Error as e:
+            except Exception as e:
                 conn.rollback()
                 logger.error(f"Erro ao executar query: {e}")
                 raise
@@ -117,9 +276,33 @@ class DatabaseHelper:
                 cursor.executemany(query, data)
                 conn.commit()
                 return cursor.rowcount
-            except Error as e:
+            except Exception as e:
                 conn.rollback()
                 logger.error(f"Erro ao executar batch: {e}")
+                raise
+            finally:
+                cursor.close()
+    
+    def execute_insert(self, query: str, params: tuple = None) -> int:
+        """
+        Executa INSERT e retorna o ID inserido
+        
+        Args:
+            query: Query SQL de INSERT
+            params: Parâmetros da query
+        
+        Returns:
+            ID do registro inserido
+        """
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(query, params or ())
+                conn.commit()
+                return cursor.lastrowid
+            except Exception as e:
+                conn.rollback()
+                logger.error(f"Erro ao executar insert: {e}")
                 raise
             finally:
                 cursor.close()
@@ -128,7 +311,7 @@ class DatabaseHelper:
     
     def get_usuario_by_email(self, email: str) -> Optional[Dict]:
         """Busca usuário por email"""
-        query = "SELECT * FROM usuarios WHERE email = %s AND ativo = TRUE"
+        query = "SELECT * FROM usuarios WHERE email = %s AND ativo = 1"
         result = self.execute_query(query, (email,), fetch=True)
         return result[0] if result else None
     
@@ -143,23 +326,12 @@ class DatabaseHelper:
             INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
             VALUES (%s, %s, %s, %s, %s, %s)
         """
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(query, (
-                    nome, email, senha_hash,
-                    kwargs.get('telefone'),
-                    kwargs.get('cargo'),
-                    kwargs.get('ativo', True)
-                ))
-                conn.commit()
-                return cursor.lastrowid
-            except Error as e:
-                conn.rollback()
-                logger.error(f"Erro ao criar usuário: {e}")
-                raise
-            finally:
-                cursor.close()
+        return self.execute_insert(query, (
+            nome, email, senha_hash,
+            kwargs.get('telefone'),
+            kwargs.get('cargo'),
+            kwargs.get('ativo', True)
+        ))
     
     # ===== MÉTODOS DE PROJETOS =====
     
@@ -182,6 +354,7 @@ class DatabaseHelper:
     
     def get_projeto_com_metricas(self, projeto_id: int) -> Optional[Dict]:
         """Retorna projeto com métricas agregadas"""
+        # Query compatível com MySQL e SQLite
         query = """
             SELECT 
                 p.*,
@@ -193,7 +366,7 @@ class DatabaseHelper:
                 COALESCE(SUM(m.quantidade_utilizada * m.preco_unitario), 0) as valor_gasto_materiais
             FROM projetos p
             LEFT JOIN tarefas t ON p.id = t.projeto_id
-            LEFT JOIN equipes e ON p.id = e.projeto_id AND e.ativo = TRUE
+            LEFT JOIN equipes e ON p.id = e.projeto_id AND e.ativo = 1
             LEFT JOIN materiais m ON p.id = m.projeto_id
             WHERE p.id = %s
             GROUP BY p.id
@@ -251,18 +424,7 @@ class DatabaseHelper:
             INSERT INTO mensagens (chat_id, usuario_id, mensagem, arquivo_url)
             VALUES (%s, %s, %s, %s)
         """
-        with self.get_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute(query, (chat_id, usuario_id, mensagem, arquivo_url))
-                conn.commit()
-                return cursor.lastrowid
-            except Error as e:
-                conn.rollback()
-                logger.error(f"Erro ao criar mensagem: {e}")
-                raise
-            finally:
-                cursor.close()
+        return self.execute_insert(query, (chat_id, usuario_id, mensagem, arquivo_url))
     
     # ===== MÉTODOS DE ESTATÍSTICAS =====
     
@@ -319,23 +481,48 @@ class DatabaseHelper:
                 cursor = conn.cursor()
                 cursor.execute("SELECT 1")
                 cursor.fetchone()
-                logger.info("✓ Conexão com banco OK")
+                db_name = "SQLite" if self.is_sqlite else "MySQL"
+                logger.info(f"✓ Conexão com {db_name} OK")
                 return True
-        except Error as e:
+        except Exception as e:
             logger.error(f"✗ Erro na conexão: {e}")
             return False
     
     def close_pool(self):
         """Fecha o connection pool (chamar ao encerrar aplicação)"""
         try:
-            # MySQL Connector Python não tem método direto para fechar pool
-            # As conexões são fechadas automaticamente
-            logger.info("✓ Connection pool fechado")
+            if self.is_sqlite:
+                logger.info("✓ SQLite não requer fechamento de pool")
+            else:
+                logger.info("✓ Connection pool MySQL fechado")
         except Exception as e:
             logger.error(f"Erro ao fechar pool: {e}")
+    
+    def init_sqlite_schema(self):
+        """Inicializa o schema do SQLite se não existir"""
+        if not self.is_sqlite:
+            return
+        
+        schema_path = os.path.join(os.path.dirname(__file__), 'schema_sqlite.sql')
+        if not os.path.exists(schema_path):
+            logger.warning(f"Schema SQLite não encontrado: {schema_path}")
+            return
+        
+        with open(schema_path, 'r', encoding='utf-8') as f:
+            schema = f.read()
+        
+        with self.get_connection() as conn:
+            try:
+                # SQLite permite executar múltiplos statements
+                conn._conn.executescript(schema)
+                logger.info("✓ Schema SQLite inicializado")
+            except Exception as e:
+                logger.error(f"Erro ao inicializar schema: {e}")
 
 
 # ===== FUNÇÕES DE CONVENIÊNCIA =====
+
+_db_instance = None
 
 def get_db() -> DatabaseHelper:
     """
@@ -349,9 +536,24 @@ def get_db() -> DatabaseHelper:
             db = get_db()
             return db.get_projetos_ativos()
     """
-    if not hasattr(get_db, '_instance'):
-        get_db._instance = DatabaseHelper()
-    return get_db._instance
+    global _db_instance
+    if _db_instance is None:
+        _db_instance = DatabaseHelper()
+    return _db_instance
+
+
+def get_db_connection():
+    """
+    Retorna uma conexão do banco de dados
+    Compatibilidade com código legado que usa get_db_connection()
+    """
+    db = get_db()
+    if db.is_sqlite:
+        conn = sqlite3.connect(db.sqlite_path)
+        conn.row_factory = sqlite3.Row
+        return SQLiteConnection(conn)
+    else:
+        return db.pool.get_connection()
 
 
 if __name__ == '__main__':
@@ -363,14 +565,21 @@ if __name__ == '__main__':
     try:
         db = DatabaseHelper()
         
+        print(f"Tipo de banco: {'SQLite' if db.is_sqlite else 'MySQL'}")
+        if db.is_sqlite:
+            print(f"Caminho: {db.sqlite_path}")
+        
         # Teste de conexão
         if db.test_connection():
             print("✓ Helper funcionando corretamente!")
             
             # Teste de query
-            usuarios = db.execute_query("SELECT COUNT(*) as total FROM usuarios", fetch=True)
-            if usuarios:
-                print(f"✓ Total de usuários no banco: {usuarios[0]['total']}")
+            try:
+                usuarios = db.execute_query("SELECT COUNT(*) as total FROM usuarios", fetch=True)
+                if usuarios:
+                    print(f"✓ Total de usuários no banco: {usuarios[0]['total']}")
+            except Exception as e:
+                print(f"⚠ Tabela usuarios não existe ainda: {e}")
         
     except Exception as e:
         print(f"✗ Erro: {e}")

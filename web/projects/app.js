@@ -14,7 +14,8 @@ async function loadProjects() {
   
   try {
     const response = await API.Projetos.listar();
-    projects = response.map(p => ({
+    const projetosData = response.data || response || [];
+    projects = projetosData.map(p => ({
       id: p.id,
       name: p.nome,
       city: p.localizacao || 'N/A',

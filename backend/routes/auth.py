@@ -3,13 +3,14 @@ Rotas de Autenticação - Login e Registro
 Desenvolvido por: Vicente de Souza
 """
 
-from fastapi import APIRouter, HTTPException, status, Request
+from fastapi import APIRouter, HTTPException, status, Request, Depends
 from pydantic import BaseModel, EmailStr, Field
-from datetime import timedelta
+from datetime import timedelta, datetime
 import sys
 import os
 import re
 import logging
+import secrets
 
 # Adicionar path do database
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
@@ -18,6 +19,7 @@ from db_helper import DatabaseHelper
 from utils.auth import hash_password, verify_password, create_access_token
 from utils.two_factor_auth import gerar_otp, enviar_otp_email, validar_otp, resend_otp
 from middleware.rate_limit import RateLimitDecorators
+from middleware.auth_middleware import get_current_active_user
 from config import settings
 
 # Logger para auditoria de segurança
@@ -310,6 +312,262 @@ async def resend_otp_endpoint(email_data: dict):
     
     logger.info(f"OTP reenviado com sucesso para: {email}")
     return {"message": mensagem}
+
+
+# ===== SCHEMAS PARA RESET DE SENHA =====
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr = Field(..., description="Email cadastrado no sistema")
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(..., min_length=32, max_length=64, description="Token de reset recebido por email")
+    nova_senha: str = Field(..., min_length=8, description="Nova senha (mín. 8 caracteres, 1 maiúscula, 1 número)")
+
+
+class ChangePasswordRequest(BaseModel):
+    senha_atual: str = Field(..., description="Senha atual do usuário")
+    nova_senha: str = Field(..., min_length=8, description="Nova senha (mín. 8 caracteres, 1 maiúscula, 1 número)")
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+    reset_link: str | None = None  # Apenas em modo desenvolvimento, opcional
+
+
+# ===== ENDPOINTS DE RESET DE SENHA =====
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password(request_data: ForgotPasswordRequest, request: Request):
+    """
+    Solicita reset de senha - gera token e retorna link (modo desenvolvimento)
+    
+    Em produção, enviaria email. Em desenvolvimento, retorna o link diretamente.
+    """
+    db = DatabaseHelper()
+    reset_link = None
+    
+    try:
+        # Buscar usuário pelo email
+        usuario = db.execute_query(
+            "SELECT id, nome, email FROM usuarios WHERE email = %s AND ativo = 1",
+            (request_data.email.lower(),),
+            fetch=True
+        )
+        
+        if usuario and len(usuario) > 0:
+            user = usuario[0]
+            user_id = user['id'] if isinstance(user, dict) else user[0]
+            user_email = user['email'] if isinstance(user, dict) else user[2]
+            
+            # Gerar token único
+            token = secrets.token_urlsafe(32)
+            
+            # Expira em 1 hora
+            expira_em = (datetime.now() + timedelta(hours=1)).isoformat()
+            
+            # Invalidar tokens anteriores do usuário
+            db.execute_query(
+                "UPDATE tokens_reset_senha SET usado = 1 WHERE usuario_id = %s AND usado = 0",
+                (user_id,)
+            )
+            
+            # Salvar novo token
+            db.execute_query(
+                "INSERT INTO tokens_reset_senha (usuario_id, token, expira_em) VALUES (%s, %s, %s)",
+                (user_id, token, expira_em)
+            )
+            
+            # MODO DESENVOLVIMENTO: Retorna o link diretamente
+            reset_link = f"http://localhost:5500/web/reset-password.html?token={token}"
+            logger.info(f"[RESET SENHA] Link gerado para {user_email}: {reset_link}")
+            print(f"\n{'='*60}")
+            print(f"📧 LINK DE RESET DE SENHA")
+            print(f"📧 Email: {user_email}")
+            print(f"🔗 Link: {reset_link}")
+            print(f"⏰ Expira em: 1 hora")
+            print(f"{'='*60}\n")
+            
+            return {
+                "message": "Link de reset gerado com sucesso!",
+                "reset_link": reset_link
+            }
+        else:
+            # Log para auditoria
+            logger.warning(f"Tentativa de reset para email não cadastrado: {request_data.email}")
+        
+        # Email não encontrado
+        return {
+            "message": "Email não encontrado no sistema.",
+            "reset_link": None
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro ao processar forgot-password: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao processar solicitação"
+        )
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(request_data: ResetPasswordRequest, request: Request):
+    """
+    Redefine senha usando token de reset
+    """
+    db = DatabaseHelper()
+    
+    # Validar força da nova senha
+    if not RegisterRequest.validate_password(request_data.nova_senha):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Senha fraca. Requisitos: mín. 8 caracteres, 1 maiúscula, 1 número"
+        )
+    
+    try:
+        # Buscar token válido
+        token_data = db.execute_query(
+            """
+            SELECT t.id, t.usuario_id, t.expira_em, u.email 
+            FROM tokens_reset_senha t
+            INNER JOIN usuarios u ON t.usuario_id = u.id
+            WHERE t.token = %s AND t.usado = 0
+            """,
+            (request_data.token,),
+            fetch=True
+        )
+        
+        if not token_data or len(token_data) == 0:
+            logger.warning(f"Tentativa de reset com token inválido: {request_data.token[:10]}...")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token inválido ou já utilizado"
+            )
+        
+        token_info = token_data[0]
+        token_id = token_info['id'] if isinstance(token_info, dict) else token_info[0]
+        user_id = token_info['usuario_id'] if isinstance(token_info, dict) else token_info[1]
+        expira_em = token_info['expira_em'] if isinstance(token_info, dict) else token_info[2]
+        user_email = token_info['email'] if isinstance(token_info, dict) else token_info[3]
+        
+        # Verificar expiração
+        if isinstance(expira_em, str):
+            expira_dt = datetime.fromisoformat(expira_em)
+        else:
+            expira_dt = expira_em
+            
+        if datetime.now() > expira_dt:
+            logger.warning(f"Token expirado usado para: {user_email}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token expirado. Solicite um novo reset de senha."
+            )
+        
+        # Hash da nova senha
+        nova_senha_hash = hash_password(request_data.nova_senha)
+        
+        # Atualizar senha do usuário
+        db.execute_query(
+            "UPDATE usuarios SET senha_hash = %s WHERE id = %s",
+            (nova_senha_hash, user_id)
+        )
+        
+        # Marcar token como usado
+        db.execute_query(
+            "UPDATE tokens_reset_senha SET usado = 1 WHERE id = %s",
+            (token_id,)
+        )
+        
+        logger.info(f"Senha resetada com sucesso para: {user_email}")
+        
+        return {"message": "Senha redefinida com sucesso! Você já pode fazer login."}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao resetar senha: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao redefinir senha"
+        )
+
+
+@router.put("/change-password", response_model=MessageResponse)
+async def change_password(
+    request_data: ChangePasswordRequest,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Troca de senha para usuário logado
+    Requer autenticação
+    """
+    db = DatabaseHelper()
+    
+    # Validar força da nova senha
+    if not RegisterRequest.validate_password(request_data.nova_senha):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Senha fraca. Requisitos: mín. 8 caracteres, 1 maiúscula, 1 número"
+        )
+    
+    # Não permitir mesma senha
+    if request_data.senha_atual == request_data.nova_senha:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A nova senha deve ser diferente da senha atual"
+        )
+    
+    try:
+        user_id = current_user.get('user_id') or current_user.get('id')
+        user_email = current_user.get('email')
+        
+        # Buscar senha atual do banco
+        usuario = db.execute_query(
+            "SELECT id, senha_hash FROM usuarios WHERE id = %s",
+            (user_id,),
+            fetch=True
+        )
+        
+        if not usuario or len(usuario) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado"
+            )
+        
+        user_data = usuario[0]
+        senha_hash_atual = user_data['senha_hash'] if isinstance(user_data, dict) else user_data[1]
+        
+        # Verificar senha atual
+        if not verify_password(request_data.senha_atual, senha_hash_atual):
+            logger.warning(f"Tentativa de troca de senha com senha incorreta: {user_email}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Senha atual incorreta"
+            )
+        
+        # Hash da nova senha
+        nova_senha_hash = hash_password(request_data.nova_senha)
+        
+        # Atualizar senha
+        db.execute_query(
+            "UPDATE usuarios SET senha_hash = %s WHERE id = %s",
+            (nova_senha_hash, user_id)
+        )
+        
+        logger.info(f"Senha alterada com sucesso para: {user_email}")
+        
+        return {"message": "Senha alterada com sucesso!"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao alterar senha: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao alterar senha"
+        )
+
+
 async def validate_token(token: str):
     """
     Valida se token JWT é válido

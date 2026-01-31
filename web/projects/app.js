@@ -230,6 +230,36 @@ window.addEventListener('DOMContentLoaded', ()=>{
     });
   }
   
+  // Botão de notificações
+  const notificationsBtn = document.getElementById('notificationsBtn');
+  if (notificationsBtn) {
+    notificationsBtn.addEventListener('click', () => {
+      window.location.href = '../notifications.html';
+    });
+  }
+  
+  // Carregar contagem de notificações não lidas
+  loadNotificationBadge();
+  
   // Carregar projetos da API
   loadProjects();
 });
+
+// Carregar badge de notificações
+async function loadNotificationBadge() {
+  try {
+    const response = await api.getNotificacoesNaoLidasCount();
+    const count = response.count || 0;
+    const badge = document.getElementById('notifBadge');
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch (error) {
+    console.warn('Erro ao carregar notificações:', error);
+  }
+}

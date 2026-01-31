@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Timeline — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .timeline-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .timeline-header h1 {
+      margin: 0;
+      color: #1a365d;
+    }
+
+    .timeline-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .timeline-controls select {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+    }
+
+    .gantt-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow-x: auto;
+    }
+
+    .gantt-header {
+      display: flex;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      min-width: 1000px;
+    }
+
+    .gantt-task-col {
+      width: 250px;
+      flex-shrink: 0;
+      font-weight: 600;
+      color: #4a5568;
+      padding: 8px;
+    }
+
+    .gantt-timeline-col {
+      flex: 1;
+      display: flex;
+      min-width: 750px;
+    }
+
+    .gantt-day {
+      flex: 1;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #718096;
+      border-left: 1px solid #edf2f7;
+      padding: 4px 2px;
+    }
+
+    .gantt-day.weekend {
+      background: #f7fafc;
+    }
+
+    .gantt-day.today {
+      background: #ebf8ff;
+      font-weight: 600;
+      color: #3182ce;
+    }
+
+    .gantt-row {
+      display: flex;
+      min-height: 50px;
+      border-bottom: 1px solid #edf2f7;
+      min-width: 1000px;
+    }
+
+    .gantt-row:hover {
+      background: #f7fafc;
+    }
+
+    .gantt-task-info {
+      width: 250px;
+      flex-shrink: 0;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .gantt-task-title {
+      font-weight: 500;
+      color: #2d3748;
+      font-size: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .gantt-task-meta {
+      font-size: 0.75rem;
+      color: #a0aec0;
+      margin-top: 2px;
+    }
+
+    .gantt-bars {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      position: relative;
+      min-width: 750px;
+    }
+
+    .gantt-bar-container {
+      position: absolute;
+      height: 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    .gantt-bar {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 0.7rem;
+      color: white;
+      font-weight: 500;
+      min-width: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .gantt-bar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .gantt-bar.a_fazer { background: linear-gradient(135deg, #a0aec0, #718096); }
+    .gantt-bar.em_andamento { background: linear-gradient(135deg, #63b3ed, #3182ce); }
+    .gantt-bar.em_revisao { background: linear-gradient(135deg, #f6e05e, #d69e2e); }
+    .gantt-bar.concluida { background: linear-gradient(135deg, #68d391, #38a169); }
+
+    .gantt-bar.overdue {
+      background: linear-gradient(135deg, #fc8181, #c53030);
+    }
+
+    .gantt-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: rgba(255,255,255,0.3);
+      border-radius: 4px 0 0 4px;
+    }
+
+    .today-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e53e3e;
+      z-index: 10;
+    }
+
+    .today-marker {
+      position: absolute;
+      top: -8px;
+      transform: translateX(-50%);
+      background: #e53e3e;
+      color: white;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      padding: 15px;
+      background: #f7fafc;
+      border-radius: 8px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .legend-color.a_fazer { background: #718096; }
+    .legend-color.em_andamento { background: #3182ce; }
+    .legend-color.em_revisao { background: #d69e2e; }
+    .legend-color.concluida { background: #38a169; }
+    .legend-color.overdue { background: #c53030; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a0aec0;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .nav-arrows {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      padding: 8px 12px;
+      background: #edf2f7;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .period-display {
+      font-weight: 600;
+      color: #2d3748;
+      min-width: 200px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>📅 Timeline</h1>
+    <div class="top-controls">
+      <button onclick="location.href='index.html'" class="btn">📁 Projetos</button>
+      <button onclick="location.href='dashboard.html'" class="btn">📊 Dashboard</button>
+      <button id="logoutBtn" class="btn">Sair</button>
+    </div>
+  </header>
+
+  <main class="timeline-container">
+    <div class="timeline-header">
+      <h1>Linha do Tempo do Projeto</h1>
+      <div class="timeline-controls">
+        <select id="projectSelect">
+          <option value="">Selecione um projeto...</option>
+        </select>
+        <div class="nav-arrows">
+          <button class="nav-btn" onclick="navigatePeriod(-1)">◀</button>
+          <span id="periodDisplay" class="period-display">-</span>
+          <button class="nav-btn" onclick="navigatePeriod(1)">▶</button>
+        </div>
+        <button class="nav-btn" onclick="goToToday()">Hoje</button>
+      </div>
+    </div>
+
+    <div id="ganttContainer" class="gantt-container">
+      <div class="empty-state">
+        <div class="empty-state-icon">📅</div>
+        <p>Selecione um projeto para ver a linha do tempo</p>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-color a_fazer"></div> A Fazer</div>
+      <div class="legend-item"><div class="legend-color em_andamento"></div> Em Andamento</div>
+      <div class="legend-item"><div class="legend-color em_revisao"></div> Em Revisão</div>
+      <div class="legend-item"><div class="legend-color concluida"></div> Concluída</div>
+      <div class="legend-item"><div class="legend-color overdue"></div> Atrasada</div>
+    </div>
+  </main>
+
+  <script src="../api-client.js"></script>
+  <script>
+    // Verificar autenticação
+    if (!api.isAuthenticated()) {
+        window.location.href = '../login.html';
+    }
+
+    // Estado
+    let projects = [];
+    let tasks = [];
+    let currentProject = null;
+    let startDate = new Date();
+    const DAYS_TO_SHOW = 30;
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', async () => {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            api.logout();
+            window.location.href = '../login.html';
+        });
+
+        document.getElementById('projectSelect').addEventListener('change', async (e) => {
+            const projectId = e.target.value;
+            if (projectId) {
+                currentProject = projects.find(p => p.id == projectId);
+                await loadTasks(projectId);
+            } else {
+                currentProject = null;
+                tasks = [];
+                renderEmptyState();
+            }
+        });
+
+        // Verificar se veio de um projeto específico
+        const params = new URLSearchParams(window.location.search);
+        const projectId = params.get('project');
+
+        await loadProjects();
+
+        if (projectId) {
+            document.getElementById('projectSelect').value = projectId;
+            currentProject = projects.find(p => p.id == projectId);
+            await loadTasks(projectId);
+        }
+
+        goToToday();
+    });
+
+    async function loadProjects() {
+        try {
+            projects = await api.getProjetos();
+            const select = document.getElementById('projectSelect');
+            select.innerHTML = '<option value="">Selecione um projeto...</option>' +
+                projects.map(p => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join('');
+        } catch (error) {
+            console.error('Erro ao carregar projetos:', error);
+        }
+    }
+
+    async function loadTasks(projectId) {
+        try {
+            tasks = await api.getTarefasByProjeto(projectId);
+            renderGantt();
+        } catch (error) {
+            console.error('Erro ao carregar tarefas:', error);
+            tasks = [];
+            renderGantt();
+        }
+    }
+
+    function renderGantt() {
+        const container = document.getElementById('ganttContainer');
+        
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <p>Nenhuma tarefa encontrada neste projeto</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Gerar dias
+        const days = [];
+        for (let i = 0; i < DAYS_TO_SHOW; i++) {
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + i);
+            days.push(d);
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Header
+        let html = `
+            <div class="gantt-header">
+                <div class="gantt-task-col">Tarefa</div>
+                <div class="gantt-timeline-col">
+                    ${days.map(d => {
+                        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                        const isToday = d.toDateString() === today.toDateString();
+                        return `<div class="gantt-day ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}">
+                            ${d.getDate()}/${d.getMonth()+1}
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+
+        // Rows
+        tasks.forEach(task => {
+            const taskStart = task.data_inicio ? new Date(task.data_inicio) : null;
+            const taskEnd = task.data_fim_prevista ? new Date(task.data_fim_prevista) : null;
+            const isOverdue = taskEnd && taskEnd < today && task.status !== 'concluida';
+
+            html += `
+                <div class="gantt-row">
+                    <div class="gantt-task-info">
+                        <div class="gantt-task-title">${escapeHtml(task.titulo)}</div>
+                        <div class="gantt-task-meta">${task.responsavel_nome || 'Não atribuído'}</div>
+                    </div>
+                    <div class="gantt-bars">
+                        ${renderBar(task, days, isOverdue)}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+        // Adicionar linha de hoje
+        const todayIndex = days.findIndex(d => d.toDateString() === today.toDateString());
+        if (todayIndex >= 0) {
+            const rows = container.querySelectorAll('.gantt-bars');
+            rows.forEach(row => {
+                const dayWidth = row.offsetWidth / DAYS_TO_SHOW;
+                const left = (todayIndex + 0.5) * dayWidth;
+                const line = document.createElement('div');
+                line.className = 'today-line';
+                line.style.left = `${left}px`;
+                row.appendChild(line);
+            });
+        }
+
+        updatePeriodDisplay();
+    }
+
+    function renderBar(task, days, isOverdue) {
+        const taskStart = task.data_inicio ? new Date(task.data_inicio) : null;
+        const taskEnd = task.data_fim_prevista ? new Date(task.data_fim_prevista) : null;
+
+        if (!taskStart && !taskEnd) {
+            return '<span style="color:#a0aec0; font-size:0.8rem; padding:0 10px;">Sem datas definidas</span>';
+        }
+
+        const periodStart = new Date(startDate);
+        const periodEnd = new Date(startDate);
+        periodEnd.setDate(periodStart.getDate() + DAYS_TO_SHOW);
+
+        const start = taskStart || taskEnd;
+        const end = taskEnd || taskStart;
+
+        // Verificar se a tarefa está no período visível
+        if (end < periodStart || start > periodEnd) {
+            return '<span style="color:#a0aec0; font-size:0.8rem; padding:0 10px;">Fora do período</span>';
+        }
+
+        // Calcular posição
+        const dayWidth = 100 / DAYS_TO_SHOW;
+        const startDiff = Math.max(0, (start - periodStart) / (1000 * 60 * 60 * 24));
+        const endDiff = Math.min(DAYS_TO_SHOW, (end - periodStart) / (1000 * 60 * 60 * 24) + 1);
+        
+        const left = startDiff * dayWidth;
+        const width = Math.max(dayWidth, (endDiff - startDiff) * dayWidth);
+
+        const statusClass = isOverdue ? 'overdue' : task.status;
+        const progress = task.progresso_percentual || 0;
+
+        return `
+            <div class="gantt-bar-container" style="left:${left}%; width:${width}%;">
+                <div class="gantt-bar ${statusClass}" title="${escapeHtml(task.titulo)} (${formatStatus(task.status)})">
+                    <div class="gantt-progress" style="width:${progress}%"></div>
+                    ${width > 10 ? escapeHtml(task.titulo.substring(0, 15)) + (task.titulo.length > 15 ? '...' : '') : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function navigatePeriod(direction) {
+        startDate.setDate(startDate.getDate() + (direction * 7));
+        if (currentProject) {
+            renderGantt();
+        }
+        updatePeriodDisplay();
+    }
+
+    function goToToday() {
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 3); // Mostrar 3 dias antes
+        startDate.setHours(0, 0, 0, 0);
+        if (currentProject) {
+            renderGantt();
+        }
+        updatePeriodDisplay();
+    }
+
+    function updatePeriodDisplay() {
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + DAYS_TO_SHOW - 1);
+        
+        const options = { day: 'numeric', month: 'short' };
+        document.getElementById('periodDisplay').textContent = 
+            `${startDate.toLocaleDateString('pt-BR', options)} - ${endDate.toLocaleDateString('pt-BR', options)}`;
+    }
+
+    function formatStatus(status) {
+        const map = {
+            'a_fazer': 'A Fazer',
+            'em_andamento': 'Em Andamento',
+            'em_revisao': 'Em Revisão',
+            'concluida': 'Concluída'
+        };
+        return map[status] || status;
+    }
+
+    function renderEmptyState() {
+        document.getElementById('ganttContainer').innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <p>Selecione um projeto para ver a linha do tempo</p>
+            </div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

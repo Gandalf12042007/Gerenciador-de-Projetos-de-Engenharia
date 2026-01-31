@@ -373,6 +373,46 @@ class ApiClient {
         return this.get(`/metricas/${projeto_id}/timeline`);
     }
 
+    // ============ COMENTÁRIOS DE TAREFAS ============
+
+    async getComentariosTarefa(tarefa_id) {
+        return this.get(`/tarefas/${tarefa_id}/comentarios`);
+    }
+
+    async addComentarioTarefa(tarefa_id, comentario) {
+        return this.post(`/tarefas/${tarefa_id}/comentarios`, { comentario });
+    }
+
+    async updateComentarioTarefa(tarefa_id, comentario_id, comentario) {
+        return this.put(`/tarefas/${tarefa_id}/comentarios/${comentario_id}`, { comentario });
+    }
+
+    async deleteComentarioTarefa(tarefa_id, comentario_id) {
+        return this.delete(`/tarefas/${tarefa_id}/comentarios/${comentario_id}`);
+    }
+
+    // ============ NOTIFICAÇÕES ============
+
+    async getNotificacoes(apenas_nao_lidas = false, limite = 50) {
+        return this.get(`/notificacoes/?apenas_nao_lidas=${apenas_nao_lidas}&limite=${limite}`);
+    }
+
+    async getNotificacoesNaoLidasCount() {
+        return this.get('/notificacoes/nao-lidas/contagem');
+    }
+
+    async marcarNotificacaoLida(notificacao_id) {
+        return this.put(`/notificacoes/${notificacao_id}/marcar-lida`, {});
+    }
+
+    async marcarTodasNotificacoesLidas() {
+        return this.put('/notificacoes/marcar-todas-lidas', {});
+    }
+
+    async deleteNotificacao(notificacao_id) {
+        return this.delete(`/notificacoes/${notificacao_id}`);
+    }
+
     // ============ HEALTH CHECK ============
 
     async healthCheck() {

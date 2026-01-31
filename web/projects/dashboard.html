@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Gerenciador de Projetos de Engenharia</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dashboard-container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    
+    .dashboard-header h1 {
+      margin: 0;
+      color: #1a365d;
+    }
+    
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .summary-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .summary-card.primary { border-top: 4px solid #3182ce; }
+    .summary-card.success { border-top: 4px solid #38a169; }
+    .summary-card.warning { border-top: 4px solid #d69e2e; }
+    .summary-card.danger { border-top: 4px solid #e53e3e; }
+    .summary-card.info { border-top: 4px solid #805ad5; }
+    
+    .summary-card .icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    .summary-card .value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    
+    .summary-card .label {
+      color: #718096;
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+    
+    .charts-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .chart-container h3 {
+      margin: 0 0 20px 0;
+      color: #2d3748;
+      font-size: 1.1rem;
+    }
+    
+    .chart-canvas {
+      max-height: 300px;
+    }
+    
+    .lists-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .list-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .list-container h3 {
+      margin: 0 0 15px 0;
+      color: #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: #f7fafc;
+      transition: background 0.2s;
+    }
+    
+    .list-item:hover {
+      background: #edf2f7;
+    }
+    
+    .list-item.overdue {
+      background: #fff5f5;
+      border-left: 3px solid #e53e3e;
+    }
+    
+    .list-item.urgent {
+      background: #fffaf0;
+      border-left: 3px solid #d69e2e;
+    }
+    
+    .list-item-info {
+      flex: 1;
+    }
+    
+    .list-item-title {
+      font-weight: 500;
+      color: #2d3748;
+      margin-bottom: 4px;
+    }
+    
+    .list-item-meta {
+      font-size: 0.8rem;
+      color: #718096;
+    }
+    
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .status-badge.a_fazer { background: #e2e8f0; color: #4a5568; }
+    .status-badge.em_andamento { background: #bee3f8; color: #2b6cb0; }
+    .status-badge.em_revisao { background: #faf089; color: #975a16; }
+    .status-badge.concluida { background: #c6f6d5; color: #276749; }
+    
+    .priority-badge {
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    
+    .priority-badge.urgente { background: #feb2b2; color: #c53030; }
+    .priority-badge.alta { background: #fbd38d; color: #c05621; }
+    .priority-badge.media { background: #bee3f8; color: #2b6cb0; }
+    .priority-badge.baixa { background: #c6f6d5; color: #276749; }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3182ce, #63b3ed);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    
+    .project-progress-item {
+      padding: 15px;
+      border-radius: 10px;
+      background: #f7fafc;
+      margin-bottom: 12px;
+    }
+    
+    .project-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .project-progress-name {
+      font-weight: 600;
+      color: #2d3748;
+    }
+    
+    .project-progress-percent {
+      font-weight: 700;
+      color: #3182ce;
+    }
+    
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .quick-action-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    
+    .quick-action-btn.primary {
+      background: #3182ce;
+      color: white;
+    }
+    
+    .quick-action-btn.primary:hover {
+      background: #2c5282;
+    }
+    
+    .quick-action-btn.secondary {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+    
+    .quick-action-btn.secondary:hover {
+      background: #e2e8f0;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #a0aec0;
+    }
+    
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    
+    @media (max-width: 768px) {
+      .charts-row, .lists-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>📊 Dashboard</h1>
+    <div class="top-controls">
+      <button onclick="location.href='index.html'" class="btn">📁 Projetos</button>
+      <button id="profileBtn" class="btn">👤 Perfil</button>
+      <button id="logoutBtn" class="btn">Sair</button>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    <!-- Ações Rápidas -->
+    <div class="dashboard-header">
+      <div>
+        <h1>Bem-vindo, <span id="userName">Usuário</span>!</h1>
+        <p style="color:#718096; margin:5px 0 0 0;">Aqui está o resumo dos seus projetos</p>
+      </div>
+      <div class="quick-actions">
+        <button class="quick-action-btn primary" onclick="location.href='index.html'">
+          ➕ Novo Projeto
+        </button>
+        <button class="quick-action-btn secondary" onclick="location.href='kanban.html'">
+          📋 Kanban
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <section class="summary-cards">
+      <div class="summary-card primary">
+        <div class="icon">📁</div>
+        <div class="value" id="totalProjects">0</div>
+        <div class="label">Total de Projetos</div>
+      </div>
+      <div class="summary-card success">
+        <div class="icon">✅</div>
+        <div class="value" id="completedProjects">0</div>
+        <div class="label">Projetos Concluídos</div>
+      </div>
+      <div class="summary-card warning">
+        <div class="icon">🚧</div>
+        <div class="value" id="activeProjects">0</div>
+        <div class="label">Em Andamento</div>
+      </div>
+      <div class="summary-card danger">
+        <div class="icon">⚠️</div>
+        <div class="value" id="overdueTasks">0</div>
+        <div class="label">Tarefas Atrasadas</div>
+      </div>
+      <div class="summary-card info">
+        <div class="icon">📈</div>
+        <div class="value" id="avgProgress">0%</div>
+        <div class="label">Progresso Médio</div>
+      </div>
+    </section>
+
+    <!-- Gráficos -->
+    <section class="charts-row">
+      <div class="chart-container">
+        <h3>📊 Tarefas por Status</h3>
+        <canvas id="tasksByStatusChart" class="chart-canvas"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>📈 Projetos por Status</h3>
+        <canvas id="projectsByStatusChart" class="chart-canvas"></canvas>
+      </div>
+    </section>
+
+    <section class="charts-row">
+      <div class="chart-container">
+        <h3>👥 Tarefas por Responsável</h3>
+        <canvas id="tasksByResponsibleChart" class="chart-canvas"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>📅 Tarefas Criadas (Últimos 7 dias)</h3>
+        <canvas id="tasksTimelineChart" class="chart-canvas"></canvas>
+      </div>
+    </section>
+
+    <!-- Listas -->
+    <section class="lists-row">
+      <div class="list-container">
+        <h3>⚠️ Tarefas Atrasadas</h3>
+        <div id="overdueTasksList">
+          <div class="empty-state">
+            <div class="empty-state-icon">🎉</div>
+            <p>Nenhuma tarefa atrasada!</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="list-container">
+        <h3>🔥 Próximas a Vencer</h3>
+        <div id="upcomingTasksList">
+          <div class="empty-state">
+            <div class="empty-state-icon">📅</div>
+            <p>Nenhuma tarefa próxima</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="list-container">
+        <h3>📊 Progresso dos Projetos</h3>
+        <div id="projectsProgressList">
+          <div class="empty-state">
+            <div class="empty-state-icon">📁</div>
+            <p>Nenhum projeto encontrado</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="../api-client.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

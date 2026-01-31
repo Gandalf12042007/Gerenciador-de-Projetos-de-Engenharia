@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notificações — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="projects/styles.css">
+  <style>
+    .notifications-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .notifications-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .notifications-header h1 {
+      margin: 0;
+      color: #1a365d;
+    }
+
+    .notifications-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-secondary {
+      background: #edf2f7;
+      color: #4a5568;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .notification-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .notification-item {
+      background: white;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      gap: 15px;
+      align-items: flex-start;
+      transition: all 0.2s;
+      cursor: pointer;
+      border-left: 4px solid transparent;
+    }
+
+    .notification-item:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      transform: translateX(4px);
+    }
+
+    .notification-item.unread {
+      background: #ebf8ff;
+      border-left-color: #3182ce;
+    }
+
+    .notification-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .notification-icon.tarefa { background: #bee3f8; }
+    .notification-icon.mensagem { background: #c6f6d5; }
+    .notification-icon.documento { background: #feebc8; }
+    .notification-icon.projeto { background: #e9d8fd; }
+    .notification-icon.sistema { background: #fed7d7; }
+    .notification-icon.mencao { background: #faf089; }
+
+    .notification-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-title {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 4px;
+    }
+
+    .notification-message {
+      color: #718096;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .notification-time {
+      font-size: 0.8rem;
+      color: #a0aec0;
+    }
+
+    .notification-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .notification-btn {
+      background: none;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #718096;
+      transition: all 0.2s;
+    }
+
+    .notification-btn:hover {
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .notification-btn.delete:hover {
+      background: #fed7d7;
+      color: #c53030;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a0aec0;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 20px;
+    }
+
+    .empty-state p {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+
+    .filter-tab {
+      padding: 8px 16px;
+      border: none;
+      background: none;
+      color: #718096;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.2s;
+    }
+
+    .filter-tab.active {
+      color: #3182ce;
+      background: #ebf8ff;
+    }
+
+    .filter-tab:hover:not(.active) {
+      color: #4a5568;
+      background: #f7fafc;
+    }
+
+    .badge {
+      background: #e53e3e;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>🔔 Notificações</h1>
+    <div class="top-controls">
+      <button onclick="location.href='projects/index.html'" class="btn">📁 Projetos</button>
+      <button onclick="location.href='projects/dashboard.html'" class="btn">📊 Dashboard</button>
+      <button id="logoutBtn" class="btn">Sair</button>
+    </div>
+  </header>
+
+  <main class="notifications-container">
+    <div class="notifications-header">
+      <h1>Suas Notificações</h1>
+      <div class="notifications-actions">
+        <button class="btn-secondary" onclick="marcarTodasLidas()">✓ Marcar todas como lidas</button>
+      </div>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">Todas</button>
+      <button class="filter-tab" data-filter="unread">Não lidas <span id="unreadBadge" class="badge" style="display:none">0</span></button>
+      <button class="filter-tab" data-filter="tarefa">Tarefas</button>
+      <button class="filter-tab" data-filter="projeto">Projetos</button>
+      <button class="filter-tab" data-filter="mensagem">Mensagens</button>
+    </div>
+
+    <div id="notificationsList" class="notification-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">🔔</div>
+        <p>Carregando notificações...</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="api-client.js"></script>
+  <script>
+    // Verificar autenticação
+    if (!api.isAuthenticated()) {
+        window.location.href = 'login.html';
+    }
+
+    let allNotifications = [];
+    let currentFilter = 'all';
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            api.logout();
+            window.location.href = 'login.html';
+        });
+
+        // Tabs de filtro
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFilter = tab.dataset.filter;
+                renderNotifications();
+            });
+        });
+
+        loadNotifications();
+    });
+
+    async function loadNotifications() {
+        try {
+            allNotifications = await api.getNotificacoes(false, 100);
+            
+            // Atualizar badge de não lidas
+            const unreadCount = allNotifications.filter(n => !n.lida).length;
+            const badge = document.getElementById('unreadBadge');
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = 'inline';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            renderNotifications();
+        } catch (error) {
+            console.error('Erro ao carregar notificações:', error);
+            document.getElementById('notificationsList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">❌</div>
+                    <p>Erro ao carregar notificações</p>
+                </div>
+            `;
+        }
+    }
+
+    function renderNotifications() {
+        const container = document.getElementById('notificationsList');
+        
+        let filtered = allNotifications;
+        
+        if (currentFilter === 'unread') {
+            filtered = allNotifications.filter(n => !n.lida);
+        } else if (currentFilter !== 'all') {
+            filtered = allNotifications.filter(n => n.tipo === currentFilter);
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎉</div>
+                    <p>Nenhuma notificação${currentFilter === 'unread' ? ' não lida' : ''}</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = filtered.map(notif => `
+            <div class="notification-item ${notif.lida ? '' : 'unread'}" onclick="handleNotificationClick(${notif.id}, '${notif.link || ''}')">
+                <div class="notification-icon ${notif.tipo}">
+                    ${getNotificationIcon(notif.tipo)}
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${escapeHtml(notif.titulo || 'Notificação')}</div>
+                    <div class="notification-message">${escapeHtml(notif.mensagem || '')}</div>
+                    <div class="notification-time">${formatTime(notif.criado_em)}</div>
+                </div>
+                <div class="notification-actions">
+                    ${!notif.lida ? `<button class="notification-btn" onclick="event.stopPropagation(); marcarLida(${notif.id})">✓ Lida</button>` : ''}
+                    <button class="notification-btn delete" onclick="event.stopPropagation(); deletarNotificacao(${notif.id})">🗑️</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function getNotificationIcon(tipo) {
+        const icons = {
+            'tarefa': '📋',
+            'mensagem': '💬',
+            'documento': '📄',
+            'projeto': '📁',
+            'sistema': '⚙️',
+            'mencao': '@'
+        };
+        return icons[tipo] || '🔔';
+    }
+
+    function formatTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) return 'Agora';
+        if (diff < 3600000) return `${Math.floor(diff/60000)} min atrás`;
+        if (diff < 86400000) return `${Math.floor(diff/3600000)}h atrás`;
+        if (diff < 604800000) return `${Math.floor(diff/86400000)} dias atrás`;
+        
+        return date.toLocaleDateString('pt-BR');
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function handleNotificationClick(id, link) {
+        // Marcar como lida
+        await marcarLida(id, false);
+        
+        // Navegar se tiver link
+        if (link) {
+            window.location.href = link;
+        }
+    }
+
+    async function marcarLida(id, reload = true) {
+        try {
+            await api.marcarNotificacaoLida(id);
+            if (reload) {
+                await loadNotifications();
+            } else {
+                // Atualizar localmente
+                const notif = allNotifications.find(n => n.id === id);
+                if (notif) notif.lida = true;
+            }
+        } catch (error) {
+            console.error('Erro ao marcar como lida:', error);
+        }
+    }
+
+    async function marcarTodasLidas() {
+        try {
+            await api.marcarTodasNotificacoesLidas();
+            await loadNotifications();
+        } catch (error) {
+            console.error('Erro ao marcar todas como lidas:', error);
+        }
+    }
+
+    async function deletarNotificacao(id) {
+        if (!confirm('Deseja deletar esta notificação?')) return;
+        
+        try {
+            await api.deleteNotificacao(id);
+            await loadNotifications();
+        } catch (error) {
+            console.error('Erro ao deletar notificação:', error);
+        }
+    }
+  </script>
+</body>
+</html>

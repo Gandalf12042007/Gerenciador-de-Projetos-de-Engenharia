@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from openapi_config import custom_openapi
 
 # Importar rotas
-from routes import auth, projetos, tarefas, equipes, documentos, materiais, orcamentos, chat, metricas
+from routes import auth, projetos, tarefas, equipes, documentos, materiais, orcamentos, chat, metricas, notificacoes
 
 # Criar aplicação FastAPI
 app = FastAPI(
@@ -53,6 +53,7 @@ app.include_router(materiais.router)
 app.include_router(orcamentos.router)
 app.include_router(chat.router)
 app.include_router(metricas.router)
+app.include_router(notificacoes.router)
 
 
 @app.get("/")

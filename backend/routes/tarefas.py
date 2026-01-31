@@ -29,6 +29,12 @@ class TarefaCreate(BaseModel):
     data_inicio: Optional[date] = None
     data_fim_prevista: Optional[date] = None
     responsavel_id: Optional[int] = None
+    # Campos de engenharia
+    etapa_tipo: Optional[str] = None  # fundacao, estrutura, alvenaria, eletrica, hidraulica, acabamento, etc
+    responsavel_tecnico: Optional[str] = None
+    numero_art: Optional[str] = None
+    checklist: Optional[str] = None  # JSON string com itens do checklist
+    observacoes_tecnicas: Optional[str] = None
 
 
 class TarefaUpdate(BaseModel):
@@ -41,6 +47,12 @@ class TarefaUpdate(BaseModel):
     data_fim_real: Optional[date] = None
     responsavel_id: Optional[int] = None
     progresso_percentual: Optional[float] = None
+    # Campos de engenharia
+    etapa_tipo: Optional[str] = None
+    responsavel_tecnico: Optional[str] = None
+    numero_art: Optional[str] = None
+    checklist: Optional[str] = None
+    observacoes_tecnicas: Optional[str] = None
 
 
 @router.get("/projeto/{projeto_id}")
@@ -69,7 +81,9 @@ async def listar_tarefas_projeto(
             SELECT t.id, t.titulo, t.descricao, t.status, t.prioridade,
                    t.data_inicio, t.data_fim_prevista, t.data_fim_real,
                    t.responsavel_id, t.progresso_percentual, t.ordem,
-                   u.nome as responsavel_nome
+                   u.nome as responsavel_nome,
+                   t.etapa_tipo, t.responsavel_tecnico, t.numero_art,
+                   t.checklist, t.observacoes_tecnicas
             FROM tarefas t
             LEFT JOIN usuarios u ON t.responsavel_id = u.id
             WHERE t.projeto_id = %s AND t.status = %s
@@ -84,7 +98,9 @@ async def listar_tarefas_projeto(
             SELECT t.id, t.titulo, t.descricao, t.status, t.prioridade,
                    t.data_inicio, t.data_fim_prevista, t.data_fim_real,
                    t.responsavel_id, t.progresso_percentual, t.ordem,
-                   u.nome as responsavel_nome
+                   u.nome as responsavel_nome,
+                   t.etapa_tipo, t.responsavel_tecnico, t.numero_art,
+                   t.checklist, t.observacoes_tecnicas
             FROM tarefas t
             LEFT JOIN usuarios u ON t.responsavel_id = u.id
             WHERE t.projeto_id = %s
@@ -107,7 +123,12 @@ async def listar_tarefas_projeto(
             "responsavel_id": t[8],
             "progresso_percentual": float(t[9]) if t[9] else 0,
             "ordem": t[10],
-            "responsavel_nome": t[11]
+            "responsavel_nome": t[11],
+            "etapa_tipo": t[12],
+            "responsavel_tecnico": t[13],
+            "numero_art": t[14],
+            "checklist": t[15],
+            "observacoes_tecnicas": t[16]
         }
         for t in tarefas
     ]
@@ -137,9 +158,10 @@ async def criar_tarefa(
             """
             INSERT INTO tarefas (
                 projeto_id, titulo, descricao, status, prioridade,
-                data_inicio, data_fim_prevista, responsavel_id, criador_id
+                data_inicio, data_fim_prevista, responsavel_id, criador_id,
+                etapa_tipo, responsavel_tecnico, numero_art, checklist, observacoes_tecnicas
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 tarefa.projeto_id,
@@ -150,7 +172,12 @@ async def criar_tarefa(
                 tarefa.data_inicio,
                 tarefa.data_fim_prevista,
                 tarefa.responsavel_id,
-                current_user["user_id"]
+                current_user["user_id"],
+                tarefa.etapa_tipo,
+                tarefa.responsavel_tecnico,
+                tarefa.numero_art,
+                tarefa.checklist,
+                tarefa.observacoes_tecnicas
             )
         )
         
@@ -294,3 +321,218 @@ async def deletar_tarefa(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao deletar tarefa: {str(e)}"
         )
+
+
+# ============ COMENTÁRIOS DE TAREFAS ============
+
+class ComentarioCreate(BaseModel):
+    comentario: str
+
+
+class ComentarioUpdate(BaseModel):
+    comentario: str
+
+
+@router.get("/{tarefa_id}/comentarios")
+async def listar_comentarios(
+    tarefa_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Lista comentários de uma tarefa
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    db = DatabaseHelper()
+    
+    # Verificar se tarefa existe e obter projeto_id
+    existing = db.execute_query(
+        "SELECT projeto_id FROM tarefas WHERE id = %s",
+        (tarefa_id,),
+        fetch=True
+    )
+    
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada"
+        )
+    
+    projeto_id = existing[0][0]
+    
+    # Verificar se usuário é membro do projeto
+    if not permission_manager.is_project_member(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
+        )
+    
+    comentarios = db.execute_query(
+        """
+        SELECT c.id, c.comentario, c.criado_em, c.atualizado_em,
+               c.usuario_id, u.nome as usuario_nome
+        FROM comentarios_tarefa c
+        JOIN usuarios u ON c.usuario_id = u.id
+        WHERE c.tarefa_id = %s
+        ORDER BY c.criado_em DESC
+        """,
+        (tarefa_id,),
+        fetch=True
+    )
+    
+    return [
+        {
+            "id": c[0],
+            "comentario": c[1],
+            "criado_em": c[2],
+            "atualizado_em": c[3],
+            "usuario_id": c[4],
+            "usuario_nome": c[5]
+        }
+        for c in comentarios
+    ]
+
+
+@router.post("/{tarefa_id}/comentarios", status_code=status.HTTP_201_CREATED)
+async def criar_comentario(
+    tarefa_id: int,
+    dados: ComentarioCreate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Adiciona comentário a uma tarefa
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    db = DatabaseHelper()
+    
+    # Verificar se tarefa existe e obter projeto_id
+    existing = db.execute_query(
+        "SELECT projeto_id FROM tarefas WHERE id = %s",
+        (tarefa_id,),
+        fetch=True
+    )
+    
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tarefa não encontrada"
+        )
+    
+    projeto_id = existing[0][0]
+    
+    # Verificar se usuário é membro do projeto
+    if not permission_manager.is_project_member(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem acesso a este projeto"
+        )
+    
+    try:
+        result = db.execute_query(
+            """
+            INSERT INTO comentarios_tarefa (tarefa_id, usuario_id, comentario)
+            VALUES (%s, %s, %s)
+            """,
+            (tarefa_id, user_id, dados.comentario)
+        )
+        
+        return {"message": "Comentário adicionado", "id": result}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao adicionar comentário: {str(e)}"
+        )
+
+
+@router.put("/{tarefa_id}/comentarios/{comentario_id}")
+async def atualizar_comentario(
+    tarefa_id: int,
+    comentario_id: int,
+    dados: ComentarioUpdate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Atualiza comentário (apenas o autor pode editar)
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    db = DatabaseHelper()
+    
+    # Verificar se comentário existe e pertence ao usuário
+    existing = db.execute_query(
+        "SELECT usuario_id FROM comentarios_tarefa WHERE id = %s AND tarefa_id = %s",
+        (comentario_id, tarefa_id),
+        fetch=True
+    )
+    
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comentário não encontrado"
+        )
+    
+    if existing[0][0] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você só pode editar seus próprios comentários"
+        )
+    
+    try:
+        db.execute_query(
+            """
+            UPDATE comentarios_tarefa 
+            SET comentario = %s, atualizado_em = datetime('now', 'localtime')
+            WHERE id = %s
+            """,
+            (dados.comentario, comentario_id)
+        )
+        
+        return {"message": "Comentário atualizado"}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao atualizar comentário: {str(e)}"
+        )
+
+
+@router.delete("/{tarefa_id}/comentarios/{comentario_id}")
+async def deletar_comentario(
+    tarefa_id: int,
+    comentario_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Deleta comentário (apenas o autor pode deletar)
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    db = DatabaseHelper()
+    
+    # Verificar se comentário existe e pertence ao usuário
+    existing = db.execute_query(
+        "SELECT usuario_id FROM comentarios_tarefa WHERE id = %s AND tarefa_id = %s",
+        (comentario_id, tarefa_id),
+        fetch=True
+    )
+    
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Comentário não encontrado"
+        )
+    
+    if existing[0][0] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você só pode deletar seus próprios comentários"
+        )
+    
+    try:
+        db.execute_query("DELETE FROM comentarios_tarefa WHERE id = %s", (comentario_id,))
+        return {"message": "Comentário deletado"}
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao deletar comentário: {str(e)}"
+        )
+

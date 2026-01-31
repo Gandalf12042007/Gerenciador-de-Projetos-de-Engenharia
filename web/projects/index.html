@@ -11,6 +11,11 @@
     <h1>Projetos</h1>
     <div class="top-controls">
       <button id="newProjectBtn" class="btn primary">Criar novo projeto</button>
+      <button onclick="location.href='dashboard.html'" class="btn" style="margin-left:10px;">📊 Dashboard</button>
+      <button onclick="location.href='timeline.html'" class="btn" style="margin-left:10px;">📅 Timeline</button>
+      <button id="notificationsBtn" class="btn" style="margin-left:10px; position:relative;">
+        🔔 <span id="notifBadge" style="display:none; position:absolute; top:-5px; right:-5px; background:#e53e3e; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; display:flex; align-items:center; justify-content:center;">0</span>
+      </button>
       <button id="profileBtn" class="btn" style="margin-left:10px;">👤 Perfil</button>
       <button id="logoutBtn" class="btn" style="margin-left:10px;">Sair</button>
     </div>

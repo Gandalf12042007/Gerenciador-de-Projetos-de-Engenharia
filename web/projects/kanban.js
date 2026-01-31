@@ -2,10 +2,11 @@
 let tasks = [];
 let projectId = null;
 
-// Backend usa: a_fazer, em_execucao, concluida
+// Backend usa: a_fazer, em_andamento, em_revisao, concluida
 const columns = [
   { key: 'a_fazer', label: 'A Fazer' },
-  { key: 'em_execucao', label: 'Em Andamento' },
+  { key: 'em_andamento', label: 'Em Andamento' },
+  { key: 'em_revisao', label: 'Em Revisão' },
   { key: 'concluida', label: 'Concluída' }
 ];
 
@@ -23,7 +24,15 @@ async function loadTasks() {
       id: t.id,
       title: t.titulo,
       desc: t.descricao,
-      status: t.status
+      status: t.status,
+      prioridade: t.prioridade,
+      data_inicio: t.data_inicio,
+      data_fim_prevista: t.data_fim_prevista,
+      etapa_tipo: t.etapa_tipo,
+      responsavel_tecnico: t.responsavel_tecnico,
+      numero_art: t.numero_art,
+      observacoes_tecnicas: t.observacoes_tecnicas,
+      responsavel_nome: t.responsavel_nome
     }));
     renderKanban();
   } catch (error) {
@@ -58,15 +67,56 @@ function taskCard(task) {
     e.dataTransfer.setData('text/plain', task.id);
   };
   div.ondragend = () => div.classList.remove('dragging');
+  
+  // Badge de prioridade
+  const prioridadeColors = {
+    'urgente': '#c53030',
+    'alta': '#c05621',
+    'media': '#2b6cb0',
+    'baixa': '#276749'
+  };
+  const prioridadeBg = {
+    'urgente': '#fed7d7',
+    'alta': '#feebc8',
+    'media': '#bee3f8',
+    'baixa': '#c6f6d5'
+  };
+  
+  // Badge de etapa
+  const etapaIcons = {
+    'fundacao': '🏗️',
+    'estrutura': '🔩',
+    'alvenaria': '🧱',
+    'cobertura': '🏠',
+    'eletrica': '⚡',
+    'hidraulica': '🚰',
+    'revestimento': '🎨',
+    'acabamento': '✨',
+    'pintura': '🖌️',
+    'paisagismo': '🌳',
+    'limpeza': '🧹',
+    'outro': '📋'
+  };
+  
   div.innerHTML = `
     <div class="task-title">${escapeHtml(task.title)}</div>
-    <div class="task-desc">${escapeHtml(task.desc || '')}</div>
-    <div class="task-actions">
-      <button class="btn" onclick="editTask(${task.id})">Editar</button>
-      <button class="btn" onclick="deleteTask(${task.id})">Excluir</button>
+    ${task.prioridade ? `<span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.7rem; background:${prioridadeBg[task.prioridade]}; color:${prioridadeColors[task.prioridade]}; font-weight:600; margin:4px 0;">${task.prioridade.toUpperCase()}</span>` : ''}
+    ${task.etapa_tipo ? `<span style="display:inline-block; margin-left:5px; font-size:0.8rem;">${etapaIcons[task.etapa_tipo] || '📋'} ${task.etapa_tipo}</span>` : ''}
+    <div class="task-desc" style="font-size:0.85rem; color:#718096; margin:5px 0;">${escapeHtml(task.desc || '')}</div>
+    ${task.responsavel_nome ? `<div style="font-size:0.75rem; color:#a0aec0;">👤 ${escapeHtml(task.responsavel_nome)}</div>` : ''}
+    ${task.data_fim_prevista ? `<div style="font-size:0.75rem; color:#a0aec0;">📅 ${formatDate(task.data_fim_prevista)}</div>` : ''}
+    <div class="task-actions" style="margin-top:8px;">
+      <button class="btn" onclick="editTask(${task.id})">✏️</button>
+      <button class="btn" onclick="deleteTask(${task.id})">🗑️</button>
     </div>
   `;
   return div;
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('pt-BR');
 }
 
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
@@ -106,6 +156,13 @@ function openTaskModal(title, task = null) {
   document.getElementById('taskTitle').value = task ? task.title : '';
   document.getElementById('taskDesc').value = task ? task.desc : '';
   document.getElementById('taskStatus').value = task ? task.status : 'a_fazer';
+  document.getElementById('taskPrioridade').value = task ? (task.prioridade || 'media') : 'media';
+  document.getElementById('taskDataInicio').value = task ? (task.data_inicio || '') : '';
+  document.getElementById('taskDataFim').value = task ? (task.data_fim_prevista || '') : '';
+  document.getElementById('taskEtapaTipo').value = task ? (task.etapa_tipo || '') : '';
+  document.getElementById('taskNumeroArt').value = task ? (task.numero_art || '') : '';
+  document.getElementById('taskResponsavelTecnico').value = task ? (task.responsavel_tecnico || '') : '';
+  document.getElementById('taskObsTecnicas').value = task ? (task.observacoes_tecnicas || '') : '';
 }
 
 function closeTaskModal() {
@@ -133,7 +190,14 @@ async function saveTaskHandler(e) {
   const data = {
     titulo: document.getElementById('taskTitle').value,
     descricao: document.getElementById('taskDesc').value,
-    status: document.getElementById('taskStatus').value
+    status: document.getElementById('taskStatus').value,
+    prioridade: document.getElementById('taskPrioridade').value,
+    data_inicio: document.getElementById('taskDataInicio').value || null,
+    data_fim_prevista: document.getElementById('taskDataFim').value || null,
+    etapa_tipo: document.getElementById('taskEtapaTipo').value || null,
+    numero_art: document.getElementById('taskNumeroArt').value || null,
+    responsavel_tecnico: document.getElementById('taskResponsavelTecnico').value || null,
+    observacoes_tecnicas: document.getElementById('taskObsTecnicas').value || null
   };
   try {
     if (id) {

@@ -20,28 +20,96 @@
     </div>
   </main>
   <div id="taskModal" class="modal" style="display:none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width:600px;">
       <span class="close" id="closeTaskModal">&times;</span>
       <h2 id="modalTaskTitle">Nova Tarefa</h2>
       <form id="taskForm">
         <input type="hidden" id="taskId" />
-        <div class="form-group">
-          <label for="taskTitle">Título</label>
-          <input type="text" id="taskTitle" required />
+        
+        <!-- Informações Básicas -->
+        <div class="form-section">
+          <h3 style="margin:0 0 15px 0; color:#2d3748; font-size:1rem;">📋 Informações Básicas</h3>
+          <div class="form-group">
+            <label for="taskTitle">Título</label>
+            <input type="text" id="taskTitle" required />
+          </div>
+          <div class="form-group">
+            <label for="taskDesc">Descrição</label>
+            <textarea id="taskDesc" rows="3"></textarea>
+          </div>
+          <div class="form-row" style="display:flex; gap:15px;">
+            <div class="form-group" style="flex:1;">
+              <label for="taskStatus">Status</label>
+              <select id="taskStatus">
+                <option value="a_fazer">A Fazer</option>
+                <option value="em_andamento">Em Andamento</option>
+                <option value="em_revisao">Em Revisão</option>
+                <option value="concluida">Concluída</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="taskPrioridade">Prioridade</label>
+              <select id="taskPrioridade">
+                <option value="baixa">Baixa</option>
+                <option value="media">Média</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row" style="display:flex; gap:15px;">
+            <div class="form-group" style="flex:1;">
+              <label for="taskDataInicio">Data Início</label>
+              <input type="date" id="taskDataInicio" />
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="taskDataFim">Data Fim Prevista</label>
+              <input type="date" id="taskDataFim" />
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="taskDesc">Descrição</label>
-          <textarea id="taskDesc"></textarea>
+        
+        <!-- Campos de Engenharia -->
+        <div class="form-section" style="margin-top:20px; padding-top:20px; border-top:1px solid #e2e8f0;">
+          <h3 style="margin:0 0 15px 0; color:#2d3748; font-size:1rem;">🏗️ Dados Técnicos de Engenharia</h3>
+          <div class="form-row" style="display:flex; gap:15px;">
+            <div class="form-group" style="flex:1;">
+              <label for="taskEtapaTipo">Tipo de Etapa</label>
+              <select id="taskEtapaTipo">
+                <option value="">Selecione...</option>
+                <option value="fundacao">Fundação</option>
+                <option value="estrutura">Estrutura</option>
+                <option value="alvenaria">Alvenaria</option>
+                <option value="cobertura">Cobertura</option>
+                <option value="eletrica">Elétrica</option>
+                <option value="hidraulica">Hidráulica</option>
+                <option value="revestimento">Revestimento</option>
+                <option value="acabamento">Acabamento</option>
+                <option value="pintura">Pintura</option>
+                <option value="paisagismo">Paisagismo</option>
+                <option value="limpeza">Limpeza Final</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="taskNumeroArt">Nº ART/RRT</label>
+              <input type="text" id="taskNumeroArt" placeholder="Ex: 123456789" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="taskResponsavelTecnico">Responsável Técnico</label>
+            <input type="text" id="taskResponsavelTecnico" placeholder="Nome do engenheiro/arquiteto responsável" />
+          </div>
+          <div class="form-group">
+            <label for="taskObsTecnicas">Observações Técnicas</label>
+            <textarea id="taskObsTecnicas" rows="2" placeholder="Notas técnicas, especificações, materiais..."></textarea>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="taskStatus">Status</label>
-          <select id="taskStatus">
-            <option value="a_fazer">A Fazer</option>
-            <option value="em_execucao">Em Andamento</option>
-            <option value="concluida">Concluída</option>
-          </select>
+        
+        <div style="margin-top:20px; display:flex; gap:10px;">
+          <button type="submit" class="btn primary" id="saveTaskBtn">Salvar</button>
+          <button type="button" class="btn" onclick="closeTaskModal()">Cancelar</button>
         </div>
-        <button type="submit" class="btn primary" id="saveTaskBtn">Salvar</button>
       </form>
     </div>
   </div>

@@ -197,9 +197,23 @@
         const loading = document.getElementById('loading');
         const alertDiv = document.getElementById('alert');
 
-        // Se já estiver logado, redirecionar
-        if (api.isAuthenticated()) {
-            window.location.href = 'projects/index.html';
+        // Verificar se há parâmetro de logout na URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('logout') === 'true') {
+            api.logout();
+            // Limpar o parâmetro da URL
+            window.history.replaceState({}, document.title, 'login.html');
+        }
+
+        // Só redireciona se tiver token E usuário válido E não veio de logout
+        if (api.isAuthenticated() && api.user && api.user.id && !urlParams.get('logout')) {
+            // Verificar se o token ainda é válido tentando uma requisição
+            api.get('/projetos').then(() => {
+                window.location.href = 'projects/index.html';
+            }).catch(() => {
+                // Token inválido, limpa e fica no login
+                api.logout();
+            });
         }
 
         function showAlert(message, type = 'error') {

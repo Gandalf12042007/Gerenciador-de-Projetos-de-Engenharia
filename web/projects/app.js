@@ -4,7 +4,17 @@ let loading = false;
 
 // Carregar projetos da API
 async function loadProjects() {
-  if (!API.Auth.isAuthenticated()) {
+  // Verifica autenticação
+  const token = localStorage.getItem('access_token');
+  const userStr = localStorage.getItem('user');
+  
+  console.log('=== DEBUG AUTH ===');
+  console.log('Token exists:', !!token);
+  console.log('User string:', userStr);
+  console.log('API isAuthenticated:', API.Auth.isAuthenticated());
+  
+  if (!token) {
+    console.log('Sem token, redirecionando para login...');
     window.location.href = '../login.html';
     return;
   }
@@ -14,6 +24,7 @@ async function loadProjects() {
   
   try {
     const response = await API.Projetos.listar();
+    console.log('Resposta projetos:', response);
     const projetosData = response.data || response || [];
     projects = projetosData.map(p => ({
       id: p.id,
@@ -69,21 +80,52 @@ function renderMetrics(list){
   document.getElementById('avg-progress').innerText = avg + '%';
 }
 
+function getProgressColor(progress) {
+  if (progress >= 80) return '#10b981'; // Verde
+  if (progress >= 50) return '#f59e0b'; // Amarelo/Laranja
+  if (progress >= 20) return '#3b82f6'; // Azul
+  if (progress > 0) return '#ef4444'; // Vermelho
+  return '#9ca3af'; // Cinza para 0%
+}
+
+function getStatusBadge(status) {
+  const statusMap = {
+    'planejamento': { label: '📋 Planejamento', color: '#6366f1' },
+    'em_andamento': { label: '🚧 Em Andamento', color: '#10b981' },
+    'pausado': { label: '⏸️ Pausado', color: '#f59e0b' },
+    'concluido': { label: '✅ Concluído', color: '#22c55e' },
+    'cancelado': { label: '❌ Cancelado', color: '#ef4444' }
+  };
+  const s = statusMap[status] || { label: status, color: '#6b7280' };
+  return `<span class="status-badge" style="background:${s.color}">${s.label}</span>`;
+}
+
 function projectCardHtml(p){
+  const progressColor = getProgressColor(p.progress);
+  const progressWidth = p.progress > 0 ? p.progress : 0;
   return `
     <article class="card">
-      <h3>${escapeHtml(p.name)}</h3>
-      <div class="meta">${escapeHtml(p.city)} • ${escapeHtml(p.manager)}</div>
-      <div class="meta">De ${p.start} até ${p.end}</div>
-      <div class="progress-wrap" aria-hidden="true">
-        <div class="progress" style="width: ${p.progress}%"></div>
+      <div class="card-header">
+        <h3>${escapeHtml(p.name)}</h3>
+        ${getStatusBadge(p.status)}
       </div>
-      <div style="margin-top:8px">Progresso: <strong>${p.progress}%</strong></div>
-      <div class="links">
-        <button class="btn" onclick="viewProject(${p.id})">📋 Tarefas</button>
-        <button class="btn" onclick="viewMaterials(${p.id})">📦 Materiais</button>
-        <button class="btn" onclick="viewBudget(${p.id})">💰 Orçamento</button>
-        <button class="btn" onclick="editProject(${p.id})">✏️ Editar</button>
+      <div class="meta">📍 ${escapeHtml(p.city)} • 👤 ${escapeHtml(p.manager)}</div>
+      <div class="meta">📅 ${p.start} → ${p.end}</div>
+      <div class="progress-section">
+        <div class="progress-header">
+          <span>Progresso</span>
+          <strong style="color: ${progressColor}">${p.progress}%</strong>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar" style="width: ${progressWidth}%; background: ${progressColor}; height: 100%; border-radius: 7px; transition: width 0.5s;"></div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-sm" onclick="viewProject(${p.id})" title="Ver Tarefas">📋 Tarefas</button>
+        <button class="btn btn-sm" onclick="viewMaterials(${p.id})" title="Ver Materiais">📦 Materiais</button>
+        <button class="btn btn-sm" onclick="viewBudget(${p.id})" title="Ver Orçamento">💰 Orçamento</button>
+        <button class="btn btn-sm btn-primary" onclick="editProject(${p.id})" title="Editar Projeto">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProject(${p.id})" title="Excluir Projeto">🗑️</button>
       </div>
     </article>
   `;
@@ -133,12 +175,16 @@ function openProjectModal(title, project = null) {
   document.getElementById('projectModal').style.display = 'flex';
   document.getElementById('projectId').value = project ? project.id : '';
   document.getElementById('projectName').value = project ? project.name : '';
-  document.getElementById('projectCity').value = project ? project.city : '';
-  document.getElementById('projectManager').value = project ? project.manager : '';
+  document.getElementById('projectCity').value = project && project.city !== 'N/A' ? project.city : '';
+  document.getElementById('projectManager').value = project && project.manager !== 'N/A' ? project.manager : '';
   document.getElementById('projectStart').value = project && project.start && project.start !== 'N/A' ? formatDateForInput(project.start) : '';
   document.getElementById('projectEnd').value = project && project.end && project.end !== 'N/A' ? formatDateForInput(project.end) : '';
   document.getElementById('projectStatus').value = project ? project.status : 'planejamento';
-  document.getElementById('projectProgress').value = project ? project.progress : 0;
+  
+  const progressValue = project ? project.progress : 0;
+  document.getElementById('projectProgress').value = progressValue;
+  const progressLabel = document.getElementById('progressValue');
+  if (progressLabel) progressLabel.textContent = progressValue;
 }
 
 function closeProjectModal() {
@@ -157,15 +203,56 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('projectForm').onsubmit = saveProjectHandler;
 });
 
+// Validar data (só permitir anos entre 2000 e 2100)
+function isValidDate(dateStr) {
+  if (!dateStr) return true; // Data opcional
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  return year >= 2000 && year <= 2100;
+}
+
+// Validar formulário
+function validateProjectForm() {
+  const startDate = document.getElementById('projectStart').value;
+  const endDate = document.getElementById('projectEnd').value;
+  const nome = document.getElementById('projectName').value.trim();
+  
+  if (!nome) {
+    showAlert('O nome do projeto é obrigatório!', 'error');
+    return false;
+  }
+  
+  if (startDate && !isValidDate(startDate)) {
+    showAlert('Data de início inválida! Use uma data entre 2000 e 2100.', 'error');
+    return false;
+  }
+  
+  if (endDate && !isValidDate(endDate)) {
+    showAlert('Data de conclusão inválida! Use uma data entre 2000 e 2100.', 'error');
+    return false;
+  }
+  
+  if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+    showAlert('A data de início não pode ser maior que a data de conclusão!', 'error');
+    return false;
+  }
+  
+  return true;
+}
+
 async function saveProjectHandler(e) {
   e.preventDefault();
+  
+  // Validar antes de enviar
+  if (!validateProjectForm()) return;
+  
   const id = document.getElementById('projectId').value;
   const data = {
-    nome: document.getElementById('projectName').value,
-    localizacao: document.getElementById('projectCity').value,
-    cliente: document.getElementById('projectManager').value,
-    data_inicio: document.getElementById('projectStart').value,
-    data_conclusao_prevista: document.getElementById('projectEnd').value,
+    nome: document.getElementById('projectName').value.trim(),
+    localizacao: document.getElementById('projectCity').value.trim(),
+    cliente: document.getElementById('projectManager').value.trim(),
+    data_inicio: document.getElementById('projectStart').value || null,
+    data_conclusao_prevista: document.getElementById('projectEnd').value || null,
     status: document.getElementById('projectStatus').value,
     progresso: parseInt(document.getElementById('projectProgress').value) || 0
   };

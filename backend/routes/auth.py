@@ -84,8 +84,10 @@ async def login(credentials: LoginRequest, request: Request):
     Returns:
         Token JWT e dados do usuário
     """
-    # Usuários de teste hardcoded (sem banco de dados)
-    USUARIOS_TESTE = {
+    # ═══════════════════════════════════════════════════════════════════════
+    # ADMINISTRADORES DO SISTEMA (Acesso Total)
+    # ═══════════════════════════════════════════════════════════════════════
+    USUARIOS_ADMIN = {
         "vicentedesouza762@gmail.com": {
             "id": 1,
             "nome": "Vicente de Souza", 
@@ -93,6 +95,7 @@ async def login(credentials: LoginRequest, request: Request):
             "senha": "Abacaxi371",
             "telefone": "11 99999-0001",
             "cargo": "Administrador",
+            "role": "admin",  # Acesso total
             "ativo": True
         },
         "francisco@gmail.com": {
@@ -102,28 +105,44 @@ async def login(credentials: LoginRequest, request: Request):
             "senha": "Teste123@",
             "telefone": "11 99999-0002",
             "cargo": "Desenvolvedor",
+            "role": "admin",  # Acesso total
+            "ativo": True
+        },
+        "professor@gmail.com": {
+            "id": 3,
+            "nome": "Professor",
+            "email": "professor@gmail.com", 
+            "senha": "Prof2024@",  # Você pode alterar depois
+            "telefone": "11 99999-0003",
+            "cargo": "Professor",
+            "role": "admin",  # Acesso total
             "ativo": True
         }
     }
     
-    # Verificar se é usuário de teste
-    if credentials.email in USUARIOS_TESTE:
-        user_teste = USUARIOS_TESTE[credentials.email]
-        if credentials.senha == user_teste["senha"] and user_teste["ativo"]:
-            # Criar token
+    # Verificar se é administrador
+    if credentials.email in USUARIOS_ADMIN:
+        user = USUARIOS_ADMIN[credentials.email]
+        if credentials.senha == user["senha"] and user["ativo"]:
+            # Criar token com role de admin
             access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
             access_token = create_access_token(
-                data={"user_id": user_teste["id"], "email": user_teste["email"], "nome": user_teste["nome"]},
+                data={
+                    "user_id": user["id"], 
+                    "email": user["email"], 
+                    "nome": user["nome"],
+                    "role": user["role"]
+                },
                 expires_delta=access_token_expires
             )
             
-            logger.info(f"Login bem-sucedido (teste): {credentials.email}")
+            logger.info(f"Login ADMIN bem-sucedido: {credentials.email}")
             
             return TokenResponse(
                 access_token=access_token,
-                user_id=user_teste["id"],
-                nome=user_teste["nome"],
-                email=user_teste["email"]
+                user_id=user["id"],
+                nome=user["nome"],
+                email=user["email"]
             )
     
     # Se não encontrou usuário de teste

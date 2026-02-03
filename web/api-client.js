@@ -84,9 +84,16 @@ class ApiClient {
                 responseData = await response.text();
             }
 
-            // Trata erro de autenticação
+            // Trata erro de autenticação (401)
             if (response.status === 401) {
+                console.warn('Token inválido ou expirado, redirecionando para login...');
                 this.logout();
+                // Só redireciona se não estivermos já na página de login
+                if (!window.location.pathname.includes('login.html')) {
+                    window.location.href = window.location.pathname.includes('/projects/') 
+                        ? '../login.html' 
+                        : 'login.html';
+                }
                 throw new Error('Sessão expirada. Faça login novamente.');
             }
 
@@ -97,6 +104,11 @@ class ApiClient {
 
             return responseData;
         } catch (error) {
+            // Se for erro de conexão (backend offline), não limpa o token
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                console.error('Erro de conexão com o servidor:', error);
+                throw new Error('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+            }
             console.error(`Erro em ${method} ${endpoint}:`, error);
             throw error;
         }

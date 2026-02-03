@@ -1,3 +1,127 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   GERENCIADOR DE PROJETOS DE ENGENHARIA - ESTILOS
+   Imagem de fundo criada por ChatGPT/OpenAI - Uso exclusivo do projeto
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Background com imagem de engenharia */
+body {
+	font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+	margin: 0;
+	color: #222;
+	background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(55, 65, 81, 0.85) 100%),
+	            url('../assets/images/background-engenharia.jpg');
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+	min-height: 100vh;
+}
+
+/* Fallback se a imagem não carregar */
+body::before {
+	content: '';
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+	z-index: -1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOOLTIPS - Balões Informativos
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Tooltip padrão */
+.tooltip-container {
+	position: relative;
+	display: inline-block;
+}
+
+.tooltip-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	background: #3b82f6;
+	color: white;
+	border-radius: 50%;
+	font-size: 12px;
+	font-weight: bold;
+	cursor: help;
+	margin-left: 6px;
+	transition: all 0.2s;
+}
+
+.tooltip-icon:hover {
+	background: #2563eb;
+	transform: scale(1.1);
+}
+
+.tooltip-text {
+	visibility: hidden;
+	opacity: 0;
+	position: absolute;
+	z-index: 10001;
+	bottom: 125%;
+	left: 50%;
+	transform: translateX(-50%);
+	background: #1f2937;
+	color: white;
+	padding: 10px 14px;
+	border-radius: 8px;
+	font-size: 13px;
+	line-height: 1.4;
+	white-space: nowrap;
+	max-width: 280px;
+	white-space: normal;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+	transition: opacity 0.2s, visibility 0.2s;
+}
+
+.tooltip-text::after {
+	content: '';
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	border: 8px solid transparent;
+	border-top-color: #1f2937;
+}
+
+.tooltip-container:hover .tooltip-text,
+.tooltip-icon:hover + .tooltip-text,
+.form-group:focus-within .tooltip-text {
+	visibility: visible;
+	opacity: 1;
+}
+
+/* Tooltip inline para inputs */
+.input-hint {
+	display: block;
+	font-size: 12px;
+	color: #6b7280;
+	margin-top: 4px;
+	font-style: italic;
+}
+
+.input-hint.info {
+	color: #3b82f6;
+}
+
+.input-hint.warning {
+	color: #f59e0b;
+}
+
+.input-hint.success {
+	color: #10b981;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 /* Modal Projeto */
 .modal {
 	position: fixed;

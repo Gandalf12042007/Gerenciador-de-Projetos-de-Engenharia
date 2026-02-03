@@ -29,6 +29,9 @@ python-mail==1.2.4
 # Tarefas agendadas (Backup)
 schedule==1.2.0
 
+# Cliente HTTP Assíncrono (para integração ChatGPT)
+httpx==0.25.2
+
 # Utilitários
 python-dateutil==2.8.2
 

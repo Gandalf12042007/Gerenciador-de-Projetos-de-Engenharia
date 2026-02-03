@@ -13,6 +13,7 @@
       <button id="newProjectBtn" class="btn primary">Criar novo projeto</button>
       <button onclick="location.href='dashboard.html'" class="btn" style="margin-left:10px;">📊 Dashboard</button>
       <button onclick="location.href='timeline.html'" class="btn" style="margin-left:10px;">📅 Timeline</button>
+      <button onclick="location.href='../chat.html'" class="btn" style="margin-left:10px;">💬 Chat</button>
       <button id="notificationsBtn" class="btn" style="margin-left:10px; position:relative;">
         🔔 <span id="notifBadge" style="display:none; position:absolute; top:-5px; right:-5px; background:#e53e3e; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; display:flex; align-items:center; justify-content:center;">0</span>
       </button>
@@ -29,29 +30,72 @@
         <h2 id="modalTitle">Novo Projeto</h2>
         <form id="projectForm">
           <input type="hidden" id="projectId" />
+          
           <div class="form-group">
-            <label for="projectName">Nome do Projeto *</label>
-            <input type="text" id="projectName" required placeholder="Digite o nome do projeto" />
+            <label for="projectName">
+              Nome do Projeto *
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">📌 Digite um nome único e descritivo para identificar o projeto. Ex: "Edifício Residencial Vila Nova" ou "Reforma Shopping Center"</span>
+              </span>
+            </label>
+            <input type="text" id="projectName" required placeholder="Ex: Edifício Residencial Centro" />
+            <span class="input-hint info">💡 Use um nome que identifique facilmente o projeto</span>
           </div>
+          
           <div class="form-group">
-            <label for="projectCity">Cidade/Localização</label>
+            <label for="projectCity">
+              Cidade/Localização
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">📍 Informe a cidade e estado onde a obra será realizada. Isso ajuda na organização por região.</span>
+              </span>
+            </label>
             <input type="text" id="projectCity" placeholder="Ex: São Paulo, SP" />
           </div>
+          
           <div class="form-group">
-            <label for="projectManager">Cliente/Gerente</label>
-            <input type="text" id="projectManager" placeholder="Nome do cliente ou gerente" />
+            <label for="projectManager">
+              Cliente/Gerente
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">👤 Nome do cliente contratante ou do gerente responsável pela obra.</span>
+              </span>
+            </label>
+            <input type="text" id="projectManager" placeholder="Nome do cliente ou gerente responsável" />
           </div>
+          
           <div class="form-group">
-            <label for="projectStart">Data de Início</label>
+            <label for="projectStart">
+              Data de Início
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">📅 Data prevista ou real de início das atividades do projeto.</span>
+              </span>
+            </label>
             <input type="date" id="projectStart" min="2000-01-01" max="2100-12-31" />
-            <small style="color:#6b7280; font-size:0.8rem;">Datas válidas: 2000 a 2100</small>
+            <span class="input-hint">Datas válidas: 2000 a 2100</span>
           </div>
+          
           <div class="form-group">
-            <label for="projectEnd">Data de Conclusão Prevista</label>
+            <label for="projectEnd">
+              Data de Conclusão Prevista
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">🏁 Data estimada para entrega final do projeto. Será usada para calcular atrasos.</span>
+              </span>
+            </label>
             <input type="date" id="projectEnd" min="2000-01-01" max="2100-12-31" />
           </div>
+          
           <div class="form-group">
-            <label for="projectStatus">Status</label>
+            <label for="projectStatus">
+              Status
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">📊 Situação atual do projeto:<br>• Planejamento: Em fase de estudos<br>• Em Andamento: Obra ativa<br>• Pausado: Temporariamente parado<br>• Concluído: Finalizado<br>• Cancelado: Não será executado</span>
+              </span>
+            </label>
             <select id="projectStatus">
               <option value="planejamento">📋 Planejamento</option>
               <option value="em_andamento">🚧 Em Andamento</option>
@@ -60,8 +104,15 @@
               <option value="cancelado">❌ Cancelado</option>
             </select>
           </div>
+          
           <div class="form-group">
-            <label for="projectProgress">Progresso: <span id="progressValue">0</span>%</label>
+            <label for="projectProgress">
+              Progresso: <span id="progressValue">0</span>%
+              <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">📈 Porcentagem de conclusão do projeto. Arraste o controle para definir o progresso atual da obra.</span>
+              </span>
+            </label>
             <input type="range" id="projectProgress" min="0" max="100" value="0" 
                    oninput="document.getElementById('progressValue').textContent = this.value" 
                    style="width:100%; cursor:pointer;" />
@@ -71,6 +122,7 @@
               <span>100%</span>
             </div>
           </div>
+          
           <div style="display:flex; gap:10px; margin-top:20px;">
             <button type="submit" class="btn primary" id="saveProjectBtn" style="flex:1;">💾 Salvar Projeto</button>
             <button type="button" class="btn" onclick="closeProjectModal()" style="flex:0.5;">Cancelar</button>

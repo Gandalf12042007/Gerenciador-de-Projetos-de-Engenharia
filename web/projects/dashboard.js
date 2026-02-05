@@ -48,7 +48,7 @@ async function loadDashboardData() {
         tasks = [];
         for (const project of projects) {
             try {
-                const projectTasks = await api.get(`/tarefas/?projeto_id=${project.id}`);
+                const projectTasks = await api.get(`/tarefas/projeto/${project.id}`);
                 if (Array.isArray(projectTasks)) {
                     tasks.push(...projectTasks.map(t => ({ ...t, projeto_nome: project.nome })));
                 }

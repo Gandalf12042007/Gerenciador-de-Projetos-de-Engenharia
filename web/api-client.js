@@ -321,12 +321,14 @@ class ApiClient {
 
     // ============ MATERIAIS ============
 
-    async getMateriaisByProjeto(projeto_id) {
-        return this.get(`/materiais/${projeto_id}`);
+    async getMateriaisByProjeto(projeto_id, categoria = null) {
+        let url = `/materiais/projeto/${projeto_id}`;
+        if (categoria) url += `?categoria=${categoria}`;
+        return this.get(url);
     }
 
     async createMaterial(projeto_id, dados) {
-        return this.post(`/materiais/${projeto_id}`, dados);
+        return this.post(`/materiais/projeto/${projeto_id}`, dados);
     }
 
     async updateMaterial(id, dados) {
@@ -339,16 +341,21 @@ class ApiClient {
 
     // ============ ORÇAMENTOS ============
 
-    async getOrcamentosByProjeto(projeto_id) {
-        return this.get(`/orcamentos/${projeto_id}`);
+    async getOrcamentosByProjeto(projeto_id, categoria = null, status = null) {
+        let url = `/orcamentos/projeto/${projeto_id}`;
+        const params = [];
+        if (categoria) params.push(`categoria=${categoria}`);
+        if (status) params.push(`status=${status}`);
+        if (params.length > 0) url += `?${params.join('&')}`;
+        return this.get(url);
     }
 
     async getResumoOrcamento(projeto_id) {
-        return this.get(`/orcamentos/${projeto_id}/resumo`);
+        return this.get(`/orcamentos/projeto/${projeto_id}/resumo`);
     }
 
     async createOrcamento(projeto_id, dados) {
-        return this.post(`/orcamentos/${projeto_id}`, dados);
+        return this.post(`/orcamentos/projeto/${projeto_id}`, dados);
     }
 
     async updateOrcamento(id, dados) {
@@ -474,13 +481,13 @@ const API = {
         remover: (id) => api.removeMemberFromTeam(id)
     },
     Materiais: {
-        listarPorProjeto: (projeto_id) => api.getMateriaisByProjeto(projeto_id),
+        listarPorProjeto: (projeto_id, categoria) => api.getMateriaisByProjeto(projeto_id, categoria),
         criar: (projeto_id, dados) => api.createMaterial(projeto_id, dados),
         atualizar: (id, dados) => api.updateMaterial(id, dados),
         deletar: (id) => api.deleteMaterial(id)
     },
     Orcamentos: {
-        listarPorProjeto: (projeto_id) => api.getOrcamentosByProjeto(projeto_id),
+        listarPorProjeto: (projeto_id, categoria, status) => api.getOrcamentosByProjeto(projeto_id, categoria, status),
         criar: (projeto_id, dados) => api.createOrcamento(projeto_id, dados),
         atualizar: (id, dados) => api.updateOrcamento(id, dados),
         deletar: (id) => api.deleteOrcamento(id)

@@ -13,7 +13,12 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: 
+                linear-gradient(135deg, rgba(30, 58, 95, 0.90) 0%, rgba(15, 39, 68, 0.85) 100%),
+                url('bg-login.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -36,7 +41,7 @@
         }
 
         .logo h1 {
-            color: #667eea;
+            color: #1E3A5F;
             font-size: 28px;
             margin-bottom: 5px;
         }
@@ -68,13 +73,13 @@
 
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #1E3A5F;
         }
 
         .btn-login {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1E3A5F 0%, #2C5282 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -86,7 +91,7 @@
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 20px rgba(30, 58, 95, 0.4);
         }
 
         .btn-login:disabled {
@@ -103,7 +108,7 @@
         }
 
         .register-link a {
-            color: #667eea;
+            color: #1E3A5F;
             text-decoration: none;
             font-weight: 600;
         }

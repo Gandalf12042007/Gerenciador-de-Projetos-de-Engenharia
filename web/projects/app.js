@@ -122,8 +122,10 @@ function projectCardHtml(p){
       </div>
       <div class="card-actions">
         <button class="btn btn-sm" onclick="viewProject(${p.id})" title="Ver Tarefas">📋 Tarefas</button>
-        <button class="btn btn-sm" onclick="viewMaterials(${p.id})" title="Ver Materiais">📦 Materiais</button>
-        <button class="btn btn-sm" onclick="viewBudget(${p.id})" title="Ver Orçamento">💰 Orçamento</button>
+        <button class="btn btn-sm" onclick="viewDocs(${p.id})" title="Ver Documentos">📄 Docs</button>
+        <button class="btn btn-sm" onclick="viewTeam(${p.id})" title="Ver Equipe">👥 Equipe</button>
+        <button class="btn btn-sm" onclick="viewMaterials(${p.id})" title="Ver Materiais">📦</button>
+        <button class="btn btn-sm" onclick="viewBudget(${p.id})" title="Ver Orçamento">💰</button>
         <button class="btn btn-sm btn-primary" onclick="editProject(${p.id})" title="Editar Projeto">✏️</button>
         <button class="btn btn-sm btn-danger" onclick="deleteProject(${p.id})" title="Excluir Projeto">🗑️</button>
       </div>
@@ -153,6 +155,14 @@ function applyFilters(){
 // actions
 function viewProject(id){
   window.location.href = `kanban.html?project=${id}`;
+}
+
+function viewDocs(id){
+  window.location.href = `docs.html?project=${id}`;
+}
+
+function viewTeam(id){
+  window.location.href = `equipes.html?project=${id}`;
 }
 
 function viewMaterials(id){

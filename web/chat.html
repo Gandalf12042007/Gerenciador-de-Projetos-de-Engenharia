@@ -379,7 +379,7 @@
         let isGoogleLoggedIn = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) { window.location.href = 'login.html'; return; }
 
             try {
@@ -444,7 +444,7 @@
 
         async function loadUsers() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 const res = await fetch(API_BASE + '/chat/usuarios-disponiveis', { headers: { 'Authorization': 'Bearer ' + token } });
                 if (res.ok) { renderUsers((await res.json()).usuarios); }
                 else { renderUsers([{ id: 1, nome: 'Vicente', cargo: 'Admin', icone: '👑' }, { id: 2, nome: 'Francisco', cargo: 'Admin', icone: '👑' }, { id: 3, nome: 'Professor', cargo: 'Admin', icone: '👑' }]); }
@@ -538,7 +538,7 @@
             msgs.scrollTop = msgs.scrollHeight;
 
             try {
-                var token = localStorage.getItem('token');
+                var token = localStorage.getItem('access_token');
                 var res = await fetch(API_BASE + '/chat/assistente-ia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -560,7 +560,7 @@
             var msgs = document.getElementById('chatMessages');
             var now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             try {
-                var token = localStorage.getItem('token');
+                var token = localStorage.getItem('access_token');
                 await fetch(API_BASE + '/chat/mensagem-direta', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },

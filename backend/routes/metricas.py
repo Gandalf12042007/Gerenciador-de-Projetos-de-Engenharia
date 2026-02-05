@@ -2,293 +2,308 @@
 Rotas para métricas e relatórios
 Análise de progresso, produtividade e indicadores de desempenho
 """
-from fastapi import APIRouter, Depends, HTTPException
+import sys
+import os
+from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Optional
-from middleware.auth_middleware import get_current_user
+
+# Adicionar path do database
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
+from db_helper import DatabaseHelper
+
+from middleware.auth_middleware import get_current_active_user
 
 router = APIRouter(prefix="/metricas", tags=["Métricas"])
 
-@router.get("/{projeto_id}/dashboard")
+
+@router.get("/projeto/{projeto_id}/dashboard")
 async def dashboard_projeto(
     projeto_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_active_user)
 ):
     """Retorna métricas gerais do projeto para dashboard"""
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    db = DatabaseHelper()
     
     try:
         # Informações básicas do projeto
-        cursor.execute("""
-            SELECT * FROM projetos WHERE id = %s
-        """, (projeto_id,))
-        projeto = cursor.fetchone()
+        projeto = db.execute_query(
+            "SELECT * FROM projetos WHERE id = %s",
+            (projeto_id,),
+            fetch=True
+        )
         
         if not projeto:
             raise HTTPException(status_code=404, detail="Projeto não encontrado")
         
+        projeto = projeto[0]
+        
         # Tarefas
-        cursor.execute("""
+        tarefas = db.execute_query(
+            """
             SELECT 
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'a_fazer' THEN 1 ELSE 0 END) as a_fazer,
-                SUM(CASE WHEN status = 'em_execucao' THEN 1 ELSE 0 END) as em_execucao,
-                SUM(CASE WHEN status = 'concluida' THEN 1 ELSE 0 END) as concluidas,
-                SUM(CASE WHEN data_limite < CURDATE() AND status != 'concluida' THEN 1 ELSE 0 END) as atrasadas
+                SUM(CASE WHEN status = 'em_execucao' OR status = 'em_andamento' THEN 1 ELSE 0 END) as em_execucao,
+                SUM(CASE WHEN status = 'concluida' OR status = 'concluido' THEN 1 ELSE 0 END) as concluidas
             FROM tarefas
             WHERE projeto_id = %s
-        """, (projeto_id,))
-        tarefas = cursor.fetchone()
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        tarefas_stats = tarefas[0] if tarefas else {
+            'total': 0, 'a_fazer': 0, 'em_execucao': 0, 'concluidas': 0
+        }
         
         # Membros da equipe
-        cursor.execute("""
+        equipe = db.execute_query(
+            """
             SELECT COUNT(*) as total_membros
             FROM equipes
-            WHERE projeto_id = %s
-        """, (projeto_id,))
-        equipe = cursor.fetchone()
+            WHERE projeto_id = %s AND ativo = 1
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        total_membros = equipe[0]['total_membros'] if equipe else 0
         
         # Orçamento
-        cursor.execute("""
+        orcamento = db.execute_query(
+            """
             SELECT 
-                SUM(valor_previsto) as orcamento_total,
-                SUM(valor_gasto) as gasto_total
+                COALESCE(SUM(valor_previsto), 0) as orcamento_total,
+                COALESCE(SUM(valor_real), 0) as gasto_total
             FROM orcamentos
             WHERE projeto_id = %s
-        """, (projeto_id,))
-        orcamento = cursor.fetchone()
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        orc_stats = orcamento[0] if orcamento else {'orcamento_total': 0, 'gasto_total': 0}
         
         # Materiais
-        cursor.execute("""
+        materiais = db.execute_query(
+            """
             SELECT 
                 COUNT(*) as total_materiais,
-                SUM(preco_unitario * quantidade_estoque) as valor_estoque
+                COALESCE(SUM(preco_unitario * quantidade_prevista), 0) as valor_previsto
             FROM materiais
             WHERE projeto_id = %s
-        """, (projeto_id,))
-        materiais = cursor.fetchone()
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        mat_stats = materiais[0] if materiais else {'total_materiais': 0, 'valor_previsto': 0}
         
         # Documentos
-        cursor.execute("""
+        docs = db.execute_query(
+            """
             SELECT COUNT(*) as total_documentos
             FROM documentos
             WHERE projeto_id = %s
-        """, (projeto_id,))
-        docs = cursor.fetchone()
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        total_docs = docs[0]['total_documentos'] if docs else 0
         
         # Calcular progresso geral
-        progresso = 0
-        if tarefas['total'] > 0:
-            progresso = (tarefas['concluidas'] / tarefas['total']) * 100
+        total_tarefas = tarefas_stats['total'] or 0
+        concluidas = tarefas_stats['concluidas'] or 0
+        progresso = (concluidas / total_tarefas * 100) if total_tarefas > 0 else 0
         
         return {
             "success": True,
             "projeto": {
                 "id": projeto['id'],
                 "nome": projeto['nome'],
-                "status": projeto['status'],
-                "progresso": round(progresso, 1),
-                "data_inicio": projeto['data_inicio'],
-                "data_fim_prevista": projeto['data_fim_prevista']
+                "status": projeto.get('status', 'em_andamento'),
+                "data_inicio": projeto.get('data_inicio'),
+                "data_fim_prevista": projeto.get('data_fim_prevista')
             },
-            "tarefas": tarefas,
-            "equipe": equipe,
-            "orcamento": {
-                "total": orcamento['orcamento_total'] or 0,
-                "gasto": orcamento['gasto_total'] or 0,
-                "saldo": (orcamento['orcamento_total'] or 0) - (orcamento['gasto_total'] or 0),
-                "percentual_gasto": round((orcamento['gasto_total'] or 0) / (orcamento['orcamento_total'] or 1) * 100, 1)
+            "tarefas": {
+                "total": total_tarefas,
+                "a_fazer": tarefas_stats['a_fazer'] or 0,
+                "em_execucao": tarefas_stats['em_execucao'] or 0,
+                "concluidas": concluidas,
+                "progresso_percentual": round(progresso, 1)
             },
-            "materiais": materiais,
-            "documentos": docs
+            "equipe": {
+                "total_membros": total_membros
+            },
+            "financeiro": {
+                "orcamento_total": orc_stats['orcamento_total'],
+                "gasto_total": orc_stats['gasto_total'],
+                "saldo": orc_stats['orcamento_total'] - orc_stats['gasto_total'],
+                "percentual_gasto": round((orc_stats['gasto_total'] / orc_stats['orcamento_total'] * 100), 1) if orc_stats['orcamento_total'] > 0 else 0
+            },
+            "materiais": {
+                "total_itens": mat_stats['total_materiais'],
+                "valor_previsto": mat_stats['valor_previsto']
+            },
+            "documentos": {
+                "total": total_docs
+            }
         }
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
 
-@router.get("/{projeto_id}/produtividade")
-async def analise_produtividade(
+@router.get("/projeto/{projeto_id}/tarefas-por-status")
+async def tarefas_por_status(
     projeto_id: int,
-    periodo_dias: int = 30,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_active_user)
 ):
-    """Análise de produtividade da equipe"""
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    """Retorna distribuição de tarefas por status"""
+    db = DatabaseHelper()
     
     try:
-        # Tarefas concluídas por membro nos últimos X dias
-        cursor.execute("""
-            SELECT 
-                e.usuario_id,
-                u.nome,
-                u.cargo,
-                COUNT(t.id) as tarefas_concluidas,
-                AVG(DATEDIFF(t.data_conclusao, t.data_inicio)) as tempo_medio_dias
-            FROM equipes e
-            LEFT JOIN usuarios u ON e.usuario_id = u.id
-            LEFT JOIN tarefas t ON t.responsavel_id = e.usuario_id 
-                AND t.projeto_id = %s
-                AND t.status = 'concluida'
-                AND t.data_conclusao >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
-            WHERE e.projeto_id = %s
-            GROUP BY e.usuario_id, u.nome, u.cargo
-            ORDER BY tarefas_concluidas DESC
-        """, (projeto_id, periodo_dias, projeto_id))
-        
-        por_membro = cursor.fetchall()
-        
-        # Taxa de conclusão no prazo
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total_concluidas,
-                SUM(CASE WHEN data_conclusao <= data_limite THEN 1 ELSE 0 END) as no_prazo,
-                SUM(CASE WHEN data_conclusao > data_limite THEN 1 ELSE 0 END) as atrasadas
+        resultado = db.execute_query(
+            """
+            SELECT status, COUNT(*) as quantidade
             FROM tarefas
             WHERE projeto_id = %s
-              AND status = 'concluida'
-              AND data_conclusao >= DATE_SUB(CURDATE(), INTERVAL %s DAY)
-        """, (projeto_id, periodo_dias))
-        
-        conclusao = cursor.fetchone()
-        
-        taxa_no_prazo = 0
-        if conclusao['total_concluidas'] > 0:
-            taxa_no_prazo = (conclusao['no_prazo'] / conclusao['total_concluidas']) * 100
+            GROUP BY status
+            """,
+            (projeto_id,),
+            fetch=True
+        )
         
         return {
             "success": True,
-            "periodo_dias": periodo_dias,
-            "por_membro": por_membro,
-            "conclusao_prazo": {
-                "total": conclusao['total_concluidas'],
-                "no_prazo": conclusao['no_prazo'],
-                "atrasadas": conclusao['atrasadas'],
-                "taxa_sucesso": round(taxa_no_prazo, 1)
+            "projeto_id": projeto_id,
+            "distribuicao": resultado
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/projeto/{projeto_id}/tarefas-por-prioridade")
+async def tarefas_por_prioridade(
+    projeto_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Retorna distribuição de tarefas por prioridade"""
+    db = DatabaseHelper()
+    
+    try:
+        resultado = db.execute_query(
+            """
+            SELECT prioridade, COUNT(*) as quantidade
+            FROM tarefas
+            WHERE projeto_id = %s
+            GROUP BY prioridade
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        return {
+            "success": True,
+            "projeto_id": projeto_id,
+            "distribuicao": resultado
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/projeto/{projeto_id}/gastos-por-categoria")
+async def gastos_por_categoria(
+    projeto_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Retorna distribuição de gastos por categoria"""
+    db = DatabaseHelper()
+    
+    try:
+        resultado = db.execute_query(
+            """
+            SELECT categoria,
+                   COALESCE(SUM(valor_previsto), 0) as previsto,
+                   COALESCE(SUM(valor_real), 0) as gasto
+            FROM orcamentos
+            WHERE projeto_id = %s
+            GROUP BY categoria
+            ORDER BY gasto DESC
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        return {
+            "success": True,
+            "projeto_id": projeto_id,
+            "categorias": resultado
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/geral")
+async def metricas_gerais(
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Retorna métricas gerais de todos os projetos do usuário"""
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    try:
+        # Projetos do usuário
+        projetos = db.execute_query(
+            """
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN status = 'em_andamento' OR status = 'ativo' THEN 1 ELSE 0 END) as ativos,
+                   SUM(CASE WHEN status = 'concluido' THEN 1 ELSE 0 END) as concluidos
+            FROM projetos p
+            LEFT JOIN equipes e ON p.id = e.projeto_id
+            WHERE p.criador_id = %s OR e.usuario_id = %s
+            """,
+            (user_id, user_id),
+            fetch=True
+        )
+        
+        proj_stats = projetos[0] if projetos else {'total': 0, 'ativos': 0, 'concluidos': 0}
+        
+        # Total de tarefas
+        tarefas = db.execute_query(
+            """
+            SELECT COUNT(*) as total,
+                   SUM(CASE WHEN t.status = 'concluida' OR t.status = 'concluido' THEN 1 ELSE 0 END) as concluidas
+            FROM tarefas t
+            JOIN projetos p ON t.projeto_id = p.id
+            LEFT JOIN equipes e ON p.id = e.projeto_id
+            WHERE p.criador_id = %s OR e.usuario_id = %s
+            """,
+            (user_id, user_id),
+            fetch=True
+        )
+        
+        tarefas_stats = tarefas[0] if tarefas else {'total': 0, 'concluidas': 0}
+        
+        return {
+            "success": True,
+            "projetos": {
+                "total": proj_stats['total'] or 0,
+                "ativos": proj_stats['ativos'] or 0,
+                "concluidos": proj_stats['concluidos'] or 0
+            },
+            "tarefas": {
+                "total": tarefas_stats['total'] or 0,
+                "concluidas": tarefas_stats['concluidas'] or 0
             }
         }
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
-
-@router.get("/{projeto_id}/timeline")
-async def timeline_projeto(
-    projeto_id: int,
-    current_user: dict = Depends(get_current_user)
-):
-    """Timeline de atividades do projeto"""
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    try:
-        # Histórico de ações (simplificado - você pode adicionar tabela de logs)
-        cursor.execute("""
-            SELECT 
-                'tarefa_criada' as tipo,
-                t.titulo as descricao,
-                t.data_criacao as data,
-                u.nome as usuario
-            FROM tarefas t
-            LEFT JOIN usuarios u ON t.responsavel_id = u.id
-            WHERE t.projeto_id = %s
-            
-            UNION ALL
-            
-            SELECT 
-                'documento_upload' as tipo,
-                d.nome as descricao,
-                d.data_upload as data,
-                u.nome as usuario
-            FROM documentos d
-            LEFT JOIN usuarios u ON d.uploaded_por = u.id
-            WHERE d.projeto_id = %s
-            
-            UNION ALL
-            
-            SELECT 
-                'membro_adicionado' as tipo,
-                CONCAT(u.nome, ' - ', e.papel) as descricao,
-                e.data_entrada as data,
-                'Sistema' as usuario
-            FROM equipes e
-            LEFT JOIN usuarios u ON e.usuario_id = u.id
-            WHERE e.projeto_id = %s
-            
-            ORDER BY data DESC
-            LIMIT 50
-        """, (projeto_id, projeto_id, projeto_id))
-        
-        eventos = cursor.fetchall()
-        
-        return {
-            "success": True,
-            "total_eventos": len(eventos),
-            "eventos": eventos
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@router.get("/{projeto_id}/relatorio-completo")
-async def relatorio_completo(
-    projeto_id: int,
-    current_user: dict = Depends(get_current_user)
-):
-    """Relatório completo do projeto para exportação"""
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    try:
-        # Chamar todas as métricas
-        dashboard = await dashboard_projeto(projeto_id, current_user)
-        produtividade = await analise_produtividade(projeto_id, 30, current_user)
-        
-        # Adicionar análise financeira detalhada
-        cursor.execute("""
-            SELECT 
-                categoria,
-                SUM(valor_previsto) as previsto,
-                SUM(valor_gasto) as gasto
-            FROM orcamentos
-            WHERE projeto_id = %s
-            GROUP BY categoria
-        """, (projeto_id,))
-        
-        financeiro_detalhado = cursor.fetchall()
-        
-        return {
-            "success": True,
-            "gerado_em": "NOW()",
-            "projeto_id": projeto_id,
-            "dashboard": dashboard,
-            "produtividade": produtividade,
-            "financeiro_detalhado": financeiro_detalhado
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()

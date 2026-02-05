@@ -280,10 +280,10 @@ async def verify_2fa(otp_data: VerifyOTPRequest):
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={
-            "user_id": usuario[0],
-            "email": usuario[2],
-            "nome": usuario[1],
-            "cargo": usuario[3],
+            "user_id": usuario['id'],
+            "email": usuario['email'],
+            "nome": usuario['nome'],
+            "cargo": usuario['cargo'],
             "2fa_verified": True
         },
         expires_delta=access_token_expires
@@ -295,10 +295,10 @@ async def verify_2fa(otp_data: VerifyOTPRequest):
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
-            "id": usuario[0],
-            "nome": usuario[1],
-            "email": usuario[2],
-            "cargo": usuario[3],
+            "id": usuario['id'],
+            "nome": usuario['nome'],
+            "email": usuario['email'],
+            "cargo": usuario['cargo'],
             "2fa_verified": True
         }
     }

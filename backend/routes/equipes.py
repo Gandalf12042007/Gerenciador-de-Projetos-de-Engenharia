@@ -1,6 +1,7 @@
 """
 Rotas de Equipes - Gerenciamento de membros e permissões
 Autor: Vicente de Souza
+Corrigido para SQLite com DatabaseHelper
 """
 
 import sys
@@ -27,30 +28,20 @@ class EquipeCreate(BaseModel):
     projeto_id: int
     usuario_id: int
     papel: str  # gerente, engenheiro, tecnico, colaborador
-    data_entrada: date
+    data_entrada: Optional[str] = None
+
 
 class EquipeUpdate(BaseModel):
     papel: Optional[str] = None
-    data_saida: Optional[date] = None
+    data_saida: Optional[str] = None
     ativo: Optional[bool] = None
 
-class MembroEquipe(BaseModel):
-    id: int
-    projeto_id: int
-    projeto_nome: str
-    usuario_id: int
-    usuario_nome: str
-    usuario_email: str
-    usuario_cargo: Optional[str]
-    papel: str
-    data_entrada: str
-    data_saida: Optional[str]
-    ativo: bool
 
 class PermissaoCreate(BaseModel):
     usuario_id: int
     permissao_id: int
     projeto_id: Optional[int] = None
+
 
 class ConviteEquipeCreate(BaseModel):
     projeto_id: int
@@ -58,13 +49,15 @@ class ConviteEquipeCreate(BaseModel):
     papel: str  # gerente, engenheiro, tecnico, colaborador
     expiracao_horas: Optional[int] = 48
 
+
 class ConviteAceitar(BaseModel):
     token: str
     usuario_id: int
 
+
 # ===== ENDPOINTS =====
 
-@router.get("/projeto/{projeto_id}", response_model=List[MembroEquipe])
+@router.get("/projeto/{projeto_id}")
 async def listar_membros_projeto(
     projeto_id: int,
     ativo: Optional[bool] = None,
@@ -72,27 +65,16 @@ async def listar_membros_projeto(
 ):
     """
     Lista todos os membros de um projeto
-    
-    Args:
-        projeto_id: ID do projeto
-        ativo: Filtrar por membros ativos (opcional)
-        
-    Returns:
-        Lista de membros com informações do usuário
     """
     db = DatabaseHelper()
     
     try:
-        if not db.connect():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao conectar no banco de dados"
-            )
-        
         # Verificar se projeto existe
-        cursor = db.connection.cursor(dictionary=True)
-        cursor.execute("SELECT id, nome FROM projetos WHERE id = %s", (projeto_id,))
-        projeto = cursor.fetchone()
+        projeto = db.execute_query(
+            "SELECT id, nome FROM projetos WHERE id = ?",
+            (projeto_id,),
+            fetch=True
+        )
         
         if not projeto:
             raise HTTPException(
@@ -117,36 +99,34 @@ async def listar_membros_projeto(
             FROM equipes e
             INNER JOIN usuarios u ON e.usuario_id = u.id
             INNER JOIN projetos p ON e.projeto_id = p.id
-            WHERE e.projeto_id = %s
+            WHERE e.projeto_id = ?
         """
         params = [projeto_id]
         
         if ativo is not None:
-            query += " AND e.ativo = %s"
+            query += " AND e.ativo = ?"
             params.append(1 if ativo else 0)
         
         query += " ORDER BY e.data_entrada DESC"
         
-        cursor.execute(query, params)
-        membros = cursor.fetchall()
+        membros = db.execute_query(query, tuple(params), fetch=True)
         
-        cursor.close()
-        
+        # Formatar resposta
         return [
-            MembroEquipe(
-                id=m['id'],
-                projeto_id=m['projeto_id'],
-                projeto_nome=m['projeto_nome'],
-                usuario_id=m['usuario_id'],
-                usuario_nome=m['usuario_nome'],
-                usuario_email=m['usuario_email'],
-                usuario_cargo=m['usuario_cargo'],
-                papel=m['papel'],
-                data_entrada=str(m['data_entrada']),
-                data_saida=str(m['data_saida']) if m['data_saida'] else None,
-                ativo=bool(m['ativo'])
-            )
-            for m in membros
+            {
+                "id": m['id'],
+                "projeto_id": m['projeto_id'],
+                "projeto_nome": m['projeto_nome'],
+                "usuario_id": m['usuario_id'],
+                "usuario_nome": m['usuario_nome'],
+                "usuario_email": m['usuario_email'],
+                "usuario_cargo": m['usuario_cargo'],
+                "papel": m['papel'],
+                "data_entrada": str(m['data_entrada']) if m['data_entrada'] else None,
+                "data_saida": str(m['data_saida']) if m['data_saida'] else None,
+                "ativo": bool(m['ativo'])
+            }
+            for m in (membros or [])
         ]
         
     except HTTPException:
@@ -156,8 +136,6 @@ async def listar_membros_projeto(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao listar membros: {str(e)}"
         )
-    finally:
-        db.disconnect()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -167,49 +145,44 @@ async def adicionar_membro(
 ):
     """
     Adiciona um novo membro à equipe do projeto
-    
-    Args:
-        membro: Dados do membro (usuario_id, projeto_id, papel)
-        
-    Returns:
-        ID do membro criado
     """
     db = DatabaseHelper()
     
     try:
-        if not db.connect():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao conectar no banco de dados"
-            )
-        
-        cursor = db.connection.cursor(dictionary=True)
-        
         # Verificar se projeto existe
-        cursor.execute("SELECT id FROM projetos WHERE id = %s", (membro.projeto_id,))
-        if not cursor.fetchone():
+        projeto = db.execute_query(
+            "SELECT id FROM projetos WHERE id = ?", 
+            (membro.projeto_id,), 
+            fetch=True
+        )
+        if not projeto:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Projeto {membro.projeto_id} não encontrado"
             )
         
         # Verificar se usuário existe
-        cursor.execute("SELECT id FROM usuarios WHERE id = %s", (membro.usuario_id,))
-        if not cursor.fetchone():
+        usuario = db.execute_query(
+            "SELECT id FROM usuarios WHERE id = ?", 
+            (membro.usuario_id,), 
+            fetch=True
+        )
+        if not usuario:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Usuário {membro.usuario_id} não encontrado"
             )
         
         # Verificar se já existe membro ativo
-        cursor.execute(
+        existente = db.execute_query(
             """
             SELECT id FROM equipes 
-            WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1
+            WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1
             """,
-            (membro.projeto_id, membro.usuario_id)
+            (membro.projeto_id, membro.usuario_id),
+            fetch=True
         )
-        if cursor.fetchone():
+        if existente:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Usuário já é membro ativo deste projeto"
@@ -224,20 +197,14 @@ async def adicionar_membro(
             )
         
         # Inserir membro
-        query = """
-            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo)
-            VALUES (%s, %s, %s, %s, 1)
-        """
-        cursor.execute(query, (
-            membro.projeto_id,
-            membro.usuario_id,
-            membro.papel,
-            membro.data_entrada
-        ))
-        
-        membro_id = cursor.lastrowid
-        db.connection.commit()
-        cursor.close()
+        data_entrada = membro.data_entrada or datetime.now().strftime('%Y-%m-%d')
+        membro_id = db.execute_query(
+            """
+            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
+            VALUES (?, ?, ?, ?, 1, datetime('now'))
+            """,
+            (membro.projeto_id, membro.usuario_id, membro.papel, data_entrada)
+        )
         
         return {
             "message": "Membro adicionado à equipe com sucesso",
@@ -247,13 +214,10 @@ async def adicionar_membro(
     except HTTPException:
         raise
     except Exception as e:
-        db.connection.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao adicionar membro: {str(e)}"
         )
-    finally:
-        db.disconnect()
 
 
 @router.put("/{membro_id}")
@@ -263,81 +227,62 @@ async def atualizar_membro(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Atualiza dados de um membro da equipe (papel, status, data_saida)
-    
-    Args:
-        membro_id: ID do membro na equipe
-        dados: Campos a atualizar
-        
-    Returns:
-        Mensagem de sucesso
+    Atualiza informações de um membro da equipe
     """
     db = DatabaseHelper()
     
     try:
-        if not db.connect():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao conectar no banco de dados"
-            )
-        
-        cursor = db.connection.cursor(dictionary=True)
-        
         # Verificar se membro existe
-        cursor.execute("SELECT id FROM equipes WHERE id = %s", (membro_id,))
-        if not cursor.fetchone():
+        membro = db.execute_query(
+            "SELECT id FROM equipes WHERE id = ?",
+            (membro_id,),
+            fetch=True
+        )
+        if not membro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Membro {membro_id} não encontrado"
             )
         
-        # Construir query dinamicamente
+        # Construir update dinamicamente
         updates = []
         params = []
         
-        dados_dict = dados.dict(exclude_unset=True)
-        
-        # Validar papel se fornecido
-        if 'papel' in dados_dict:
+        if dados.papel is not None:
             papeis_validos = ['gerente', 'engenheiro', 'tecnico', 'colaborador']
-            if dados_dict['papel'] not in papeis_validos:
+            if dados.papel not in papeis_validos:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Papel inválido. Use: {', '.join(papeis_validos)}"
                 )
+            updates.append("papel = ?")
+            params.append(dados.papel)
         
-        for campo, valor in dados_dict.items():
-            updates.append(f"{campo} = %s")
-            # Converter booleano para inteiro para SQLite
-            if isinstance(valor, bool):
-                valor = 1 if valor else 0
-            params.append(valor)
+        if dados.data_saida is not None:
+            updates.append("data_saida = ?")
+            params.append(dados.data_saida)
+        
+        if dados.ativo is not None:
+            updates.append("ativo = ?")
+            params.append(1 if dados.ativo else 0)
         
         if not updates:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Nenhum campo para atualizar"
-            )
+            return {"message": "Nenhuma alteração solicitada"}
         
         params.append(membro_id)
-        query = f"UPDATE equipes SET {', '.join(updates)} WHERE id = %s"
+        query = f"UPDATE equipes SET {', '.join(updates)} WHERE id = ?"
         
-        cursor.execute(query, params)
-        db.connection.commit()
-        cursor.close()
+        db.execute_query(query, tuple(params))
         
         return {"message": "Membro atualizado com sucesso"}
         
     except HTTPException:
         raise
     except Exception as e:
-        db.connection.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao atualizar membro: {str(e)}"
         )
-    finally:
-        db.disconnect()
 
 
 @router.delete("/{membro_id}")
@@ -347,225 +292,177 @@ async def remover_membro(
 ):
     """
     Remove um membro da equipe (soft delete - marca como inativo)
-    
-    Args:
-        membro_id: ID do membro na equipe
-        
-    Returns:
-        Mensagem de sucesso
     """
     db = DatabaseHelper()
     
     try:
-        if not db.connect():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao conectar no banco de dados"
-            )
-        
-        cursor = db.connection.cursor(dictionary=True)
-        
         # Verificar se membro existe
-        cursor.execute("SELECT id FROM equipes WHERE id = %s", (membro_id,))
-        if not cursor.fetchone():
+        membro = db.execute_query(
+            "SELECT id, ativo FROM equipes WHERE id = ?",
+            (membro_id,),
+            fetch=True
+        )
+        if not membro:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Membro {membro_id} não encontrado"
             )
         
-        # Soft delete: marca como inativo e define data_saida
-        cursor.execute(
-            """
-            UPDATE equipes 
-            SET ativo = 0, data_saida = %s 
-            WHERE id = %s
-            """,
-            (date.today(), membro_id)
+        # Soft delete
+        db.execute_query(
+            "UPDATE equipes SET ativo = 0, data_saida = date('now') WHERE id = ?",
+            (membro_id,)
         )
-        
-        db.connection.commit()
-        cursor.close()
         
         return {"message": "Membro removido da equipe com sucesso"}
         
     except HTTPException:
         raise
     except Exception as e:
-        db.connection.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao remover membro: {str(e)}"
         )
-    finally:
-        db.disconnect()
 
 
-@router.post("/convite", status_code=status.HTTP_201_CREATED)
-async def enviar_convite_equipes(
+@router.get("/usuario/{usuario_id}")
+async def listar_projetos_usuario(
+    usuario_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Lista todos os projetos em que um usuário participa
+    """
+    db = DatabaseHelper()
+    
+    try:
+        projetos = db.execute_query(
+            """
+            SELECT 
+                e.id as membro_id,
+                e.projeto_id,
+                p.nome as projeto_nome,
+                p.status as projeto_status,
+                e.papel,
+                e.data_entrada,
+                e.ativo
+            FROM equipes e
+            INNER JOIN projetos p ON e.projeto_id = p.id
+            WHERE e.usuario_id = ?
+            ORDER BY e.ativo DESC, e.data_entrada DESC
+            """,
+            (usuario_id,),
+            fetch=True
+        )
+        
+        return {
+            "usuario_id": usuario_id,
+            "total_projetos": len(projetos) if projetos else 0,
+            "projetos": projetos or []
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar projetos: {str(e)}"
+        )
+
+
+@router.get("/meus-projetos")
+async def listar_meus_projetos(
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Lista todos os projetos do usuário logado
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    db = DatabaseHelper()
+    
+    try:
+        projetos = db.execute_query(
+            """
+            SELECT 
+                e.id as membro_id,
+                e.projeto_id,
+                p.nome as projeto_nome,
+                p.descricao,
+                p.status as projeto_status,
+                e.papel,
+                e.data_entrada,
+                e.ativo
+            FROM equipes e
+            INNER JOIN projetos p ON e.projeto_id = p.id
+            WHERE e.usuario_id = ? AND e.ativo = 1
+            ORDER BY e.data_entrada DESC
+            """,
+            (user_id,),
+            fetch=True
+        )
+        
+        return {
+            "total_projetos": len(projetos) if projetos else 0,
+            "projetos": projetos or []
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar projetos: {str(e)}"
+        )
+
+
+# ===== CONVITES =====
+
+@router.post("/convites")
+async def criar_convite(
     convite: ConviteEquipeCreate,
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Envia convite para membro por e-mail (gera token, salva convite)
+    Cria um convite para adicionar usuário ao projeto
     """
     db = DatabaseHelper()
-    if not db.connect():
-        raise HTTPException(status_code=500, detail="Erro ao conectar no banco de dados")
+    
     try:
         # Verificar se projeto existe
-        cursor = db.connection.cursor(dictionary=True)
-        cursor.execute("SELECT id FROM projetos WHERE id = %s", (convite.projeto_id,))
-        if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Projeto não encontrado")
-        # Gerar token único
-        token = secrets.token_urlsafe(32)
-        expiracao = datetime.utcnow() + timedelta(hours=convite.expiracao_horas or 48)
-        # Inserir convite
-        cursor.execute(
-            """
-            INSERT INTO convites_equipes (projeto_id, email_convidado, papel, token, expiracao)
-            VALUES (%s, %s, %s, %s, %s)
-            """,
-            (convite.projeto_id, convite.email_convidado, convite.papel, token, expiracao)
+        projeto = db.execute_query(
+            "SELECT id, nome FROM projetos WHERE id = ?",
+            (convite.projeto_id,),
+            fetch=True
         )
-        db.connection.commit()
-        # Simular envio de e-mail (log)
-        print(f"[CONVITE] Enviado para {convite.email_convidado}: Token={token}")
-        return {"message": "Convite enviado com sucesso", "token": token}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.connection.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao enviar convite: {str(e)}")
-    finally:
-        db.disconnect()
-
-
-@router.post("/aceitar-convite", status_code=status.HTTP_201_CREATED)
-async def aceitar_convite_equipes(
-    dados: ConviteAceitar = Body(...)
-):
-    """
-    Aceita convite de equipe usando token
-    """
-    db = DatabaseHelper()
-    if not db.connect():
-        raise HTTPException(status_code=500, detail="Erro ao conectar no banco de dados")
-    try:
-        cursor = db.connection.cursor(dictionary=True)
-        # Buscar convite válido - usando função de data compatível
-        cursor.execute(
-            """
-            SELECT * FROM convites_equipes WHERE token = %s AND aceito = 0 AND cancelado = 0
-            """,
-            (dados.token,)
-        )
-        convite = cursor.fetchone()
-        if not convite:
-            raise HTTPException(status_code=400, detail="Convite inválido, expirado ou já aceito/cancelado")
-        # Verificar se expirou
-        expiracao = convite['expiracao']
-        if isinstance(expiracao, str):
-            expiracao = datetime.fromisoformat(expiracao)
-        if expiracao < datetime.utcnow():
-            raise HTTPException(status_code=400, detail="Convite expirado")
-        # Verificar se usuário já é membro
-        cursor.execute(
-            "SELECT id FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
-            (convite['projeto_id'], dados.usuario_id)
-        )
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Usuário já é membro ativo deste projeto")
-        # Adicionar membro à equipe
-        cursor.execute(
-            """
-            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo)
-            VALUES (%s, %s, %s, %s, 1)
-            """,
-            (convite['projeto_id'], dados.usuario_id, convite['papel'], datetime.utcnow().date())
-        )
-        # Marcar convite como aceito
-        cursor.execute(
-            "UPDATE convites_equipes SET aceito = 1, aceito_em = %s WHERE id = %s",
-            (datetime.utcnow(), convite['id'])
-        )
-        db.connection.commit()
-        return {"message": "Convite aceito e membro adicionado à equipe"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.connection.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao aceitar convite: {str(e)}")
-    finally:
-        db.disconnect()
-
-
-@router.get("/usuario/{usuario_id}/permissoes")
-async def listar_permissoes_usuario(
-    usuario_id: int,
-    projeto_id: Optional[int] = None,
-    current_user: dict = Depends(get_current_active_user)
-):
-    """
-    Lista todas as permissões de um usuário (global ou por projeto)
-    
-    Args:
-        usuario_id: ID do usuário
-        projeto_id: Filtrar por projeto específico (opcional)
-        
-    Returns:
-        Lista de permissões do usuário
-    """
-    db = DatabaseHelper()
-    
-    try:
-        if not db.connect():
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao conectar no banco de dados"
-            )
-        
-        cursor = db.connection.cursor(dictionary=True)
-        
-        # Verificar se usuário existe
-        cursor.execute("SELECT id, nome FROM usuarios WHERE id = %s", (usuario_id,))
-        usuario = cursor.fetchone()
-        if not usuario:
+        if not projeto:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Usuário {usuario_id} não encontrado"
+                detail=f"Projeto {convite.projeto_id} não encontrado"
             )
         
-        # Buscar permissões
-        query = """
-            SELECT 
-                up.id,
-                up.usuario_id,
-                up.permissao_id,
-                p.nome as permissao_nome,
-                p.descricao as permissao_descricao,
-                up.projeto_id,
-                proj.nome as projeto_nome
-            FROM usuario_permissoes up
-            INNER JOIN permissoes p ON up.permissao_id = p.id
-            LEFT JOIN projetos proj ON up.projeto_id = proj.id
-            WHERE up.usuario_id = %s
-        """
-        params = [usuario_id]
+        # Gerar token único
+        token = secrets.token_urlsafe(32)
+        expiracao = datetime.now() + timedelta(hours=convite.expiracao_horas)
         
-        if projeto_id is not None:
-            query += " AND up.projeto_id = %s"
-            params.append(projeto_id)
-        
-        cursor.execute(query, params)
-        permissoes = cursor.fetchall()
-        cursor.close()
+        # Inserir convite
+        convite_id = db.execute_query(
+            """
+            INSERT INTO convites_equipes (
+                projeto_id, email_convidado, papel, token, 
+                data_expiracao, criado_por, criado_em
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            """,
+            (
+                convite.projeto_id,
+                convite.email_convidado,
+                convite.papel,
+                token,
+                expiracao.strftime('%Y-%m-%d %H:%M:%S'),
+                current_user.get("user_id") or current_user.get("id")
+            )
+        )
         
         return {
-            "usuario_id": usuario_id,
-            "usuario_nome": usuario['nome'],
-            "total_permissoes": len(permissoes),
-            "permissoes": permissoes
+            "message": "Convite criado com sucesso",
+            "id": convite_id,
+            "token": token,
+            "expira_em": expiracao.isoformat()
         }
         
     except HTTPException:
@@ -573,7 +470,300 @@ async def listar_permissoes_usuario(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao criar convite: {str(e)}"
+        )
+
+
+@router.post("/convites/aceitar")
+async def aceitar_convite(
+    dados: ConviteAceitar,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Aceita um convite de equipe usando o token
+    """
+    db = DatabaseHelper()
+    
+    try:
+        # Buscar convite pelo token
+        convite = db.execute_query(
+            """
+            SELECT id, projeto_id, papel, email_convidado, data_expiracao, usado
+            FROM convites_equipes
+            WHERE token = ?
+            """,
+            (dados.token,),
+            fetch=True
+        )
+        
+        if not convite:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Convite não encontrado ou inválido"
+            )
+        
+        convite = convite[0]
+        
+        # Verificar se já foi usado
+        if convite.get('usado'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Este convite já foi utilizado"
+            )
+        
+        # Verificar expiração
+        expiracao = datetime.fromisoformat(convite['data_expiracao'])
+        if datetime.now() > expiracao:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Este convite expirou"
+            )
+        
+        # Verificar se usuário já está no projeto
+        existente = db.execute_query(
+            "SELECT id FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+            (convite['projeto_id'], dados.usuario_id),
+            fetch=True
+        )
+        if existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Usuário já é membro deste projeto"
+            )
+        
+        # Adicionar à equipe
+        membro_id = db.execute_query(
+            """
+            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
+            VALUES (?, ?, ?, date('now'), 1, datetime('now'))
+            """,
+            (convite['projeto_id'], dados.usuario_id, convite['papel'])
+        )
+        
+        # Marcar convite como usado
+        db.execute_query(
+            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = ?",
+            (convite['id'],)
+        )
+        
+        return {
+            "message": "Convite aceito! Você foi adicionado ao projeto.",
+            "membro_id": membro_id,
+            "projeto_id": convite['projeto_id']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao aceitar convite: {str(e)}"
+        )
+
+
+@router.get("/convites/projeto/{projeto_id}")
+async def listar_convites_projeto(
+    projeto_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Lista convites pendentes de um projeto
+    """
+    db = DatabaseHelper()
+    
+    try:
+        convites = db.execute_query(
+            """
+            SELECT 
+                c.id, c.email_convidado, c.papel, 
+                c.data_expiracao, c.usado, c.criado_em,
+                u.nome as criado_por_nome
+            FROM convites_equipes c
+            LEFT JOIN usuarios u ON c.criado_por = u.id
+            WHERE c.projeto_id = ? AND (c.usado = 0 OR c.usado IS NULL)
+            ORDER BY c.criado_em DESC
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        return {
+            "projeto_id": projeto_id,
+            "total_convites": len(convites) if convites else 0,
+            "convites": convites or []
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar convites: {str(e)}"
+        )
+
+
+# ===== PERMISSÕES =====
+
+@router.get("/permissoes/usuario/{usuario_id}")
+async def listar_permissoes_usuario(
+    usuario_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Lista todas as permissões de um usuário
+    """
+    db = DatabaseHelper()
+    
+    try:
+        permissoes = db.execute_query(
+            """
+            SELECT 
+                up.id,
+                up.permissao_id,
+                p.nome as permissao_nome,
+                p.descricao as permissao_descricao,
+                up.projeto_id,
+                pr.nome as projeto_nome
+            FROM usuario_permissoes up
+            INNER JOIN permissoes p ON up.permissao_id = p.id
+            LEFT JOIN projetos pr ON up.projeto_id = pr.id
+            WHERE up.usuario_id = ?
+            """,
+            (usuario_id,),
+            fetch=True
+        )
+        
+        return {
+            "usuario_id": usuario_id,
+            "total_permissoes": len(permissoes) if permissoes else 0,
+            "permissoes": permissoes or []
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao listar permissões: {str(e)}"
         )
-    finally:
-        db.disconnect()
+
+
+@router.post("/permissoes")
+async def atribuir_permissao(
+    permissao: PermissaoCreate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Atribui uma permissão a um usuário
+    """
+    db = DatabaseHelper()
+    
+    try:
+        # Verificar se usuário existe
+        usuario = db.execute_query(
+            "SELECT id FROM usuarios WHERE id = ?",
+            (permissao.usuario_id,),
+            fetch=True
+        )
+        if not usuario:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Usuário {permissao.usuario_id} não encontrado"
+            )
+        
+        # Verificar se permissão existe
+        perm = db.execute_query(
+            "SELECT id FROM permissoes WHERE id = ?",
+            (permissao.permissao_id,),
+            fetch=True
+        )
+        if not perm:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Permissão {permissao.permissao_id} não encontrada"
+            )
+        
+        # Inserir permissão
+        perm_id = db.execute_query(
+            """
+            INSERT INTO usuario_permissoes (usuario_id, permissao_id, projeto_id, criado_em)
+            VALUES (?, ?, ?, datetime('now'))
+            """,
+            (permissao.usuario_id, permissao.permissao_id, permissao.projeto_id)
+        )
+        
+        return {
+            "message": "Permissão atribuída com sucesso",
+            "id": perm_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao atribuir permissão: {str(e)}"
+        )
+
+
+@router.delete("/permissoes/{permissao_id}")
+async def remover_permissao(
+    permissao_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Remove uma permissão de um usuário
+    """
+    db = DatabaseHelper()
+    
+    try:
+        # Verificar se existe
+        perm = db.execute_query(
+            "SELECT id FROM usuario_permissoes WHERE id = ?",
+            (permissao_id,),
+            fetch=True
+        )
+        if not perm:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Permissão {permissao_id} não encontrada"
+            )
+        
+        db.execute_query(
+            "DELETE FROM usuario_permissoes WHERE id = ?",
+            (permissao_id,)
+        )
+        
+        return {"message": "Permissão removida com sucesso"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao remover permissão: {str(e)}"
+        )
+
+
+@router.get("/permissoes/disponiveis")
+async def listar_permissoes_disponiveis(
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Lista todas as permissões disponíveis no sistema
+    """
+    db = DatabaseHelper()
+    
+    try:
+        permissoes = db.execute_query(
+            "SELECT id, nome, descricao FROM permissoes ORDER BY nome",
+            fetch=True
+        )
+        
+        return {
+            "total": len(permissoes) if permissoes else 0,
+            "permissoes": permissoes or []
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao listar permissões: {str(e)}"
+        )
+

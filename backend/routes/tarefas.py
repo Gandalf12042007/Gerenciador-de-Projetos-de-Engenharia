@@ -112,23 +112,23 @@ async def listar_tarefas_projeto(
     
     return [
         {
-            "id": t[0],
-            "titulo": t[1],
-            "descricao": t[2],
-            "status": t[3],
-            "prioridade": t[4],
-            "data_inicio": t[5],
-            "data_fim_prevista": t[6],
-            "data_fim_real": t[7],
-            "responsavel_id": t[8],
-            "progresso_percentual": float(t[9]) if t[9] else 0,
-            "ordem": t[10],
-            "responsavel_nome": t[11],
-            "etapa_tipo": t[12],
-            "responsavel_tecnico": t[13],
-            "numero_art": t[14],
-            "checklist": t[15],
-            "observacoes_tecnicas": t[16]
+            "id": t['id'],
+            "titulo": t['titulo'],
+            "descricao": t['descricao'],
+            "status": t['status'],
+            "prioridade": t['prioridade'],
+            "data_inicio": t['data_inicio'],
+            "data_fim_prevista": t['data_fim_prevista'],
+            "data_fim_real": t['data_fim_real'],
+            "responsavel_id": t['responsavel_id'],
+            "progresso_percentual": float(t['progresso_percentual']) if t['progresso_percentual'] else 0,
+            "ordem": t['ordem'],
+            "responsavel_nome": t['responsavel_nome'],
+            "etapa_tipo": t['etapa_tipo'],
+            "responsavel_tecnico": t['responsavel_tecnico'],
+            "numero_art": t['numero_art'],
+            "checklist": t['checklist'],
+            "observacoes_tecnicas": t['observacoes_tecnicas']
         }
         for t in tarefas
     ]
@@ -215,7 +215,7 @@ async def atualizar_tarefa(
             detail="Tarefa não encontrada"
         )
     
-    projeto_id = existing[0][0]
+    projeto_id = existing[0]['projeto_id']
     
     # Verificar se usuário é membro do projeto
     if not permission_manager.is_project_member(user_id, projeto_id):
@@ -285,7 +285,7 @@ async def deletar_tarefa(
             detail="Tarefa não encontrada"
         )
     
-    projeto_id = existing[0][0]
+    projeto_id = existing[0]['projeto_id']
     
     # Verificar se usuário é membro do projeto
     if not permission_manager.is_project_member(user_id, projeto_id):
@@ -357,7 +357,7 @@ async def listar_comentarios(
             detail="Tarefa não encontrada"
         )
     
-    projeto_id = existing[0][0]
+    projeto_id = existing[0]['projeto_id']
     
     # Verificar se usuário é membro do projeto
     if not permission_manager.is_project_member(user_id, projeto_id):
@@ -381,12 +381,12 @@ async def listar_comentarios(
     
     return [
         {
-            "id": c[0],
-            "comentario": c[1],
-            "criado_em": c[2],
-            "atualizado_em": c[3],
-            "usuario_id": c[4],
-            "usuario_nome": c[5]
+            "id": c['id'],
+            "comentario": c['comentario'],
+            "criado_em": c['criado_em'],
+            "atualizado_em": c['atualizado_em'],
+            "usuario_id": c['usuario_id'],
+            "usuario_nome": c['usuario_nome']
         }
         for c in comentarios
     ]
@@ -417,7 +417,7 @@ async def criar_comentario(
             detail="Tarefa não encontrada"
         )
     
-    projeto_id = existing[0][0]
+    projeto_id = existing[0]['projeto_id']
     
     # Verificar se usuário é membro do projeto
     if not permission_manager.is_project_member(user_id, projeto_id):
@@ -470,7 +470,7 @@ async def atualizar_comentario(
             detail="Comentário não encontrado"
         )
     
-    if existing[0][0] != user_id:
+    if existing[0]['usuario_id'] != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você só pode editar seus próprios comentários"
@@ -520,7 +520,7 @@ async def deletar_comentario(
             detail="Comentário não encontrado"
         )
     
-    if existing[0][0] != user_id:
+    if existing[0]['usuario_id'] != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você só pode deletar seus próprios comentários"

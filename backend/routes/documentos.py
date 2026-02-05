@@ -1,16 +1,21 @@
 """
 Rotas para gerenciamento de documentos
 Permite upload, download, versionamento e organização de arquivos técnicos
-Com validações de segurança em uploads
 """
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from typing import List, Optional
-from datetime import datetime
+import sys
 import os
 import uuid
 import logging
-from middleware.auth_middleware import get_current_user
-from utils.file_security import FileSecurityValidator, UploadSecurityManager
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi.responses import FileResponse
+from typing import Optional
+from pydantic import BaseModel
+
+# Adicionar path do database
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
+from db_helper import DatabaseHelper
+
+from middleware.auth_middleware import get_current_active_user
 
 # Logger para auditoria
 logger = logging.getLogger(__name__)
@@ -18,46 +23,60 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/documentos", tags=["Documentos"])
 
 # Diretório para armazenar uploads
-UPLOAD_DIR = "uploads/documentos"
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'uploads', 'documentos')
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Gerenciador de segurança de uploads
-upload_manager = UploadSecurityManager(UPLOAD_DIR)
+# Extensões permitidas
+ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.dwg', '.dxf', '.png', '.jpg', '.jpeg', '.zip'}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
-@router.get("/{projeto_id}")
+
+class DocumentoUpdate(BaseModel):
+    descricao: Optional[str] = None
+    categoria: Optional[str] = None
+
+
+@router.get("/projeto/{projeto_id}")
 async def listar_documentos(
     projeto_id: int,
     categoria: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_active_user)
 ):
     """
     Lista todos os documentos de um projeto
-    Filtros: categoria (plantas, rrt, diario, medicoes, fotos, relatorios)
+    Categorias: plantas, rrt, diario, medicoes, fotos, relatorios, contratos, outros
     """
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    db = DatabaseHelper()
     
     try:
-        query = """
-            SELECT d.*, u.nome as uploaded_por_nome,
-                   COUNT(v.id) as total_versoes
-            FROM documentos d
-            LEFT JOIN usuarios u ON d.uploaded_por = u.id
-            LEFT JOIN versoes_documento v ON d.id = v.documento_id
-            WHERE d.projeto_id = %s
-        """
-        params = [projeto_id]
-        
         if categoria:
-            query += " AND d.categoria = %s"
-            params.append(categoria)
-        
-        query += " GROUP BY d.id ORDER BY d.data_upload DESC"
-        
-        cursor.execute(query, params)
-        documentos = cursor.fetchall()
+            documentos = db.execute_query(
+                """
+                SELECT d.id, d.projeto_id, d.nome, d.descricao,
+                       d.categoria, d.tamanho_bytes, d.tipo, d.caminho_arquivo,
+                       d.uploaded_por, d.criado_em, u.nome as uploaded_por_nome
+                FROM documentos d
+                LEFT JOIN usuarios u ON d.uploaded_por = u.id
+                WHERE d.projeto_id = %s AND d.categoria = %s
+                ORDER BY d.criado_em DESC
+                """,
+                (projeto_id, categoria),
+                fetch=True
+            )
+        else:
+            documentos = db.execute_query(
+                """
+                SELECT d.id, d.projeto_id, d.nome, d.descricao,
+                       d.categoria, d.tamanho_bytes, d.tipo, d.caminho_arquivo,
+                       d.uploaded_por, d.criado_em, u.nome as uploaded_por_nome
+                FROM documentos d
+                LEFT JOIN usuarios u ON d.uploaded_por = u.id
+                WHERE d.projeto_id = %s
+                ORDER BY d.criado_em DESC
+                """,
+                (projeto_id,),
+                fetch=True
+            )
         
         return {
             "success": True,
@@ -67,311 +86,226 @@ async def listar_documentos(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
 
-@router.post("/{projeto_id}/upload")
+@router.post("/projeto/{projeto_id}/upload")
 async def upload_documento(
     projeto_id: int,
     file: UploadFile = File(...),
     categoria: str = "outros",
     descricao: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Faz upload de um novo documento com validações de segurança
-    Categorias: plantas, rrt, diario, medicoes, fotos, relatorios, outros
-    Validações: tipo arquivo, tamanho máximo, magic bytes
+    Faz upload de um documento para o projeto
+    Categorias: plantas, rrt, diario, medicoes, fotos, relatorios, contratos, outros
     """
-    from database.db_helper import get_db_connection
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
     
-    # 1. VALIDAR TAMANHO (antes de ler arquivo)
-    max_tamanho = 100 * 1024 * 1024  # 100MB
-    if file.size and file.size > max_tamanho:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Arquivo excede tamanho máximo de 100MB"
-        )
-    
-    # 2. VALIDAR EXTENSÃO
-    ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in FileSecurityValidator.ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Extensão '{ext}' não permitida. Extensões aceitas: {', '.join(FileSecurityValidator.ALLOWED_EXTENSIONS)}"
-        )
-    
-    # 3. LER ARQUIVO COM LIMITE
     try:
-        conteudo = await file.read()
-        if len(conteudo) > max_tamanho:
+        # Validar extensão
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
             raise HTTPException(
-                status_code=413,
-                detail=f"Arquivo excede tamanho máximo de 100MB"
+                status_code=400,
+                detail=f"Extensão não permitida. Permitidas: {', '.join(ALLOWED_EXTENSIONS)}"
             )
-    except Exception as e:
-        logger.error(f"Erro ao ler arquivo: {str(e)}")
-        raise HTTPException(status_code=400, detail="Erro ao processar arquivo")
-    
-    # 4. VALIDAR MIME TYPE
-    import mimetypes
-    mime_type, _ = mimetypes.guess_type(file.filename)
-    if mime_type and mime_type not in FileSecurityValidator.ALLOWED_MIMETYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"MIME type '{mime_type}' não permitido"
-        )
-    
-    # 5. VALIDAR MAGIC BYTES (assinatura do arquivo)
-    if len(conteudo) > 8:
-        header = conteudo[:8]
-        arquivo_valido = False
         
-        for magic, tipo_ext in FileSecurityValidator.MAGIC_BYTES.items():
-            if header.startswith(magic):
-                if tipo_ext == ext:
-                    arquivo_valido = True
-                else:
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Arquivo disfarçado: extensão '{ext}' não corresponde ao tipo real"
-                    )
+        # Ler conteúdo
+        content = await file.read()
         
-        if not arquivo_valido and mime_type not in FileSecurityValidator.ALLOWED_MIMETYPES:
-            logger.warning(f"Arquivo sem assinatura reconhecida: {file.filename}, MIME: {mime_type}")
-    
-    # 6. GERAR NOME ÚNICO E SANITIZADO
-    nome_sanitizado = FileSecurityValidator.sanitizar_nome_arquivo(file.filename)
-    nome_unico = f"{uuid.uuid4()}_{nome_sanitizado}"
-    caminho_arquivo = os.path.join(UPLOAD_DIR, nome_unico)
-    
-    # 7. SALVAR ARQUIVO
-    try:
-        with open(caminho_arquivo, "wb") as f:
-            f.write(conteudo)
+        # Validar tamanho
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Arquivo muito grande. Máximo: {MAX_FILE_SIZE // (1024*1024)}MB"
+            )
         
-        tamanho_bytes = len(conteudo)
-        logger.info(f"Arquivo salvo: {nome_unico} ({tamanho_bytes} bytes) por {current_user['id']}")
+        # Gerar nome único
+        nome_unico = f"{uuid.uuid4()}{ext}"
+        projeto_dir = os.path.join(UPLOAD_DIR, str(projeto_id))
+        os.makedirs(projeto_dir, exist_ok=True)
         
-    except Exception as e:
-        logger.error(f"Erro ao salvar arquivo: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro ao salvar arquivo no servidor")
-    
-    # 8. INSERIR NO BANCO
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    try:
-        # Validar categoria
-        categorias_validas = ['plantas', 'rrt', 'diario', 'medicoes', 'fotos', 'relatorios', 'outros']
-        if categoria not in categorias_validas:
-            categoria = 'outros'
+        caminho = os.path.join(projeto_dir, nome_unico)
         
-        # Inserir documento
-        query = """
+        # Salvar arquivo
+        with open(caminho, 'wb') as f:
+            f.write(content)
+        
+        # Registrar no banco
+        doc_id = db.execute_query(
+            """
             INSERT INTO documentos 
-            (projeto_id, nome, categoria, descricao, caminho_arquivo, 
-             tamanho_bytes, uploaded_por, data_upload)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
-        """
-        cursor.execute(query, (
-            projeto_id, file.filename, categoria, descricao,
-            caminho_arquivo, tamanho_bytes, current_user['id']
-        ))
-        
-        doc_id = cursor.lastrowid
-        
-        # Criar primeira versão
-        query_versao = """
-            INSERT INTO versoes_documento
-            (documento_id, numero_versao, caminho_arquivo, tamanho_bytes,
-             criado_por, data_criacao, comentario)
-            VALUES (%s, 1, %s, %s, %s, NOW(), 'Versão inicial')
-        """
-        cursor.execute(query_versao, (
-            doc_id, caminho_arquivo, tamanho_bytes, current_user['id']
-        ))
-        
-        conn.commit()
-        logger.info(f"Documento registrado no banco: {doc_id}")
-        
-        return {
-            "success": True,
-            "message": "Documento enviado com sucesso",
-            "documento_id": doc_id,
-            "nome": file.filename,
-            "tamanho": tamanho_bytes,
-            "categoria": categoria
-        }
-        
-    except Exception as e:
-        conn.rollback()
-        # Remover arquivo se houver erro
-        if os.path.exists(caminho_arquivo):
-            os.remove(caminho_arquivo)
-            logger.error(f"Arquivo removido devido a erro no banco: {nome_unico}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
-
-
-@router.post("/{documento_id}/nova-versao")
-async def criar_nova_versao(
-    documento_id: int,
-    file: UploadFile = File(...),
-    comentario: Optional[str] = None,
-    current_user: dict = Depends(get_current_user)
-):
-    """Cria uma nova versão de um documento existente"""
-    from database.db_helper import get_db_connection
-    
-    # Salvar nova versão do arquivo
-    extensao = os.path.splitext(file.filename)[1]
-    nome_unico = f"{uuid.uuid4()}{extensao}"
-    caminho_arquivo = os.path.join(UPLOAD_DIR, nome_unico)
-    
-    with open(caminho_arquivo, "wb") as f:
-        conteudo = await file.read()
-        f.write(conteudo)
-    
-    tamanho_bytes = len(conteudo)
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    try:
-        # Obter última versão
-        cursor.execute("""
-            SELECT MAX(numero_versao) as ultima_versao
-            FROM versoes_documento
-            WHERE documento_id = %s
-        """, (documento_id,))
-        result = cursor.fetchone()
-        nova_versao = (result['ultima_versao'] or 0) + 1
-        # Criar nova versão
-        query = """
-            INSERT INTO versoes_documento
-            (documento_id, numero_versao, caminho_arquivo, tamanho_bytes,
-             criado_por, data_criacao, comentario)
-            VALUES (%s, %s, %s, %s, %s, NOW(), %s)
-        """
-        cursor.execute(query, (
-            documento_id, nova_versao, caminho_arquivo,
-            tamanho_bytes, current_user['id'], comentario
-        ))
-        # Atualizar documento principal
-        cursor.execute("""
-            UPDATE documentos
-            SET caminho_arquivo = %s, tamanho_bytes = %s
-            WHERE id = %s
-        """, (caminho_arquivo, tamanho_bytes, documento_id))
-        conn.commit()
-        # Auditoria
-        from backend.utils.audit import registrar_auditoria
-        detalhes = f"Nova versão {nova_versao} criada. Comentário: {comentario}"
-        registrar_auditoria(
-            usuario_id=current_user['id'],
-            entidade="documento",
-            entidade_id=documento_id,
-            acao="nova_versao",
-            detalhes=detalhes
+            (projeto_id, nome, descricao, categoria, tamanho_bytes, tipo, caminho_arquivo, uploaded_por)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                projeto_id, file.filename, descricao,
+                categoria, len(content), file.content_type, caminho, user_id
+            )
         )
+        
+        logger.info(f"Documento {file.filename} uploaded por {user_id} no projeto {projeto_id}")
+        
         return {
             "success": True,
-            "message": f"Versão {nova_versao} criada com sucesso",
-            "versao": nova_versao
+            "message": "Documento uploaded com sucesso",
+            "documento_id": doc_id,
+            "nome": file.filename
         }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        conn.rollback()
-        if os.path.exists(caminho_arquivo):
-            os.remove(caminho_arquivo)
+        logger.error(f"Erro no upload: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
 
-@router.get("/{documento_id}/versoes")
-async def listar_versoes(
+@router.get("/{documento_id}/download")
+async def download_documento(
     documento_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_active_user)
 ):
-    """Lista todas as versões de um documento"""
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    """Faz download de um documento"""
+    db = DatabaseHelper()
     
     try:
-        cursor.execute("""
-            SELECT v.*, u.nome as criado_por_nome
-            FROM versoes_documento v
-            LEFT JOIN usuarios u ON v.criado_por = u.id
-            WHERE v.documento_id = %s
-            ORDER BY v.numero_versao DESC
-        """, (documento_id,))
+        doc = db.execute_query(
+            "SELECT * FROM documentos WHERE id = %s",
+            (documento_id,),
+            fetch=True
+        )
         
-        versoes = cursor.fetchall()
+        if not doc:
+            raise HTTPException(status_code=404, detail="Documento não encontrado")
+        
+        doc = doc[0]
+        caminho = doc['caminho_arquivo']
+        
+        if not caminho or not os.path.exists(caminho):
+            raise HTTPException(status_code=404, detail="Arquivo não encontrado no servidor")
+        
+        return FileResponse(
+            path=caminho,
+            filename=doc['nome'],
+            media_type=doc.get('tipo', 'application/octet-stream')
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{documento_id}")
+async def atualizar_documento(
+    documento_id: int,
+    dados: DocumentoUpdate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Atualiza informações de um documento"""
+    db = DatabaseHelper()
+    
+    try:
+        updates = []
+        params = []
+        
+        if dados.descricao is not None:
+            updates.append("descricao = %s")
+            params.append(dados.descricao)
+        if dados.categoria:
+            updates.append("categoria = %s")
+            params.append(dados.categoria)
+        
+        if not updates:
+            raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+        
+        params.append(documento_id)
+        query = f"UPDATE documentos SET {', '.join(updates)} WHERE id = %s"
+        
+        db.execute_query(query, tuple(params))
         
         return {
             "success": True,
-            "total_versoes": len(versoes),
-            "versoes": versoes
+            "message": "Documento atualizado com sucesso"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
 
 
 @router.delete("/{documento_id}")
 async def deletar_documento(
     documento_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_active_user)
 ):
-    """Deleta um documento e todas suas versões"""
-    from database.db_helper import get_db_connection
-    
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    """Deleta um documento"""
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
     
     try:
-        # Buscar arquivos para deletar
-        cursor.execute("""
-            SELECT caminho_arquivo FROM documentos WHERE id = %s
-            UNION
-            SELECT caminho_arquivo FROM versoes_documento WHERE documento_id = %s
-        """, (documento_id, documento_id))
-        arquivos = cursor.fetchall()
-        # Deletar do banco
-        cursor.execute("DELETE FROM documentos WHERE id = %s", (documento_id,))
-        conn.commit()
-        # Auditoria
-        from backend.utils.audit import registrar_auditoria
-        registrar_auditoria(
-            usuario_id=current_user['id'],
-            entidade="documento",
-            entidade_id=documento_id,
-            acao="deletar",
-            detalhes="Documento e versões removidos"
+        # Buscar documento
+        doc = db.execute_query(
+            "SELECT * FROM documentos WHERE id = %s",
+            (documento_id,),
+            fetch=True
         )
-        # Deletar arquivos físicos
-        for arquivo in arquivos:
-            caminho = arquivo['caminho_arquivo']
-            if os.path.exists(caminho):
-                os.remove(caminho)
+        
+        if not doc:
+            raise HTTPException(status_code=404, detail="Documento não encontrado")
+        
+        doc = doc[0]
+        
+        # Deletar arquivo físico
+        caminho = doc.get('caminho_arquivo')
+        if caminho and os.path.exists(caminho):
+            os.remove(caminho)
+        
+        # Deletar do banco
+        db.execute_query("DELETE FROM documentos WHERE id = %s", (documento_id,))
+        
+        logger.info(f"Documento {doc['nome']} deletado por {user_id}")
+        
         return {
             "success": True,
             "message": "Documento deletado com sucesso"
         }
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        conn.close()
+
+
+@router.get("/projeto/{projeto_id}/categorias")
+async def listar_categorias(
+    projeto_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Lista categorias com contagem de documentos"""
+    db = DatabaseHelper()
+    
+    try:
+        categorias = db.execute_query(
+            """
+            SELECT categoria, COUNT(*) as quantidade
+            FROM documentos
+            WHERE projeto_id = %s
+            GROUP BY categoria
+            ORDER BY quantidade DESC
+            """,
+            (projeto_id,),
+            fetch=True
+        )
+        
+        return {
+            "success": True,
+            "categorias": categorias
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

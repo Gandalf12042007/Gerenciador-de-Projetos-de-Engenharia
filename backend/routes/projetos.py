@@ -146,30 +146,27 @@ async def consultar_auditoria(
     if not current_user.get("is_admin", False):
         raise HTTPException(status_code=403, detail="Apenas administradores podem consultar logs de auditoria")
     
-    from database.db_helper import get_db_connection
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    db = DatabaseHelper()
     
     try:
         query = "SELECT a.*, u.nome as usuario_nome FROM audit_trail a LEFT JOIN usuarios u ON a.usuario_id = u.id WHERE 1=1"
         params = []
         
         if projeto_id:
-            query += " AND (a.entidade = 'projeto' AND a.entidade_id = %s)"
+            query += " AND (a.entidade = 'projeto' AND a.entidade_id = ?)"
             params.append(projeto_id)
         if usuario_id:
-            query += " AND a.usuario_id = %s"
+            query += " AND a.usuario_id = ?"
             params.append(usuario_id)
         if data_inicio:
-            query += " AND a.criado_em >= %s"
+            query += " AND a.criado_em >= ?"
             params.append(data_inicio)
         if data_fim:
-            query += " AND a.criado_em <= %s"
+            query += " AND a.criado_em <= ?"
             params.append(data_fim)
         
         query += " ORDER BY a.criado_em DESC"
-        cursor.execute(query, tuple(params))
-        logs = cursor.fetchall()
+        logs = db.execute_query(query, tuple(params), fetch=True) or []
         
         if formato == "csv":
             def iter_csv():
@@ -181,9 +178,8 @@ async def consultar_auditoria(
             return StreamingResponse(iter_csv(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=audit_logs.csv"})
         
         return JSONResponse(content=logs)
-    finally:
-        cursor.close()
-        conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao consultar auditoria: {str(e)}")
 
 
 @router.get("/{projeto_id}", response_model=ProjetoResponse)

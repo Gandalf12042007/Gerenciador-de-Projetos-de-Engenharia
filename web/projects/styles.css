@@ -1,31 +1,80 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    GERENCIADOR DE PROJETOS DE ENGENHARIA - ESTILOS
-   Imagem de fundo criada por ChatGPT/OpenAI - Uso exclusivo do projeto
+   Background com tema de engenharia/construção civil
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Background com imagem de engenharia */
+/* Background com padrão de engenharia (SVG inline) */
 body {
 	font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
 	margin: 0;
 	color: #222;
-	background: linear-gradient(135deg, rgba(31, 41, 55, 0.9) 0%, rgba(55, 65, 81, 0.85) 100%),
-	            url('../assets/images/background-engenharia.jpg');
+	background-color: #1a2332;
+	background-image: 
+		/* Overlay escuro */
+		linear-gradient(135deg, rgba(26, 35, 50, 0.95) 0%, rgba(45, 55, 72, 0.9) 100%),
+		/* Padrão de grade/blueprint de engenharia */
+		repeating-linear-gradient(
+			0deg,
+			transparent,
+			transparent 49px,
+			rgba(66, 153, 225, 0.1) 49px,
+			rgba(66, 153, 225, 0.1) 50px
+		),
+		repeating-linear-gradient(
+			90deg,
+			transparent,
+			transparent 49px,
+			rgba(66, 153, 225, 0.1) 49px,
+			rgba(66, 153, 225, 0.1) 50px
+		),
+		/* Círculos decorativos representando engrenagens */
+		radial-gradient(circle at 20% 80%, rgba(246, 173, 85, 0.15) 0%, transparent 25%),
+		radial-gradient(circle at 80% 20%, rgba(72, 187, 120, 0.15) 0%, transparent 25%),
+		radial-gradient(circle at 50% 50%, rgba(66, 153, 225, 0.1) 0%, transparent 40%),
+		/* Linhas diagonais representando vigas */
+		repeating-linear-gradient(
+			45deg,
+			transparent,
+			transparent 100px,
+			rgba(255, 255, 255, 0.02) 100px,
+			rgba(255, 255, 255, 0.02) 101px
+		),
+		repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 100px,
+			rgba(255, 255, 255, 0.02) 100px,
+			rgba(255, 255, 255, 0.02) 101px
+		);
 	background-size: cover;
 	background-position: center;
 	background-attachment: fixed;
 	min-height: 100vh;
+	position: relative;
 }
 
-/* Fallback se a imagem não carregar */
+/* Ícones decorativos de construção (pseudo-elemento) */
 body::before {
-	content: '';
+	content: '🏗️';
 	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-	z-index: -1;
+	top: 15%;
+	left: 5%;
+	font-size: 4rem;
+	opacity: 0.08;
+	z-index: 0;
+	pointer-events: none;
+}
+
+body::after {
+	content: '🔧 🏢 ⚙️ 📐 🧱 👷';
+	position: fixed;
+	bottom: 10%;
+	right: 5%;
+	font-size: 2rem;
+	opacity: 0.06;
+	z-index: 0;
+	pointer-events: none;
+	letter-spacing: 1rem;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

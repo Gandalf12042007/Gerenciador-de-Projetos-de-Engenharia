@@ -65,13 +65,13 @@ async def listar_notificacoes(
     
     return [
         {
-            "id": n[0],
-            "tipo": n[1],
-            "titulo": n[2],
-            "mensagem": n[3] or n[4],  # mensagem ou conteudo
-            "link": n[5],
-            "lida": bool(n[6]),
-            "criado_em": n[7]
+            "id": n['id'],
+            "tipo": n['tipo'],
+            "titulo": n['titulo'],
+            "mensagem": n['mensagem'] or n['conteudo'],  # mensagem ou conteudo
+            "link": n['link'],
+            "lida": bool(n['lida']),
+            "criado_em": n['criado_em']
         }
         for n in notificacoes
     ]
@@ -88,12 +88,12 @@ async def contar_nao_lidas(
     db = DatabaseHelper()
     
     result = db.execute_query(
-        "SELECT COUNT(*) FROM notificacoes WHERE usuario_id = %s AND lida = 0",
+        "SELECT COUNT(*) as total FROM notificacoes WHERE usuario_id = %s AND lida = 0",
         (user_id,),
         fetch=True
     )
     
-    return {"count": result[0][0] if result else 0}
+    return {"count": result[0]['total'] if result else 0}
 
 
 @router.put("/{notificacao_id}/marcar-lida")

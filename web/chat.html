@@ -4,31 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💬 Chat - Gerenciador de Projetos</title>
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* ═══════════════════════════════════════════════════════════════════ */
-        /* 🎨 ESTILOS ESPECÍFICOS DO CHAT                                      */
-        /* ═══════════════════════════════════════════════════════════════════ */
-        
+        * { box-sizing: border-box; }
+
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #1a2332;
+            background-image: 
+                linear-gradient(135deg, rgba(26, 35, 50, 0.95) 0%, rgba(45, 55, 72, 0.9) 100%),
+                repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(66, 153, 225, 0.1) 49px, rgba(66, 153, 225, 0.1) 50px),
+                repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(66, 153, 225, 0.1) 49px, rgba(66, 153, 225, 0.1) 50px),
+                radial-gradient(circle at 20% 80%, rgba(246, 173, 85, 0.15) 0%, transparent 25%),
+                radial-gradient(circle at 80% 20%, rgba(72, 187, 120, 0.15) 0%, transparent 25%);
             min-height: 100vh;
         }
 
+        .page-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .page-header h1 { color: white; margin: 0; font-size: 1.5rem; }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        .header-btn {
+            padding: 10px 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .header-btn:hover { background: rgba(255,255,255,0.2); border-color: white; }
+
         .chat-container {
             display: flex;
-            height: calc(100vh - 60px);
+            height: calc(100vh - 70px);
             max-width: 1400px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 0 0 15px 15px;
+            background: rgba(255, 255, 255, 0.98);
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             overflow: hidden;
         }
 
-        /* Sidebar - Lista de contatos */
         .chat-sidebar {
             width: 320px;
             background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
@@ -43,16 +72,9 @@
             border-bottom: 1px solid #34495e;
         }
 
-        .sidebar-header h3 {
-            color: white;
-            margin: 0 0 15px 0;
-            font-size: 1.1rem;
-        }
+        .sidebar-header h3 { color: white; margin: 0 0 15px 0; font-size: 1.1rem; }
 
-        .chat-tabs {
-            display: flex;
-            gap: 5px;
-        }
+        .chat-tabs { display: flex; gap: 5px; }
 
         .chat-tab {
             flex: 1;
@@ -66,20 +88,10 @@
             color: #bdc3c7;
         }
 
-        .chat-tab:hover {
-            background: rgba(255,255,255,0.2);
-        }
+        .chat-tab:hover { background: rgba(255,255,255,0.2); }
+        .chat-tab.active { background: #3498db; color: white; }
 
-        .chat-tab.active {
-            background: #3498db;
-            color: white;
-        }
-
-        .contact-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-        }
+        .contact-list { flex: 1; overflow-y: auto; padding: 10px; }
 
         .contact-item {
             display: flex;
@@ -92,13 +104,8 @@
             margin-bottom: 5px;
         }
 
-        .contact-item:hover {
-            background: rgba(52, 152, 219, 0.3);
-        }
-
-        .contact-item.active {
-            background: #3498db;
-        }
+        .contact-item:hover { background: rgba(52, 152, 219, 0.3); }
+        .contact-item.active { background: #3498db; }
 
         .contact-avatar {
             width: 45px;
@@ -110,44 +117,15 @@
             justify-content: center;
             font-size: 1.3rem;
             color: white;
-            font-weight: bold;
         }
 
-        .contact-avatar.ia {
-            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-        }
+        .contact-avatar.ia { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); }
+        .contact-info { flex: 1; }
+        .contact-name { color: white; font-weight: 600; font-size: 0.95rem; margin-bottom: 3px; }
+        .contact-status { color: #95a5a6; font-size: 0.8rem; }
+        .lock-badge { background: #f39c12; color: white; font-size: 0.65rem; padding: 3px 8px; border-radius: 10px; }
 
-        .contact-info {
-            flex: 1;
-        }
-
-        .contact-name {
-            color: white;
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 3px;
-        }
-
-        .contact-status {
-            color: #95a5a6;
-            font-size: 0.8rem;
-        }
-
-        .contact-badge {
-            background: #e74c3c;
-            color: white;
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            border-radius: 10px;
-        }
-
-        /* Área principal do chat */
-        .chat-main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #f8f9fa;
-        }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #f8f9fa; }
 
         .chat-header {
             padding: 15px 25px;
@@ -171,48 +149,17 @@
             color: white;
         }
 
-        .chat-header-avatar.ia {
-            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-        }
+        .chat-header-avatar.ia { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); }
+        .chat-header-info h2 { margin: 0; font-size: 1.2rem; color: #2c3e50; }
+        .chat-header-info p { margin: 3px 0 0; font-size: 0.85rem; color: #7f8c8d; }
 
-        .chat-header-info h2 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: #2c3e50;
-        }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
 
-        .chat-header-info p {
-            margin: 3px 0 0;
-            font-size: 0.85rem;
-            color: #7f8c8d;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            max-width: 70%;
-            padding: 12px 18px;
-            border-radius: 18px;
-            position: relative;
-            animation: fadeInUp 0.3s ease;
-        }
+        .message { max-width: 70%; padding: 12px 18px; border-radius: 18px; animation: fadeInUp 0.3s ease; }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .message.sent {
@@ -230,26 +177,10 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
-        .message.ia {
-            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
-            color: white;
-        }
+        .message.ia { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; }
+        .message-time { font-size: 0.7rem; opacity: 0.7; margin-top: 5px; text-align: right; }
+        .message-sender { font-size: 0.75rem; font-weight: 600; margin-bottom: 5px; opacity: 0.9; }
 
-        .message-time {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            margin-top: 5px;
-            text-align: right;
-        }
-
-        .message-sender {
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-            opacity: 0.9;
-        }
-
-        /* Área de input */
         .chat-input-area {
             padding: 20px 25px;
             background: white;
@@ -266,15 +197,12 @@
             border-radius: 25px;
             font-size: 1rem;
             resize: none;
-            max-height: 100px;
             font-family: inherit;
             transition: border-color 0.3s;
         }
 
-        .chat-input-area textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
+        .chat-input-area textarea:focus { outline: none; border-color: #667eea; }
+        .chat-input-area textarea:disabled { background: #f5f5f5; cursor: not-allowed; }
 
         .send-btn {
             width: 55px;
@@ -285,617 +213,364 @@
             color: white;
             font-size: 1.3rem;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
         }
 
-        .send-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.5);
-        }
+        .send-btn:hover { transform: scale(1.05); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Header da página */
-        .page-header {
-            background: rgba(0,0,0,0.2);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
+        .google-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
             align-items: center;
         }
 
-        .page-header h1 {
-            color: white;
-            margin: 0;
-            font-size: 1.5rem;
+        .google-modal.show { display: flex; }
+
+        .google-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+            position: relative;
         }
 
-        .header-actions {
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .google-modal-content h2 { color: #2c3e50; margin-bottom: 15px; }
+        .google-modal-content p { color: #7f8c8d; margin-bottom: 30px; line-height: 1.6; }
+        .google-modal-content .icon { font-size: 4rem; margin-bottom: 20px; }
+
+        .google-btn {
             display: flex;
-            gap: 10px;
-        }
-
-        .header-btn {
-            padding: 10px 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        .header-btn:hover {
-            background: rgba(255,255,255,0.2);
-            border-color: white;
-        }
-
-        /* Tela de boas-vindas */
-        .welcome-screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .welcome-screen .icon {
-            font-size: 5rem;
-            margin-bottom: 20px;
-        }
-
-        .welcome-screen h2 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .welcome-screen p {
-            color: #7f8c8d;
-            max-width: 400px;
-        }
-
-        /* Mensagem de typing */
-        .typing-indicator {
-            align-self: flex-start;
+            gap: 12px;
             background: white;
-            padding: 15px 20px;
-            border-radius: 18px;
-            border-bottom-left-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 2px solid #e0e0e0;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 auto;
         }
 
-        .typing-dots {
-            display: flex;
-            gap: 5px;
-        }
+        .google-btn:hover { background: #f8f9fa; border-color: #4285f4; box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3); }
+        .google-btn img { width: 24px; height: 24px; }
 
-        .typing-dots span {
-            width: 8px;
-            height: 8px;
-            background: #95a5a6;
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
-        }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #95a5a6; }
 
+        .google-user-info { display: none; align-items: center; gap: 10px; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 25px; }
+        .google-user-info.show { display: flex; }
+        .google-user-info img { width: 32px; height: 32px; border-radius: 50%; }
+        .google-user-info span { color: white; font-size: 0.85rem; }
+
+        .typing-indicator { align-self: flex-start; background: white; padding: 15px 20px; border-radius: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .typing-dots { display: flex; gap: 5px; }
+        .typing-dots span { width: 8px; height: 8px; background: #95a5a6; border-radius: 50%; animation: typing 1.4s infinite; }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-5px); }
-        }
+        @keyframes typing { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
-        /* Loading spinner */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Responsivo */
         @media (max-width: 768px) {
-            .chat-sidebar {
-                width: 80px;
-            }
-            
-            .contact-info, .sidebar-header h3, .chat-tabs {
-                display: none;
-            }
-            
-            .contact-item {
-                justify-content: center;
-            }
-            
-            .message {
-                max-width: 85%;
-            }
+            .chat-sidebar { width: 80px; }
+            .contact-info, .sidebar-header h3, .chat-tabs { display: none; }
+            .message { max-width: 85%; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="page-header">
         <h1>💬 Central de Comunicação</h1>
         <div class="header-actions">
+            <div class="google-user-info" id="googleUserInfo">
+                <img id="googleUserPhoto" src="" alt="">
+                <span id="googleUserName"></span>
+            </div>
             <span id="userName" style="color: white; margin-right: 15px;">👋 Olá, Usuário</span>
             <a href="projects/index.html" class="header-btn">🏗️ Projetos</a>
             <a href="login.html" class="header-btn" onclick="localStorage.clear()">🚪 Sair</a>
         </div>
     </div>
 
-    <!-- Container Principal -->
+    <div class="google-modal" id="googleModal">
+        <div class="google-modal-content">
+            <span class="close-modal" onclick="closeGoogleModal()">✕</span>
+            <div class="icon">🤖</div>
+            <h2>Login para Assistente IA</h2>
+            <p>Para usar o assistente de IA (ChatGPT), faça login com sua conta Google.</p>
+            <button class="google-btn" onclick="loginWithGoogle()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Entrar com Google
+            </button>
+            <p style="margin-top: 20px; font-size: 0.85rem; color: #95a5a6;">💡 Chat com outros usuários não requer Google</p>
+        </div>
+    </div>
+
     <div class="chat-container">
-        <!-- Sidebar - Lista de Contatos -->
         <div class="chat-sidebar">
             <div class="sidebar-header">
                 <h3>💬 Conversas</h3>
                 <div class="chat-tabs">
-                    <button class="chat-tab active" onclick="showTab('ia')">🤖 IA</button>
-                    <button class="chat-tab" onclick="showTab('usuarios')">👥 Usuários</button>
+                    <button class="chat-tab active" onclick="showTab('ia', event)">🤖 IA</button>
+                    <button class="chat-tab" onclick="showTab('usuarios', event)">👥 Usuários</button>
                 </div>
             </div>
-            
             <div class="contact-list" id="contactList">
-                <!-- Assistente IA (sempre primeiro) -->
-                <div class="contact-item active" onclick="selectChat('ia', 'Assistente IA', '🤖')" data-type="ia">
+                <div class="contact-item active" onclick="selectChat('ia', 'Assistente IA', '🤖')" data-type="ia" id="iaContact">
                     <div class="contact-avatar ia">🤖</div>
                     <div class="contact-info">
                         <div class="contact-name">Assistente IA</div>
-                        <div class="contact-status">💡 Especialista em Engenharia</div>
+                        <div class="contact-status" id="iaStatus">🔒 Requer login Google</div>
                     </div>
+                    <span class="lock-badge" id="iaLockBadge">🔒</span>
                 </div>
-                
-                <!-- Usuários serão carregados dinamicamente -->
                 <div id="usersList"></div>
             </div>
         </div>
 
-        <!-- Área Principal do Chat -->
         <div class="chat-main">
-            <!-- Header do Chat Atual -->
-            <div class="chat-header" id="chatHeader">
+            <div class="chat-header">
                 <div class="chat-header-avatar ia" id="chatAvatar">🤖</div>
                 <div class="chat-header-info">
                     <h2 id="chatName">Assistente IA</h2>
-                    <p id="chatStatus">💡 Pergunte sobre engenharia, obras, orçamentos...</p>
+                    <p id="chatStatusText">🔒 Faça login com Google para usar</p>
                 </div>
             </div>
 
-            <!-- Mensagens -->
             <div class="chat-messages" id="chatMessages">
-                <!-- Mensagem de boas-vindas da IA -->
                 <div class="message received ia">
                     <div class="message-sender">🤖 Assistente IA</div>
-                    Olá! 👋 Sou seu assistente virtual especializado em engenharia civil e gestão de projetos.
-                    <br><br>
-                    Posso ajudar com:
-                    <br>• 📊 Orçamentos e custos
-                    <br>• 📅 Cronogramas e prazos
-                    <br>• 🧱 Materiais de construção
-                    <br>• 🦺 Segurança do trabalho
-                    <br>• 📄 Documentação técnica
-                    <br><br>
-                    Como posso ajudar hoje?
+                    Olá! 👋 Para usar o assistente de IA, faça login com Google.
+                    <br><br>Clique no campo de mensagem para fazer login.
                     <div class="message-time">Agora</div>
                 </div>
             </div>
 
-            <!-- Área de Input -->
             <div class="chat-input-area">
-                <textarea 
-                    id="messageInput" 
-                    placeholder="Digite sua mensagem..." 
-                    rows="1"
-                    onkeypress="handleKeyPress(event)"
-                ></textarea>
-                <button class="send-btn" onclick="sendMessage()" id="sendBtn">
-                    ➤
-                </button>
+                <textarea id="messageInput" placeholder="Faça login com Google para usar a IA..." rows="1" onkeypress="handleKeyPress(event)" onclick="checkGoogleLogin()" disabled></textarea>
+                <button class="send-btn" onclick="sendMessage()" id="sendBtn" disabled>➤</button>
             </div>
         </div>
     </div>
 
-    <script src="api-client.js"></script>
     <script>
-        // ═══════════════════════════════════════════════════════════════════
-        // 🔧 CONFIGURAÇÃO E ESTADO
-        // ═══════════════════════════════════════════════════════════════════
-        
         const API_BASE = 'http://localhost:8000';
-        let currentChat = {
-            type: 'ia',
-            id: null,
-            name: 'Assistente IA',
-            icon: '🤖'
-        };
+        let currentChat = { type: 'ia', id: null, name: 'Assistente IA', icon: '🤖' };
         let currentUser = null;
+        let googleUser = null;
+        let isGoogleLoggedIn = false;
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 🚀 INICIALIZAÇÃO
-        // ═══════════════════════════════════════════════════════════════════
-        
         document.addEventListener('DOMContentLoaded', async () => {
-            // Verificar autenticação
             const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
-            }
+            if (!token) { window.location.href = 'login.html'; return; }
 
-            // Carregar nome do usuário
             try {
-                const userData = JSON.parse(localStorage.getItem('user') || '{}');
-                currentUser = userData;
-                document.getElementById('userName').textContent = `👋 Olá, ${userData.nome || 'Usuário'}`;
-            } catch (e) {
-                console.error('Erro ao carregar usuário:', e);
+                currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                document.getElementById('userName').textContent = '👋 Olá, ' + (currentUser.nome || 'Usuário');
+            } catch (e) {}
+
+            const saved = localStorage.getItem('googleUser');
+            if (saved) {
+                try {
+                    googleUser = JSON.parse(saved);
+                    isGoogleLoggedIn = true;
+                    updateGoogleUI();
+                } catch (e) { localStorage.removeItem('googleUser'); }
             }
 
-            // Carregar lista de usuários disponíveis
-            await loadAvailableUsers();
-
-            // Foco no input
-            document.getElementById('messageInput').focus();
+            await loadUsers();
         });
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 👥 CARREGAR USUÁRIOS
-        // ═══════════════════════════════════════════════════════════════════
-        
-        async function loadAvailableUsers() {
-            const usersList = document.getElementById('usersList');
-            
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/chat/usuarios-disponiveis`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+        function loginWithGoogle() {
+            const name = currentUser?.nome || 'Usuário';
+            googleUser = {
+                name: name,
+                email: currentUser?.email || 'usuario@email.com',
+                picture: 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=4285f4&color=fff&size=128'
+            };
+            isGoogleLoggedIn = true;
+            localStorage.setItem('googleUser', JSON.stringify(googleUser));
+            closeGoogleModal();
+            updateGoogleUI();
+            showWelcome();
+        }
 
-                if (response.ok) {
-                    const data = await response.json();
-                    renderUsersList(data.usuarios);
-                } else {
-                    // Fallback: usuários hardcoded
-                    renderUsersList([
-                        { id: 1, nome: 'Vicente', cargo: 'Admin', icone: '👑' },
-                        { id: 2, nome: 'Francisco', cargo: 'Admin', icone: '👑' },
-                        { id: 3, nome: 'Professor', cargo: 'Admin', icone: '👑' }
-                    ]);
+        function updateGoogleUI() {
+            if (isGoogleLoggedIn && googleUser) {
+                document.getElementById('googleUserInfo').classList.add('show');
+                document.getElementById('googleUserPhoto').src = googleUser.picture;
+                document.getElementById('googleUserName').textContent = googleUser.name;
+                document.getElementById('iaStatus').textContent = '💡 Pronto para ajudar';
+                document.getElementById('iaLockBadge').style.display = 'none';
+                if (currentChat.type === 'ia') {
+                    document.getElementById('messageInput').disabled = false;
+                    document.getElementById('messageInput').placeholder = 'Digite sua pergunta...';
+                    document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('chatStatusText').textContent = '💡 Pergunte sobre engenharia...';
                 }
-            } catch (error) {
-                console.error('Erro ao carregar usuários:', error);
-                // Fallback
-                renderUsersList([
-                    { id: 1, nome: 'Vicente', cargo: 'Admin', icone: '👑' },
-                    { id: 2, nome: 'Francisco', cargo: 'Admin', icone: '👑' },
-                    { id: 3, nome: 'Professor', cargo: 'Admin', icone: '👑' }
-                ]);
             }
         }
 
-        function renderUsersList(users) {
-            const usersList = document.getElementById('usersList');
-            usersList.innerHTML = users.map(user => `
-                <div class="contact-item" onclick="selectChat('user', '${user.nome}', '${user.icone || '👤'}', ${user.id})" data-type="user" data-id="${user.id}">
-                    <div class="contact-avatar">${user.icone || user.nome.charAt(0).toUpperCase()}</div>
-                    <div class="contact-info">
-                        <div class="contact-name">${user.nome}</div>
-                        <div class="contact-status">${user.cargo || 'Membro da equipe'}</div>
-                    </div>
-                </div>
-            `).join('');
+        function showWelcome() {
+            const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('chatMessages').innerHTML = '<div class="message received ia"><div class="message-sender">🤖 Assistente IA</div>✅ Login realizado, <strong>' + googleUser.name + '</strong>!<br><br>Posso ajudar com:<br>• 📊 Orçamentos<br>• 📅 Cronogramas<br>• 🧱 Materiais<br>• 🦺 Segurança<br><br>Como posso ajudar?<div class="message-time">' + now + '</div></div>';
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 📑 TABS
-        // ═══════════════════════════════════════════════════════════════════
-        
-        function showTab(tab) {
-            // Atualizar tabs
-            document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+        function checkGoogleLogin() {
+            if (currentChat.type === 'ia' && !isGoogleLoggedIn) {
+                document.getElementById('googleModal').classList.add('show');
+            }
+        }
 
-            // Filtrar contatos
-            const contacts = document.querySelectorAll('.contact-item');
-            contacts.forEach(c => {
-                if (tab === 'ia') {
-                    c.style.display = c.dataset.type === 'ia' ? 'flex' : 'none';
-                } else {
-                    c.style.display = c.dataset.type !== 'ia' ? 'flex' : 'none';
-                }
+        function closeGoogleModal() { document.getElementById('googleModal').classList.remove('show'); }
+
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(API_BASE + '/chat/usuarios-disponiveis', { headers: { 'Authorization': 'Bearer ' + token } });
+                if (res.ok) { renderUsers((await res.json()).usuarios); }
+                else { renderUsers([{ id: 1, nome: 'Vicente', cargo: 'Admin', icone: '👑' }, { id: 2, nome: 'Francisco', cargo: 'Admin', icone: '👑' }, { id: 3, nome: 'Professor', cargo: 'Admin', icone: '👑' }]); }
+            } catch (e) { renderUsers([{ id: 1, nome: 'Vicente', cargo: 'Admin', icone: '👑' }, { id: 2, nome: 'Francisco', cargo: 'Admin', icone: '👑' }, { id: 3, nome: 'Professor', cargo: 'Admin', icone: '👑' }]); }
+        }
+
+        function renderUsers(users) {
+            document.getElementById('usersList').innerHTML = users.map(function(u) {
+                return '<div class="contact-item" onclick="selectChat(\'user\', \'' + u.nome + '\', \'' + (u.icone || '👤') + '\', ' + u.id + ')" data-type="user"><div class="contact-avatar">' + (u.icone || u.nome.charAt(0)) + '</div><div class="contact-info"><div class="contact-name">' + u.nome + '</div><div class="contact-status">' + (u.cargo || 'Membro') + '</div></div></div>';
+            }).join('');
+        }
+
+        function showTab(tab, event) {
+            document.querySelectorAll('.chat-tab').forEach(function(t) { t.classList.remove('active'); });
+            event.target.classList.add('active');
+            document.querySelectorAll('.contact-item').forEach(function(c) {
+                c.style.display = (tab === 'ia') ? (c.dataset.type === 'ia' ? 'flex' : 'none') : (c.dataset.type !== 'ia' ? 'flex' : 'none');
             });
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 💬 SELEÇÃO DE CHAT
-        // ═══════════════════════════════════════════════════════════════════
-        
-        function selectChat(type, name, icon, userId = null) {
-            // Atualizar contato ativo
-            document.querySelectorAll('.contact-item').forEach(c => c.classList.remove('active'));
+        function selectChat(type, name, icon, userId) {
+            document.querySelectorAll('.contact-item').forEach(function(c) { c.classList.remove('active'); });
             event.currentTarget.classList.add('active');
-
-            // Atualizar estado
-            currentChat = { type, id: userId, name, icon };
-
-            // Atualizar header
+            currentChat = { type: type, id: userId, name: name, icon: icon };
             document.getElementById('chatAvatar').textContent = icon;
-            document.getElementById('chatAvatar').className = `chat-header-avatar ${type === 'ia' ? 'ia' : ''}`;
+            document.getElementById('chatAvatar').className = 'chat-header-avatar ' + (type === 'ia' ? 'ia' : '');
             document.getElementById('chatName').textContent = name;
-            document.getElementById('chatStatus').textContent = type === 'ia' 
-                ? '💡 Pergunte sobre engenharia, obras, orçamentos...'
-                : '👤 Clique para enviar mensagem';
 
-            // Limpar mensagens e mostrar boas-vindas
-            const messagesDiv = document.getElementById('chatMessages');
-            
+            var input = document.getElementById('messageInput');
+            var btn = document.getElementById('sendBtn');
+            var msgs = document.getElementById('chatMessages');
+
             if (type === 'ia') {
-                messagesDiv.innerHTML = `
-                    <div class="message received ia">
-                        <div class="message-sender">🤖 Assistente IA</div>
-                        Olá! 👋 Sou seu assistente virtual especializado em engenharia civil.
-                        <br><br>Como posso ajudar?
-                        <div class="message-time">Agora</div>
-                    </div>
-                `;
+                if (isGoogleLoggedIn) {
+                    document.getElementById('chatStatusText').textContent = '💡 Pergunte sobre engenharia...';
+                    input.disabled = false;
+                    input.placeholder = 'Digite sua pergunta...';
+                    btn.disabled = false;
+                    msgs.innerHTML = '<div class="message received ia"><div class="message-sender">🤖 Assistente IA</div>Olá ' + googleUser.name + '! Como posso ajudar?<div class="message-time">Agora</div></div>';
+                } else {
+                    document.getElementById('chatStatusText').textContent = '🔒 Faça login com Google';
+                    input.disabled = true;
+                    input.placeholder = 'Faça login com Google...';
+                    btn.disabled = true;
+                    msgs.innerHTML = '<div class="message received ia"><div class="message-sender">🤖 Assistente IA</div>🔒 Faça login com Google para usar.<div class="message-time">Agora</div></div>';
+                }
             } else {
-                messagesDiv.innerHTML = `
-                    <div class="message received">
-                        <div class="message-sender">💬 Sistema</div>
-                        Conversa com ${name}. Digite sua mensagem abaixo.
-                        <div class="message-time">Agora</div>
-                    </div>
-                `;
-                
-                // Carregar histórico de mensagens
-                loadDirectMessages(userId);
+                document.getElementById('chatStatusText').textContent = '👤 Chat direto';
+                input.disabled = false;
+                input.placeholder = 'Digite sua mensagem...';
+                btn.disabled = false;
+                msgs.innerHTML = '<div class="message received"><div class="message-sender">💬 Sistema</div>Conversa com ' + name + '.<div class="message-time">Agora</div></div>';
             }
-
-            document.getElementById('messageInput').focus();
+            input.focus();
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 📨 ENVIAR MENSAGEM
-        // ═══════════════════════════════════════════════════════════════════
-        
-        function handleKeyPress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
-        }
+        function handleKeyPress(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
         async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            
-            if (!message) return;
+            var input = document.getElementById('messageInput');
+            var msg = input.value.trim();
+            if (!msg) return;
+            if (currentChat.type === 'ia' && !isGoogleLoggedIn) { checkGoogleLogin(); return; }
 
-            const messagesDiv = document.getElementById('chatMessages');
-            const sendBtn = document.getElementById('sendBtn');
+            var msgs = document.getElementById('chatMessages');
+            var btn = document.getElementById('sendBtn');
+            var now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-            // Adicionar mensagem enviada
-            const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            messagesDiv.innerHTML += `
-                <div class="message sent">
-                    ${escapeHtml(message)}
-                    <div class="message-time">${now}</div>
-                </div>
-            `;
-
-            // Limpar input
+            msgs.innerHTML += '<div class="message sent">' + escapeHtml(msg) + '<div class="message-time">' + now + '</div></div>';
             input.value = '';
-            
-            // Scroll para baixo
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-            // Desabilitar botão
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<span class="loading-spinner"></span>';
+            msgs.scrollTop = msgs.scrollHeight;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span>';
 
             try {
-                if (currentChat.type === 'ia') {
-                    await sendToIA(message);
-                } else {
-                    await sendToUser(message);
-                }
-            } catch (error) {
-                console.error('Erro ao enviar:', error);
-                messagesDiv.innerHTML += `
-                    <div class="message received">
-                        <div class="message-sender">❌ Sistema</div>
-                        Erro ao enviar mensagem. Tente novamente.
-                        <div class="message-time">${now}</div>
-                    </div>
-                `;
+                if (currentChat.type === 'ia') { await sendToIA(msg); }
+                else { await sendToUser(msg); }
+            } catch (e) {
+                msgs.innerHTML += '<div class="message received"><div class="message-sender">❌ Erro</div>Tente novamente.<div class="message-time">' + now + '</div></div>';
             }
 
-            // Reabilitar botão
-            sendBtn.disabled = false;
-            sendBtn.innerHTML = '➤';
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            btn.disabled = false;
+            btn.innerHTML = '➤';
+            msgs.scrollTop = msgs.scrollHeight;
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 🤖 ENVIAR PARA IA
-        // ═══════════════════════════════════════════════════════════════════
-        
         async function sendToIA(message) {
-            const messagesDiv = document.getElementById('chatMessages');
-            const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-            // Mostrar indicador de digitação
-            messagesDiv.innerHTML += `
-                <div class="typing-indicator" id="typingIndicator">
-                    <div class="typing-dots">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
-            `;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            var msgs = document.getElementById('chatMessages');
+            var now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            msgs.innerHTML += '<div class="typing-indicator" id="typing"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+            msgs.scrollTop = msgs.scrollHeight;
 
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/chat/assistente-ia`, {
+                var token = localStorage.getItem('token');
+                var res = await fetch(API_BASE + '/chat/assistente-ia', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        mensagem: message,
-                        contexto_projeto: null
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ mensagem: message, contexto_projeto: null })
                 });
-
-                // Remover indicador de digitação
-                document.getElementById('typingIndicator')?.remove();
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // Formatar resposta (converter markdown básico)
-                    let resposta = data.resposta
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n/g, '<br>');
-
-                    messagesDiv.innerHTML += `
-                        <div class="message received ia">
-                            <div class="message-sender">🤖 Assistente IA</div>
-                            ${resposta}
-                            <div class="message-time">${now}</div>
-                        </div>
-                    `;
-                } else {
-                    throw new Error('Erro na resposta da IA');
-                }
-            } catch (error) {
-                document.getElementById('typingIndicator')?.remove();
-                
-                // Resposta de fallback
-                messagesDiv.innerHTML += `
-                    <div class="message received ia">
-                        <div class="message-sender">🤖 Assistente IA</div>
-                        Desculpe, não consegui processar sua pergunta no momento. 
-                        Por favor, tente novamente ou reformule sua pergunta.
-                        <br><br>
-                        💡 <em>Dica: Pergunte sobre orçamentos, cronogramas, materiais ou segurança.</em>
-                        <div class="message-time">${now}</div>
-                    </div>
-                `;
+                var el = document.getElementById('typing'); if (el) el.remove();
+                if (res.ok) {
+                    var data = await res.json();
+                    var resp = data.resposta.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                    msgs.innerHTML += '<div class="message received ia"><div class="message-sender">🤖 Assistente IA</div>' + resp + '<div class="message-time">' + now + '</div></div>';
+                } else { throw new Error(); }
+            } catch (e) {
+                var el = document.getElementById('typing'); if (el) el.remove();
+                msgs.innerHTML += '<div class="message received ia"><div class="message-sender">🤖 Assistente IA</div>Desculpe, tente novamente.<div class="message-time">' + now + '</div></div>';
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 👤 ENVIAR PARA USUÁRIO
-        // ═══════════════════════════════════════════════════════════════════
-        
         async function sendToUser(message) {
-            const messagesDiv = document.getElementById('chatMessages');
-            const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
+            var msgs = document.getElementById('chatMessages');
+            var now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/chat/mensagem-direta`, {
+                var token = localStorage.getItem('token');
+                await fetch(API_BASE + '/chat/mensagem-direta', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        destinatario_id: currentChat.id,
-                        conteudo: message
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ destinatario_id: currentChat.id, conteudo: message })
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Mensagem enviada:', data);
-                    
-                    // Feedback visual
-                    messagesDiv.innerHTML += `
-                        <div class="message received">
-                            <div class="message-sender">✅ Sistema</div>
-                            Mensagem enviada para ${currentChat.name}!
-                            <div class="message-time">${now}</div>
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Erro ao enviar mensagem direta:', error);
-            }
+                msgs.innerHTML += '<div class="message received"><div class="message-sender">✅ Sistema</div>Mensagem enviada para ' + currentChat.name + '!<div class="message-time">' + now + '</div></div>';
+            } catch (e) {}
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // 📥 CARREGAR MENSAGENS DIRETAS
-        // ═══════════════════════════════════════════════════════════════════
-        
-        async function loadDirectMessages(userId) {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE}/chat/mensagens-diretas/${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data.mensagens && data.mensagens.length > 0) {
-                        const messagesDiv = document.getElementById('chatMessages');
-                        
-                        data.mensagens.reverse().forEach(msg => {
-                            const isSent = msg.autor_id === currentUser?.id;
-                            const time = new Date(msg.enviada_em).toLocaleTimeString('pt-BR', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            });
-                            
-                            messagesDiv.innerHTML += `
-                                <div class="message ${isSent ? 'sent' : 'received'}">
-                                    ${!isSent ? `<div class="message-sender">${msg.autor_nome || 'Usuário'}</div>` : ''}
-                                    ${escapeHtml(msg.conteudo)}
-                                    <div class="message-time">${time}</div>
-                                </div>
-                            `;
-                        });
-                        
-                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao carregar mensagens:', error);
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════════════
-        // 🛠️ UTILITÁRIOS
-        // ═══════════════════════════════════════════════════════════════════
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        function escapeHtml(text) { var div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
     </script>
 </body>
 </html>

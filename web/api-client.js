@@ -3,7 +3,25 @@
  * Comunica com o backend FastAPI
  */
 
-const API_URL = 'http://localhost:8000'; // Sem prefixo /api - backend não usa
+// Detectar URL da API automaticamente
+// Em produção: usa a mesma origem (mesmo domínio)
+// Em desenvolvimento local: usa localhost:8000
+const getApiUrl = () => {
+    const hostname = window.location.hostname;
+    
+    // Se estiver em localhost com porta 3000 (dev frontend), aponta para 8000 (dev backend)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        if (window.location.port === '3000') {
+            return 'http://localhost:8000';
+        }
+    }
+    
+    // Em produção ou quando acessando diretamente pelo backend
+    // Usa a mesma origem (protocolo + hostname + porta)
+    return window.location.origin;
+};
+
+const API_URL = getApiUrl();
 
 class ApiClient {
     constructor() {

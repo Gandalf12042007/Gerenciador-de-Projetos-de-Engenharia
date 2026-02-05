@@ -3,8 +3,12 @@ API - Gerenciador de Projetos de Engenharia Civil
 Desenvolvido por: Vicente de Souza
 """
 
+import os
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.exceptions import RequestValidationError
 from config import settings
 from middleware.rate_limit import limiter, rate_limit_exception_handler
@@ -71,6 +75,40 @@ async def root():
 async def health_check():
     """Health check da API"""
     return {"status": "healthy", "service": "api-gerenciador-projetos"}
+
+
+# ===== SERVIR FRONTEND ESTÁTICO =====
+# Diretório do frontend
+WEB_DIR = Path(__file__).parent.parent / "web"
+
+# Montar arquivos estáticos se o diretório existir
+if WEB_DIR.exists():
+    # Arquivos assets (imagens, css de assets)
+    assets_dir = WEB_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+    
+    # Arquivos de projetos (CSS, JS específicos)
+    projects_dir = WEB_DIR / "projects"
+    if projects_dir.exists():
+        app.mount("/projects", StaticFiles(directory=str(projects_dir), html=True), name="projects")
+    
+    # Rota para servir index.html na raiz
+    @app.get("/app")
+    async def serve_app():
+        """Redireciona para o frontend"""
+        index_file = WEB_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+        return {"error": "Frontend not found"}
+    
+    # Servir login.html
+    @app.get("/login")
+    async def serve_login():
+        login_file = WEB_DIR / "login.html"
+        if login_file.exists():
+            return FileResponse(login_file)
+        return {"error": "Login page not found"}
 
 
 if __name__ == "__main__":

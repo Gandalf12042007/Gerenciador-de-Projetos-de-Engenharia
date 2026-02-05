@@ -234,7 +234,7 @@ class ApiClient {
     // ============ PROJETOS ============
 
     async getProjetos(skip = 0, limit = 100) {
-        return this.get(`/projetos?skip=${skip}&limit=${limit}`);
+        return this.get('/projetos/');
     }
 
     async getProjetoById(id) {
@@ -242,7 +242,7 @@ class ApiClient {
     }
 
     async createProjeto(dados) {
-        return this.post('/projetos', dados);
+        return this.post('/projetos/', dados);
     }
 
     async updateProjeto(id, dados) {
@@ -276,11 +276,11 @@ class ApiClient {
     // ============ DOCUMENTOS ============
 
     async getDocumentosByProjeto(projeto_id) {
-        return this.get(`/documentos/${projeto_id}`);
+        return this.get(`/documentos/projeto/${projeto_id}`);
     }
 
     async uploadDocumento(projeto_id, file) {
-        return this.uploadFile(`/documentos/${projeto_id}/upload`, file);
+        return this.uploadFile(`/documentos/projeto/${projeto_id}/upload`, file);
     }
 
     async deleteDocumento(id) {

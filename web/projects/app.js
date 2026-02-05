@@ -254,7 +254,7 @@ async function saveProjectHandler(e) {
     data_inicio: document.getElementById('projectStart').value || null,
     data_conclusao_prevista: document.getElementById('projectEnd').value || null,
     status: document.getElementById('projectStatus').value,
-    progresso: parseInt(document.getElementById('projectProgress').value) || 0
+    progresso_percentual: parseInt(document.getElementById('projectProgress').value) || 0
   };
   try {
     if (id) {

@@ -268,7 +268,7 @@ async function loadDashboardData() {
 
         // Calcular progresso médio
         const progresso = projetos.length > 0
-            ? Math.round(projetos.reduce((sum, p) => sum + (p.progresso || 0), 0) / projetos.length)
+            ? Math.round(projetos.reduce((sum, p) => sum + (p.progresso_percentual || p.progresso || 0), 0) / projetos.length)
             : 0;
         document.getElementById('stat-progress').textContent = progresso + '%';
 
@@ -278,7 +278,7 @@ async function loadDashboardData() {
         recentList.innerHTML = recentProjects.map(p => `
             <div class="list-item">
                 <strong>${p.nome}</strong>
-                <span>${p.status} • ${p.progresso || 0}%</span>
+                <span>${formatStatus(p.status)} • ${p.progresso_percentual || p.progresso || 0}%</span>
             </div>
         `).join('');
 
@@ -310,14 +310,14 @@ async function loadProjects() {
             <div class="project-card">
                 <div class="project-header">
                     <div class="project-title">${projeto.nome}</div>
-                    <span class="project-status">${projeto.status || 'Planejamento'}</span>
+                    <span class="project-status status-${projeto.status || 'planejamento'}">${formatStatus(projeto.status)}</span>
                 </div>
                 <div class="project-client">${projeto.cliente || 'Sem cliente'}</div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${projeto.progresso || 0}%"></div>
+                    <div class="progress-fill" style="width: ${projeto.progresso_percentual || projeto.progresso || 0}%"></div>
                 </div>
                 <div class="project-footer">
-                    <span>R$ ${(projeto.orcamento || 0).toLocaleString('pt-BR')}</span>
+                    <span>R$ ${(projeto.valor_total || projeto.orcamento || 0).toLocaleString('pt-BR')}</span>
                     <div>
                         <button class="btn btn-small" onclick="editProject(${projeto.id})">Editar</button>
                         <button class="btn btn-danger btn-small" onclick="deleteProject(${projeto.id})">Deletar</button>
@@ -736,6 +736,17 @@ function formatBytes(bytes) {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+function formatStatus(status) {
+    const statusMap = {
+        'planejamento': 'Planejamento',
+        'em_andamento': 'Em Andamento',
+        'pausado': 'Pausado',
+        'concluido': 'Concluído',
+        'cancelado': 'Cancelado'
+    };
+    return statusMap[status] || status || 'Planejamento';
 }
 
 // Fechar modais ao clicar fora

@@ -1,30 +1,61 @@
-/* Documentos - Estilos */
+/* Documentos - Estilos Vibrantes */
 
-/* Topbar */
-.topbar{ display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color:#fff; padding:16px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 10px; }
-.topbar h1{ margin:0; font-size:1.4rem; font-weight: 600; }
+/* Background com imagem de engenharia */
+body {
+	font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+	margin: 0;
+	color: #1a1a2e;
+	background-color: #0a1628;
+	background-image: 
+		linear-gradient(135deg, rgba(10, 22, 40, 0.85) 0%, rgba(20, 40, 70, 0.80) 100%),
+		url('../assets/images/bg-engineering.jpg');
+	background-size: cover;
+	background-position: center;
+	background-attachment: fixed;
+	min-height: 100vh;
+}
+
+/* Topbar vibrante */
+.topbar{ 
+	display:flex; 
+	justify-content:space-between; 
+	align-items:center; 
+	background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #7c3aed 100%); 
+	color:#fff; 
+	padding:16px 24px; 
+	box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3); 
+	flex-wrap: wrap; 
+	gap: 10px; 
+}
+.topbar h1{ margin:0; font-size:1.4rem; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 .docs-container {
   padding: 24px;
-  background: #f7f8fa;
+  background: transparent;
   min-height: 80vh;
 }
 .docs-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
   overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 .docs-table th, .docs-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #eee;
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   text-align: left;
 }
 .docs-table th {
-  background: #f0f4fa;
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  color: white;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.docs-table tr:hover {
+  background: rgba(14, 165, 233, 0.05);
 }
 .docs-table tr:last-child td {
   border-bottom: none;
@@ -33,16 +64,17 @@
   position: fixed;
   z-index: 10000;
   left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.3);
+  background: rgba(0,0,0,0.5);
   display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
 }
 .modal-content {
-  background: #fff;
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
   padding: 32px 24px 24px 24px;
-  border-radius: 10px;
+  border-radius: 14px;
   min-width: 320px;
   max-width: 95vw;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   position: relative;
 }
 .close {
@@ -50,15 +82,29 @@
   right: 16px;
   top: 12px;
   font-size: 2rem;
-  color: #888;
+  color: #94a3b8;
   cursor: pointer;
+  transition: color 0.2s;
 }
+.close:hover { color: #ef4444; }
 .form-group { margin-bottom: 16px; }
-.form-group label { display: block; margin-bottom: 4px; font-weight: 500; }
+.form-group label { display: block; margin-bottom: 4px; font-weight: 600; color: #1e3a5f; }
 .form-group input, .form-group select {
-  width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px;
-  font-size: 1rem;
+  width: 100%; padding: 10px 12px; border: 2px solid #e0e7ff; border-radius: 8px;
+  font-size: 1rem; transition: border-color 0.2s;
 }
-.btn { padding: 8px 16px; border: none; border-radius: 5px; background: #4A90E2; color: #fff; cursor: pointer; font-weight: 500; }
-.btn.primary { background: #3578e5; }
-.btn:hover { background: #3578e5; }
+.form-group input:focus, .form-group select:focus { border-color: #0ea5e9; outline: none; }
+.btn { 
+  padding: 10px 18px; 
+  border: none; 
+  border-radius: 8px; 
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); 
+  color: #fff; 
+  cursor: pointer; 
+  font-weight: 600; 
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+.btn.primary { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); }
+

@@ -22,7 +22,8 @@
     
     .dashboard-header h1 {
       margin: 0;
-      color: #1a365d;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
     .summary-cards {
@@ -33,40 +34,45 @@
     }
     
     .summary-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
       text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.3s, box-shadow 0.3s;
+      backdrop-filter: blur(10px);
     }
     
     .summary-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(14, 165, 233, 0.25);
     }
     
-    .summary-card.primary { border-top: 4px solid #3182ce; }
-    .summary-card.success { border-top: 4px solid #38a169; }
-    .summary-card.warning { border-top: 4px solid #d69e2e; }
-    .summary-card.danger { border-top: 4px solid #e53e3e; }
-    .summary-card.info { border-top: 4px solid #805ad5; }
+    .summary-card.primary { border-top: 5px solid #0ea5e9; }
+    .summary-card.success { border-top: 5px solid #22c55e; }
+    .summary-card.warning { border-top: 5px solid #f59e0b; }
+    .summary-card.danger { border-top: 5px solid #ef4444; }
+    .summary-card.info { border-top: 5px solid #8b5cf6; }
     
     .summary-card .icon {
-      font-size: 2rem;
+      font-size: 2.2rem;
       margin-bottom: 10px;
     }
     
     .summary-card .value {
       font-size: 2.5rem;
       font-weight: bold;
-      color: #2d3748;
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     
     .summary-card .label {
-      color: #718096;
-      font-size: 0.9rem;
+      color: #475569;
+      font-size: 0.95rem;
       margin-top: 5px;
+      font-weight: 500;
     }
     
     .charts-row {
@@ -77,16 +83,18 @@
     }
     
     .chart-container {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      backdrop-filter: blur(10px);
     }
     
     .chart-container h3 {
       margin: 0 0 20px 0;
-      color: #2d3748;
-      font-size: 1.1rem;
+      color: #0f172a;
+      font-size: 1.15rem;
+      font-weight: 600;
     }
     
     .chart-canvas {
@@ -101,45 +109,49 @@
     }
     
     .list-container {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
       max-height: 400px;
       overflow-y: auto;
+      backdrop-filter: blur(10px);
     }
     
     .list-container h3 {
       margin: 0 0 15px 0;
-      color: #2d3748;
+      color: #0f172a;
       display: flex;
       align-items: center;
       gap: 10px;
+      font-weight: 600;
     }
     
     .list-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      background: #f7fafc;
-      transition: background 0.2s;
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      transition: all 0.3s;
+      border-left: 4px solid #0ea5e9;
     }
     
     .list-item:hover {
-      background: #edf2f7;
+      background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+      transform: translateX(4px);
     }
     
     .list-item.overdue {
-      background: #fff5f5;
-      border-left: 3px solid #e53e3e;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border-left: 4px solid #ef4444;
     }
     
     .list-item.urgent {
-      background: #fffaf0;
-      border-left: 3px solid #d69e2e;
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-left: 4px solid #f59e0b;
     }
     
     .list-item-info {
@@ -147,7 +159,7 @@
     }
     
     .list-item-title {
-      font-weight: 500;
+      font-weight: 600;
       color: #2d3748;
       margin-bottom: 4px;
     }

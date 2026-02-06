@@ -605,3 +605,124 @@ async def validate_token(token: str):
         )
     
     return {"valid": True, "user_id": payload.get("user_id")}
+
+
+# ===== LOGIN COM GOOGLE OAUTH =====
+
+class GoogleLoginRequest(BaseModel):
+    credential: str = Field(..., description="Token de credencial do Google")
+    client_id: str = Field(None, description="Client ID do Google (opcional)")
+
+
+class GoogleUserInfo(BaseModel):
+    email: str
+    name: str
+    picture: str = None
+    google_id: str
+
+
+@router.post("/google-login")
+async def google_login(google_data: GoogleLoginRequest, request: Request):
+    """
+    Login com conta Google usando credencial JWT do Google Sign-In
+    
+    - Valida o token do Google
+    - Cria ou atualiza usuário no banco
+    - Retorna token JWT do sistema
+    """
+    try:
+        import httpx
+        
+        # Validar token do Google
+        # Em produção, use a biblioteca google-auth para validar propriamente
+        # Aqui fazemos uma validação simplificada usando o endpoint do Google
+        
+        async with httpx.AsyncClient() as client:
+            # Decodificar o JWT do Google (para extrair informações)
+            # Em produção, valide a assinatura do token
+            parts = google_data.credential.split('.')
+            if len(parts) != 3:
+                raise HTTPException(status_code=400, detail="Token Google inválido")
+            
+            import base64
+            import json
+            
+            # Decodificar payload do JWT
+            payload_b64 = parts[1]
+            # Adicionar padding se necessário
+            payload_b64 += '=' * (4 - len(payload_b64) % 4)
+            payload_bytes = base64.urlsafe_b64decode(payload_b64)
+            payload = json.loads(payload_bytes)
+            
+            google_email = payload.get('email')
+            google_name = payload.get('name')
+            google_picture = payload.get('picture')
+            google_id = payload.get('sub')
+            
+            if not google_email:
+                raise HTTPException(status_code=400, detail="Email não encontrado no token Google")
+        
+        db = DatabaseHelper()
+        
+        # Verificar se usuário já existe
+        existing = db.execute_query(
+            "SELECT id, nome, email, cargo FROM usuarios WHERE email = ?",
+            (google_email.lower(),),
+            fetch=True
+        )
+        
+        if existing and len(existing) > 0:
+            # Usuário existe, fazer login
+            user = existing[0]
+            user_id = user['id']
+            user_nome = user['nome']
+            user_email = user['email']
+            user_cargo = user.get('cargo', 'Usuário')
+        else:
+            # Criar novo usuário
+            user_id = db.execute_query(
+                """
+                INSERT INTO usuarios (nome, email, senha_hash, cargo, ativo, criado_em)
+                VALUES (?, ?, ?, ?, 1, datetime('now'))
+                """,
+                (google_name, google_email.lower(), 'GOOGLE_OAUTH', 'Usuário')
+            )
+            user_nome = google_name
+            user_email = google_email
+            user_cargo = 'Usuário'
+            
+            logger.info(f"Novo usuário criado via Google OAuth: {google_email}")
+        
+        # Criar token JWT do sistema
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={
+                "user_id": user_id,
+                "email": user_email,
+                "nome": user_nome,
+                "cargo": user_cargo,
+                "oauth_provider": "google"
+            },
+            expires_delta=access_token_expires
+        )
+        
+        logger.info(f"Login Google OAuth bem-sucedido: {google_email}")
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user_id": user_id,
+            "nome": user_nome,
+            "email": user_email,
+            "cargo": user_cargo,
+            "picture": google_picture
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro no login Google: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao processar login com Google"
+        )

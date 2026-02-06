@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Gerenciador de Projetos</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             margin: 0;
@@ -153,6 +154,54 @@
         .loading.active {
             display: block;
         }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #999;
+            font-size: 13px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider span {
+            padding: 0 15px;
+        }
+
+        .btn-google {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            color: #555;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .btn-google:hover {
+            background: #f8f9fa;
+            border-color: #4285f4;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.2);
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
 <body>
@@ -190,6 +239,13 @@
 
             <div class="loading" id="loading">Entrando...</div>
         </form>
+
+        <div class="divider"><span>ou</span></div>
+
+        <button type="button" class="btn-google" id="btnGoogleLogin">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            Entrar com Google
+        </button>
 
         <div class="forgot-password" style="text-align: center; margin-top: 15px;">
             <a href="forgot-password.html" style="color: #667eea; text-decoration: none; font-size: 14px;">
@@ -281,6 +337,79 @@
                 loading.classList.remove('active');
             }
         });
+
+        // Google Sign-In
+        const GOOGLE_CLIENT_ID = ''; // Adicione seu Client ID do Google aqui
+
+        document.getElementById('btnGoogleLogin').addEventListener('click', async () => {
+            if (!GOOGLE_CLIENT_ID) {
+                // Modo simulado - cria usuário fictício
+                const mockUser = {
+                    id: Date.now(),
+                    nome: 'Usuário Google',
+                    email: 'usuario@gmail.com'
+                };
+                
+                // Criar token local para teste
+                const mockToken = 'google_mock_' + Date.now();
+                api.setAuth(mockToken, mockUser);
+                localStorage.setItem('keep_logged_in', 'true');
+                
+                showAlert('Login simulado com Google!', 'success');
+                setTimeout(() => {
+                    window.location.href = 'projects/index.html';
+                }, 1000);
+                return;
+            }
+
+            // Inicializar Google Sign-In
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleGoogleCredential
+            });
+
+            // Mostrar popup de login
+            google.accounts.id.prompt();
+        });
+
+        async function handleGoogleCredential(response) {
+            try {
+                loading.classList.add('active');
+                btnLogin.disabled = true;
+
+                const res = await fetch('http://localhost:8000/auth/google-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const user = {
+                        id: data.user_id,
+                        nome: data.nome,
+                        email: data.email,
+                        picture: data.picture
+                    };
+                    
+                    api.setAuth(data.access_token, user);
+                    localStorage.setItem('keep_logged_in', 'true');
+                    
+                    showAlert('Login com Google realizado!', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'projects/index.html';
+                    }, 1000);
+                } else {
+                    const error = await res.json();
+                    showAlert(error.detail || 'Erro no login com Google');
+                }
+            } catch (error) {
+                showAlert('Erro ao conectar com Google: ' + error.message);
+            } finally {
+                loading.classList.remove('active');
+                btnLogin.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>

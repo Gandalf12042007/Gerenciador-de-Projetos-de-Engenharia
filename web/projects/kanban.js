@@ -43,12 +43,33 @@ async function loadTasks() {
 function renderKanban() {
   const board = document.getElementById('kanbanBoard');
   board.innerHTML = '';
+  
   columns.forEach(col => {
     const colDiv = document.createElement('div');
     colDiv.className = 'kanban-column';
-    colDiv.innerHTML = `<h3>${col.label}</h3><div class="kanban-tasks" id="col-${col.key}"></div>`;
+    colDiv.dataset.status = col.key;
+    colDiv.innerHTML = `<h3>${col.label}</h3><div class="kanban-tasks" id="col-${col.key}" data-status="${col.key}"></div>`;
     board.appendChild(colDiv);
+    
+    // Configurar drag and drop na área de tarefas
+    const tasksArea = colDiv.querySelector('.kanban-tasks');
+    tasksArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      tasksArea.classList.add('drag-over');
+    });
+    tasksArea.addEventListener('dragleave', (e) => {
+      tasksArea.classList.remove('drag-over');
+    });
+    tasksArea.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      tasksArea.classList.remove('drag-over');
+      const taskId = e.dataTransfer.getData('text/plain');
+      if (taskId) {
+        await moveTask(taskId, col.key);
+      }
+    });
   });
+  
   columns.forEach(col => {
     const colTasks = tasks.filter(t => t.status === col.key);
     const colDiv = document.getElementById('col-' + col.key);
@@ -121,21 +142,7 @@ function formatDate(dateStr) {
 
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
-// Drag and drop
-columns.forEach(col => {
-  document.addEventListener('dragover', function(e) {
-    if (e.target.id === 'col-' + col.key) {
-      e.preventDefault();
-    }
-  });
-  document.addEventListener('drop', async function(e) {
-    if (e.target.id === 'col-' + col.key) {
-      e.preventDefault();
-      const taskId = e.dataTransfer.getData('text/plain');
-      await moveTask(taskId, col.key);
-    }
-  });
-});
+// Drag and drop - configurado no renderKanban()
 
 async function moveTask(id, newStatus) {
   const task = tasks.find(t => t.id == id);

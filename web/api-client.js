@@ -297,8 +297,41 @@ class ApiClient {
         return this.get(`/documentos/projeto/${projeto_id}`);
     }
 
-    async uploadDocumento(projeto_id, file) {
-        return this.uploadFile(`/documentos/projeto/${projeto_id}/upload`, file);
+    async uploadDocumento(projeto_id, file, categoria = 'outros', descricao = '', nome = '') {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const params = new URLSearchParams();
+            params.append('categoria', categoria);
+            if (descricao) params.append('descricao', descricao);
+            if (nome) params.append('nome', nome);
+            
+            const url = `${API_URL}/documentos/projeto/${projeto_id}/upload?${params.toString()}`;
+            
+            const options = {
+                method: 'POST',
+                headers: {},
+            };
+
+            if (this.token) {
+                options.headers['Authorization'] = `Bearer ${this.token}`;
+            }
+
+            options.body = formData;
+
+            const response = await fetch(url, options);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || 'Erro ao fazer upload');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Erro no upload:', error);
+            throw error;
+        }
     }
 
     async deleteDocumento(id) {
@@ -487,10 +520,20 @@ const API = {
     },
     Documentos: {
         listar: (projeto_id) => api.getDocumentosByProjeto(projeto_id),
-        criar: (projeto_id, formData) => api.uploadDocumento(projeto_id, formData.get('file')),
-        atualizar: (id, formData) => api.put(`/documentos/${id}`, formData),
+        criar: (projeto_id, formData) => api.uploadDocumento(
+            projeto_id, 
+            formData.get('file'), 
+            formData.get('categoria') || 'outros',
+            formData.get('descricao') || '',
+            formData.get('nome') || ''
+        ),
+        atualizar: (id, formData) => api.put(`/documentos/${id}`, {
+            descricao: formData.get('descricao'),
+            categoria: formData.get('categoria')
+        }),
         deletar: (id) => api.deleteDocumento(id),
-        download: (id) => Promise.resolve(api.downloadDocumentoUrl(id))
+        download: (id) => Promise.resolve(api.downloadDocumentoUrl(id)),
+        visualizar: (id) => Promise.resolve(`${API_URL}/documentos/${id}/visualizar`)
     },
     Equipes: {
         listarPorProjeto: (projeto_id) => api.getEquipesByProjeto(projeto_id),

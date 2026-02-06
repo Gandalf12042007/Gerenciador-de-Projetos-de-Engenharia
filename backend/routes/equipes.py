@@ -55,6 +55,16 @@ class ConviteAceitar(BaseModel):
     usuario_id: int
 
 
+class CodigoConviteCreate(BaseModel):
+    projeto_id: int
+    papel: str = "colaborador"  # gerente, engenheiro, tecnico, colaborador, cliente
+    expiracao_horas: int = 168  # 7 dias por padrão
+
+
+class CodigoConviteAceitar(BaseModel):
+    codigo: str
+
+
 # ===== ENDPOINTS =====
 
 @router.get("/projeto/{projeto_id}")
@@ -598,6 +608,241 @@ async def listar_convites_projeto(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao listar convites: {str(e)}"
         )
+
+
+# ===== CÓDIGO DE CONVITE SIMPLES =====
+
+def gerar_codigo_curto(tamanho: int = 6) -> str:
+    """Gera um código alfanumérico maiúsculo fácil de digitar"""
+    import string
+    import random
+    caracteres = string.ascii_uppercase + string.digits
+    # Remover caracteres confusos (0, O, I, 1, L)
+    caracteres = caracteres.replace('0', '').replace('O', '').replace('I', '').replace('1', '').replace('L', '')
+    return ''.join(random.choices(caracteres, k=tamanho))
+
+
+@router.post("/convites/gerar-codigo")
+async def gerar_codigo_convite(
+    dados: CodigoConviteCreate,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Gera um código de convite simples (6 caracteres) para compartilhar com clientes/membros
+    Apenas admin, gerente ou criador do projeto pode gerar códigos
+    """
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
+    user_cargo = current_user.get("cargo", "")
+    
+    try:
+        # Verificar se projeto existe
+        projeto = db.execute_query(
+            "SELECT id, nome, criador_id FROM projetos WHERE id = ?",
+            (dados.projeto_id,),
+            fetch=True
+        )
+        if not projeto:
+            raise HTTPException(status_code=404, detail="Projeto não encontrado")
+        
+        projeto = projeto[0]
+        
+        # Verificar permissão (admin, gerente ou criador do projeto)
+        if user_cargo not in ['admin', 'gerente'] and projeto.get('criador_id') != user_id:
+            # Verificar se é gerente do projeto
+            membro = db.execute_query(
+                "SELECT papel FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+                (dados.projeto_id, user_id),
+                fetch=True
+            )
+            if not membro or membro[0].get('papel') != 'gerente':
+                raise HTTPException(status_code=403, detail="Sem permissão para gerar códigos de convite")
+        
+        # Gerar código único
+        codigo = gerar_codigo_curto(6)
+        
+        # Verificar se código já existe (raro, mas possível)
+        tentativas = 0
+        while tentativas < 10:
+            existente = db.execute_query(
+                "SELECT id FROM convites_equipes WHERE token = ? AND (usado = 0 OR usado IS NULL)",
+                (codigo,),
+                fetch=True
+            )
+            if not existente:
+                break
+            codigo = gerar_codigo_curto(6)
+            tentativas += 1
+        
+        # Calcular expiração
+        expiracao = datetime.now() + timedelta(hours=dados.expiracao_horas)
+        
+        # Inserir convite com código simples
+        convite_id = db.execute_query(
+            """
+            INSERT INTO convites_equipes (
+                projeto_id, email_convidado, papel, token, 
+                data_expiracao, criado_por, criado_em
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            """,
+            (
+                dados.projeto_id,
+                f"codigo_{codigo}@convite.interno",  # Email placeholder
+                dados.papel,
+                codigo,  # Usar código curto como token
+                expiracao.strftime('%Y-%m-%d %H:%M:%S'),
+                user_id
+            )
+        )
+        
+        return {
+            "success": True,
+            "message": f"Código de convite gerado para o projeto '{projeto['nome']}'",
+            "codigo": codigo,
+            "projeto_nome": projeto['nome'],
+            "papel": dados.papel,
+            "expira_em": expiracao.isoformat(),
+            "dias_valido": dados.expiracao_horas // 24
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar código: {str(e)}")
+
+
+@router.post("/convites/entrar")
+async def entrar_com_codigo(
+    dados: CodigoConviteAceitar,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Aceita um código de convite e adiciona o usuário ao projeto
+    O usuário deve estar logado
+    """
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    try:
+        # Normalizar código (maiúsculo, sem espaços)
+        codigo = dados.codigo.upper().strip()
+        
+        # Buscar convite pelo código
+        convite = db.execute_query(
+            """
+            SELECT c.id, c.projeto_id, c.papel, c.data_expiracao, c.usado,
+                   p.nome as projeto_nome
+            FROM convites_equipes c
+            JOIN projetos p ON c.projeto_id = p.id
+            WHERE c.token = ?
+            """,
+            (codigo,),
+            fetch=True
+        )
+        
+        if not convite:
+            raise HTTPException(status_code=404, detail="Código inválido ou expirado")
+        
+        convite = convite[0]
+        
+        # Verificar se já foi usado
+        if convite.get('usado'):
+            raise HTTPException(status_code=400, detail="Este código já foi utilizado")
+        
+        # Verificar expiração
+        try:
+            expiracao = datetime.fromisoformat(convite['data_expiracao'])
+            if datetime.now() > expiracao:
+                raise HTTPException(status_code=400, detail="Este código expirou")
+        except:
+            pass  # Se não conseguir parsear, ignora verificação
+        
+        # Verificar se usuário já está no projeto
+        existente = db.execute_query(
+            "SELECT id FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+            (convite['projeto_id'], user_id),
+            fetch=True
+        )
+        if existente:
+            raise HTTPException(status_code=400, detail="Você já é membro deste projeto")
+        
+        # Adicionar à equipe
+        membro_id = db.execute_query(
+            """
+            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
+            VALUES (?, ?, ?, date('now'), 1, datetime('now'))
+            """,
+            (convite['projeto_id'], user_id, convite['papel'])
+        )
+        
+        # Marcar convite como usado
+        db.execute_query(
+            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = ?",
+            (convite['id'],)
+        )
+        
+        return {
+            "success": True,
+            "message": f"Você entrou no projeto '{convite['projeto_nome']}'!",
+            "projeto_id": convite['projeto_id'],
+            "projeto_nome": convite['projeto_nome'],
+            "papel": convite['papel'],
+            "membro_id": membro_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao entrar no projeto: {str(e)}")
+
+
+@router.get("/convites/validar/{codigo}")
+async def validar_codigo(codigo: str):
+    """
+    Valida um código de convite sem aceitar (público, sem auth)
+    Retorna informações do projeto se o código for válido
+    """
+    db = DatabaseHelper()
+    
+    try:
+        codigo = codigo.upper().strip()
+        
+        convite = db.execute_query(
+            """
+            SELECT c.projeto_id, c.papel, c.data_expiracao, c.usado,
+                   p.nome as projeto_nome, p.descricao as projeto_descricao
+            FROM convites_equipes c
+            JOIN projetos p ON c.projeto_id = p.id
+            WHERE c.token = ?
+            """,
+            (codigo,),
+            fetch=True
+        )
+        
+        if not convite:
+            return {"valido": False, "erro": "Código não encontrado"}
+        
+        convite = convite[0]
+        
+        if convite.get('usado'):
+            return {"valido": False, "erro": "Código já utilizado"}
+        
+        try:
+            expiracao = datetime.fromisoformat(convite['data_expiracao'])
+            if datetime.now() > expiracao:
+                return {"valido": False, "erro": "Código expirado"}
+        except:
+            pass
+        
+        return {
+            "valido": True,
+            "projeto_nome": convite['projeto_nome'],
+            "projeto_descricao": convite.get('projeto_descricao', ''),
+            "papel": convite['papel']
+        }
+        
+    except Exception as e:
+        return {"valido": False, "erro": str(e)}
 
 
 # ===== PERMISSÕES =====

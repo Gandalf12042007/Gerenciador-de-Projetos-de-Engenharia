@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔑 Entrar em Projeto - Gerenciador de Projetos</title>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2332 0%, #2d3748 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #7c3aed 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .header h1 { color: white; margin: 0; font-size: 1.3rem; }
+        
+        .header-btn {
+            padding: 10px 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .header-btn:hover { background: rgba(255,255,255,0.2); }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .card-icon {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            text-align: center;
+            color: #1a202c;
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+        
+        .card p {
+            text-align: center;
+            color: #718096;
+            margin: 0 0 30px 0;
+        }
+        
+        .code-input-container {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .code-input {
+            width: 50px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        
+        .code-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+        
+        .code-input.valid { border-color: #22c55e; background: #f0fdf4; }
+        .code-input.invalid { border-color: #ef4444; background: #fef2f2; }
+        
+        .btn-entrar {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+        
+        .btn-entrar:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
+        }
+        
+        .btn-entrar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .projeto-preview {
+            display: none;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .projeto-preview.show { display: block; }
+        
+        .projeto-preview h3 {
+            margin: 0 0 8px 0;
+            color: #0369a1;
+            font-size: 1.3rem;
+        }
+        
+        .projeto-preview p {
+            margin: 0;
+            color: #0c4a6e;
+            font-size: 0.9rem;
+        }
+        
+        .projeto-preview .papel {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 15px;
+            background: #0ea5e9;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .mensagem {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .mensagem.sucesso {
+            display: block;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        
+        .mensagem.erro {
+            display: block;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: #a0aec0;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        
+        .divider span { padding: 0 15px; font-size: 0.9rem; }
+        
+        .criar-conta-link {
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .criar-conta-link a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .criar-conta-link a:hover { text-decoration: underline; }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show { display: block; }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🔑 Entrar em Projeto</h1>
+        <div>
+            <a href="projects/index.html" class="header-btn">📁 Meus Projetos</a>
+            <a href="login.html" class="header-btn" id="loginBtn">🔐 Login</a>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <div class="card-icon">🎟️</div>
+            <h2>Digite o Código de Convite</h2>
+            <p>Recebeu um código de um administrador ou gerente? Digite abaixo para entrar no projeto.</p>
+            
+            <div id="mensagem" class="mensagem"></div>
+            
+            <div class="code-input-container">
+                <input type="text" class="code-input" maxlength="1" data-index="0" autofocus>
+                <input type="text" class="code-input" maxlength="1" data-index="1">
+                <input type="text" class="code-input" maxlength="1" data-index="2">
+                <input type="text" class="code-input" maxlength="1" data-index="3">
+                <input type="text" class="code-input" maxlength="1" data-index="4">
+                <input type="text" class="code-input" maxlength="1" data-index="5">
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <span>Validando código...</span>
+            </div>
+            
+            <div id="projetoPreview" class="projeto-preview">
+                <h3 id="projetoNome"></h3>
+                <p id="projetoDescricao"></p>
+                <span class="papel" id="papelUsuario"></span>
+            </div>
+            
+            <button id="btnEntrar" class="btn-entrar" disabled>
+                🚀 Entrar no Projeto
+            </button>
+            
+            <div class="divider"><span>ou</span></div>
+            
+            <div class="criar-conta-link">
+                Não tem uma conta? <a href="login.html">Faça login ou cadastre-se</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const inputs = document.querySelectorAll('.code-input');
+        const btnEntrar = document.getElementById('btnEntrar');
+        const mensagem = document.getElementById('mensagem');
+        const loading = document.getElementById('loading');
+        const projetoPreview = document.getElementById('projetoPreview');
+        
+        let codigoValidado = false;
+        let codigoAtual = '';
+        
+        // Auto-focus e navegação entre inputs
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                const value = e.target.value.toUpperCase();
+                e.target.value = value;
+                
+                if (value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+                
+                checkCodigo();
+            });
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+            
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text').toUpperCase().slice(0, 6);
+                pasteData.split('').forEach((char, i) => {
+                    if (inputs[i]) inputs[i].value = char;
+                });
+                checkCodigo();
+            });
+        });
+        
+        async function checkCodigo() {
+            const codigo = Array.from(inputs).map(i => i.value).join('');
+            
+            if (codigo.length !== 6) {
+                btnEntrar.disabled = true;
+                projetoPreview.classList.remove('show');
+                inputs.forEach(i => i.classList.remove('valid', 'invalid'));
+                return;
+            }
+            
+            codigoAtual = codigo;
+            loading.classList.add('show');
+            
+            try {
+                const res = await fetch(`${API_BASE}/equipes/convites/validar/${codigo}`);
+                const data = await res.json();
+                
+                loading.classList.remove('show');
+                
+                if (data.valido) {
+                    inputs.forEach(i => i.classList.add('valid'));
+                    inputs.forEach(i => i.classList.remove('invalid'));
+                    
+                    document.getElementById('projetoNome').textContent = '🏗️ ' + data.projeto_nome;
+                    document.getElementById('projetoDescricao').textContent = data.projeto_descricao || 'Projeto de engenharia';
+                    document.getElementById('papelUsuario').textContent = 'Papel: ' + data.papel.toUpperCase();
+                    projetoPreview.classList.add('show');
+                    
+                    codigoValidado = true;
+                    btnEntrar.disabled = false;
+                    
+                    mostrarMensagem('Código válido! Clique para entrar.', 'sucesso');
+                } else {
+                    inputs.forEach(i => i.classList.add('invalid'));
+                    inputs.forEach(i => i.classList.remove('valid'));
+                    projetoPreview.classList.remove('show');
+                    codigoValidado = false;
+                    btnEntrar.disabled = true;
+                    
+                    mostrarMensagem(data.erro || 'Código inválido', 'erro');
+                }
+            } catch (e) {
+                loading.classList.remove('show');
+                mostrarMensagem('Erro ao validar código. Verifique sua conexão.', 'erro');
+            }
+        }
+        
+        function mostrarMensagem(texto, tipo) {
+            mensagem.textContent = texto;
+            mensagem.className = 'mensagem ' + tipo;
+        }
+        
+        btnEntrar.addEventListener('click', async () => {
+            const token = localStorage.getItem('access_token');
+            
+            if (!token) {
+                mostrarMensagem('Você precisa fazer login primeiro!', 'erro');
+                setTimeout(() => {
+                    window.location.href = 'login.html?redirect=entrar-projeto.html';
+                }, 1500);
+                return;
+            }
+            
+            if (!codigoValidado || !codigoAtual) {
+                mostrarMensagem('Digite um código válido primeiro', 'erro');
+                return;
+            }
+            
+            btnEntrar.disabled = true;
+            btnEntrar.textContent = '⏳ Entrando...';
+            
+            try {
+                const res = await fetch(`${API_BASE}/equipes/convites/entrar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ codigo: codigoAtual })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    mostrarMensagem('🎉 ' + data.message, 'sucesso');
+                    btnEntrar.textContent = '✅ Você entrou!';
+                    
+                    setTimeout(() => {
+                        window.location.href = `projects/dashboard.html?project=${data.projeto_id}`;
+                    }, 2000);
+                } else {
+                    mostrarMensagem(data.detail || 'Erro ao entrar no projeto', 'erro');
+                    btnEntrar.disabled = false;
+                    btnEntrar.textContent = '🚀 Entrar no Projeto';
+                }
+            } catch (e) {
+                mostrarMensagem('Erro de conexão. Tente novamente.', 'erro');
+                btnEntrar.disabled = false;
+                btnEntrar.textContent = '🚀 Entrar no Projeto';
+            }
+        });
+        
+        // Verificar se está logado
+        if (localStorage.getItem('access_token')) {
+            document.getElementById('loginBtn').textContent = '👤 Perfil';
+            document.getElementById('loginBtn').href = 'profile.html';
+        }
+    </script>
+</body>
+</html>

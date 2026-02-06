@@ -93,6 +93,12 @@ body {
   padding: 8px;
   background: rgba(241, 245, 249, 0.7);
   border-radius: 8px;
+  transition: all 0.3s ease;
+}
+.kanban-tasks.drag-over {
+  background: rgba(14, 165, 233, 0.2);
+  border: 2px dashed #0ea5e9;
+  border-radius: 8px;
 }
 .kanban-task {
   background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);

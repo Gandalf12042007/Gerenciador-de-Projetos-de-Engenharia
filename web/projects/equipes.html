@@ -12,8 +12,9 @@
     <h1>👥 Equipe do Projeto</h1>
     <div class="top-controls">
       <button id="addMemberBtn" class="btn primary">➕ Adicionar Membro</button>
+      <button id="generateCodeBtn" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🔑 Gerar Código</button>
       <button id="inviteBtn" class="btn">✉️ Convidar por Email</button>
-      <button onclick="location.href='kanban.html?project='+projectId" class="btn">📋 Kanban</button>
+      <button onclick="location.href='kanban.html?project='+projectId" class="btn">📋 Quadro</button>
       <button onclick="location.href='docs.html?project='+projectId" class="btn">📄 Documentos</button>
       <button onclick="location.href='index.html'" class="btn">🏠 Projetos</button>
     </div>
@@ -146,6 +147,58 @@
     </div>
   </div>
 
+  <!-- Modal Gerar Código de Convite -->
+  <div id="codeModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 450px; text-align: center;">
+      <span class="close" id="closeCodeModal">&times;</span>
+      <h2 style="margin-bottom: 10px;">🔑 Gerar Código de Convite</h2>
+      <p style="color: #718096; margin-bottom: 20px;">Gere um código simples para compartilhar com clientes ou membros da equipe</p>
+      
+      <div id="codeForm" style="display: block;">
+        <div class="form-group">
+          <label for="codePapel">Papel do Convidado</label>
+          <select id="codePapel" required style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0;">
+            <option value="cliente">🏠 Cliente</option>
+            <option value="colaborador">👤 Colaborador</option>
+            <option value="tecnico">🔧 Técnico</option>
+            <option value="engenheiro">👷 Engenheiro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="codeDias">Válido por</label>
+          <select id="codeDias" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0;">
+            <option value="24">1 dia</option>
+            <option value="72">3 dias</option>
+            <option value="168" selected>7 dias</option>
+            <option value="720">30 dias</option>
+          </select>
+        </div>
+        <button type="button" class="btn primary" onclick="gerarCodigo()" style="width: 100%; padding: 12px; font-size: 1rem;">
+          ✨ Gerar Código
+        </button>
+      </div>
+      
+      <div id="codeResult" style="display: none;">
+        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <p style="color: #166534; margin: 0 0 10px 0; font-size: 0.9rem;">Código gerado com sucesso!</p>
+          <div id="codigoGerado" style="font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; color: #15803d; font-family: monospace;"></div>
+        </div>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;">
+          Compartilhe este código com o convidado. Ele deve acessar:<br>
+          <strong style="color: #2563eb;">http://localhost:3000/entrar-projeto.html</strong>
+        </p>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn primary" onclick="copiarCodigo()" style="flex: 1; padding: 10px;">
+            📋 Copiar Código
+          </button>
+          <button type="button" class="btn" onclick="novoCodigoForm()" style="flex: 1; padding: 10px;">
+            🔄 Novo Código
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="../api-client.js"></script>
   <script>
     let projectId = null;
@@ -166,8 +219,10 @@
       // Event listeners
       document.getElementById('addMemberBtn').onclick = openAddMemberModal;
       document.getElementById('inviteBtn').onclick = openInviteModal;
+      document.getElementById('generateCodeBtn').onclick = openCodeModal;
       document.getElementById('closeMemberModal').onclick = closeMemberModal;
       document.getElementById('closeInviteModal').onclick = closeInviteModal;
+      document.getElementById('closeCodeModal').onclick = closeCodeModal;
       document.getElementById('memberForm').onsubmit = saveMember;
       document.getElementById('inviteForm').onsubmit = sendInvite;
       document.getElementById('searchMember').oninput = filterMembers;
@@ -418,6 +473,63 @@
         members = originalMembers;
       }
     }
+
+    // ===== FUNÇÕES DO CÓDIGO DE CONVITE =====
+    let codigoAtualGerado = '';
+
+    function openCodeModal() {
+      document.getElementById('codeModal').style.display = 'flex';
+      document.getElementById('codeForm').style.display = 'block';
+      document.getElementById('codeResult').style.display = 'none';
+    }
+
+    function closeCodeModal() {
+      document.getElementById('codeModal').style.display = 'none';
+    }
+
+    function novoCodigoForm() {
+      document.getElementById('codeForm').style.display = 'block';
+      document.getElementById('codeResult').style.display = 'none';
+    }
+
+    async function gerarCodigo() {
+      const papel = document.getElementById('codePapel').value;
+      const horas = parseInt(document.getElementById('codeDias').value);
+      
+      try {
+        const response = await api.post('/equipes/convites/gerar-codigo', {
+          projeto_id: parseInt(projectId),
+          papel: papel,
+          expiracao_horas: horas
+        });
+        
+        if (response.success) {
+          codigoAtualGerado = response.codigo;
+          document.getElementById('codigoGerado').textContent = response.codigo;
+          document.getElementById('codeForm').style.display = 'none';
+          document.getElementById('codeResult').style.display = 'block';
+        } else {
+          alert('Erro ao gerar código: ' + (response.detail || 'Erro desconhecido'));
+        }
+      } catch (error) {
+        alert('Erro ao gerar código: ' + (error.message || 'Erro de conexão'));
+      }
+    }
+
+    function copiarCodigo() {
+      if (codigoAtualGerado) {
+        navigator.clipboard.writeText(codigoAtualGerado).then(() => {
+          alert('Código copiado: ' + codigoAtualGerado);
+        }).catch(() => {
+          prompt('Copie o código:', codigoAtualGerado);
+        });
+      }
+    }
+
+    // Fechar modal ao clicar fora
+    document.getElementById('codeModal').onclick = (e) => {
+      if (e.target === e.currentTarget) closeCodeModal();
+    };
   </script>
 </body>
 </html>

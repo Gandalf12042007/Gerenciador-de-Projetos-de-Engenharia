@@ -65,6 +65,13 @@ class CodigoConviteAceitar(BaseModel):
     codigo: str
 
 
+class EnviarConviteEmail(BaseModel):
+    projeto_id: int
+    email_destinatario: str
+    papel: str = "colaborador"
+    expiracao_horas: int = 168  # 7 dias por padrão
+
+
 # ===== ENDPOINTS =====
 
 @router.get("/projeto/{projeto_id}")
@@ -709,6 +716,130 @@ async def gerar_codigo_convite(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao gerar código: {str(e)}")
+
+
+@router.post("/convites/enviar-email")
+async def enviar_convite_por_email(
+    dados: EnviarConviteEmail,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Gera um código de convite e envia por email usando SendGrid
+    O destinatário receberá um email com o código para entrar no projeto
+    """
+    from utils.email_service import email_service
+    
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
+    user_cargo = current_user.get("cargo", "")
+    user_nome = current_user.get("nome", "Usuário")
+    
+    try:
+        # Verificar se SendGrid está configurado
+        if not email_service.is_configured():
+            raise HTTPException(
+                status_code=503,
+                detail="Serviço de email não configurado. Configure SENDGRID_API_KEY."
+            )
+        
+        # Verificar se projeto existe
+        projeto = db.execute_query(
+            "SELECT id, nome, criador_id FROM projetos WHERE id = ?",
+            (dados.projeto_id,),
+            fetch=True
+        )
+        if not projeto:
+            raise HTTPException(status_code=404, detail="Projeto não encontrado")
+        
+        projeto = projeto[0]
+        
+        # Verificar permissão (admin, gerente ou criador do projeto)
+        if user_cargo not in ['admin', 'gerente'] and projeto.get('criador_id') != user_id:
+            membro = db.execute_query(
+                "SELECT papel FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+                (dados.projeto_id, user_id),
+                fetch=True
+            )
+            if not membro or membro[0].get('papel') != 'gerente':
+                raise HTTPException(status_code=403, detail="Sem permissão para enviar convites")
+        
+        # Gerar código único
+        codigo = gerar_codigo_curto(6)
+        
+        tentativas = 0
+        while tentativas < 10:
+            existente = db.execute_query(
+                "SELECT id FROM convites_equipes WHERE token = ? AND (usado = 0 OR usado IS NULL)",
+                (codigo,),
+                fetch=True
+            )
+            if not existente:
+                break
+            codigo = gerar_codigo_curto(6)
+            tentativas += 1
+        
+        # Calcular expiração
+        expiracao = datetime.now() + timedelta(hours=dados.expiracao_horas)
+        
+        # Inserir convite
+        convite_id = db.execute_query(
+            """
+            INSERT INTO convites_equipes (
+                projeto_id, email_convidado, papel, token, 
+                data_expiracao, criado_por, criado_em
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            """,
+            (
+                dados.projeto_id,
+                dados.email_destinatario,
+                dados.papel,
+                codigo,
+                expiracao.strftime('%Y-%m-%d %H:%M:%S'),
+                user_id
+            )
+        )
+        
+        # Formatar data de expiração
+        expira_formatado = expiracao.strftime('%d/%m/%Y às %H:%M')
+        
+        # Enviar email
+        resultado_email = email_service.send_invite_code(
+            to_email=dados.email_destinatario,
+            codigo=codigo,
+            projeto_nome=projeto['nome'],
+            papel=dados.papel,
+            convidado_por=user_nome,
+            expira_em=expira_formatado
+        )
+        
+        if not resultado_email.get('success'):
+            # Se falhou o email, ainda retorna o código para uso manual
+            return {
+                "success": True,
+                "warning": "Código gerado mas email não enviado",
+                "email_error": resultado_email.get('error'),
+                "codigo": codigo,
+                "projeto_nome": projeto['nome'],
+                "email_destinatario": dados.email_destinatario,
+                "papel": dados.papel,
+                "expira_em": expiracao.isoformat()
+            }
+        
+        return {
+            "success": True,
+            "message": f"Convite enviado com sucesso para {dados.email_destinatario}",
+            "codigo": codigo,
+            "projeto_nome": projeto['nome'],
+            "email_destinatario": dados.email_destinatario,
+            "papel": dados.papel,
+            "expira_em": expiracao.isoformat(),
+            "email_enviado": True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao enviar convite: {str(e)}")
 
 
 @router.post("/convites/entrar")

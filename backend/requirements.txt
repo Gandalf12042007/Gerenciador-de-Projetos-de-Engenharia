@@ -23,8 +23,8 @@ email-validator==2.1.0
 # Rate Limiting
 slowapi==0.1.9
 
-# Email (2FA)
-python-mail==1.2.4
+# Email (SendGrid)
+sendgrid==6.11.0
 
 # Tarefas agendadas (Backup)
 schedule==1.2.0

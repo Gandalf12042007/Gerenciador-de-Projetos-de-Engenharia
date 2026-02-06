@@ -61,6 +61,12 @@ class Settings:
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
+    # SendGrid Email
+    SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
+    SENDGRID_FROM_EMAIL: str = os.getenv("SENDGRID_FROM_EMAIL", "noreply@gerenciador-projetos.com")
+    SENDGRID_FROM_NAME: str = os.getenv("SENDGRID_FROM_NAME", "Gerenciador de Projetos")
+    APP_URL: str = os.getenv("APP_URL", "http://localhost:3000")
+    
     @property
     def db_config(self) -> dict:
         """Retorna configuração do banco de dados"""

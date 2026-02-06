@@ -516,8 +516,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ### Vicente de Souza
 **Desenvolvedor Principal**
 
-[![GitHub](https://img.shields.io/badge/GitHub-Gandalf12042007-181717?style=for-the-badge&logo=github)](https://github.com/Gandalf12042007)
-[![GitHub](https://img.shields.io/badge/GitHub-souza371-181717?style=for-the-badge&logo=github)](https://github.com/souza371)
+[![GitHub](https://img.shields.io/badge/GitHub-Souza371-181717?style=for-the-badge&logo=github)](https://github.com/Souza371)
 [![Email](https://img.shields.io/badge/Email-vicentedesouza762@gmail.com-EA4335?style=for-the-badge&logo=gmail)](mailto:vicentedesouza762@gmail.com)
 [![Portfolio](https://img.shields.io/badge/Portfolio-souza371.github.io-00C7B7?style=for-the-badge&logo=netlify)](https://souza371.github.io/)
 

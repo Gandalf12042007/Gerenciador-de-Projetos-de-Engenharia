@@ -861,7 +861,7 @@ async def entrar_com_codigo(
         # Buscar convite pelo código
         convite = db.execute_query(
             """
-            SELECT c.id, c.projeto_id, c.papel, c.data_expiracao, c.usado,
+            SELECT c.id, c.projeto_id, c.papel, c.expiracao, c.aceito,
                    p.nome as projeto_nome
             FROM convites_equipes c
             JOIN projetos p ON c.projeto_id = p.id
@@ -877,12 +877,12 @@ async def entrar_com_codigo(
         convite = convite[0]
         
         # Verificar se já foi usado
-        if convite.get('usado'):
+        if convite.get('aceito'):
             raise HTTPException(status_code=400, detail="Este código já foi utilizado")
         
         # Verificar expiração
         try:
-            expiracao = datetime.fromisoformat(convite['data_expiracao'])
+            expiracao = datetime.fromisoformat(convite['expiracao'])
             if datetime.now() > expiracao:
                 raise HTTPException(status_code=400, detail="Este código expirou")
         except:
@@ -940,7 +940,7 @@ async def validar_codigo(codigo: str):
         
         convite = db.execute_query(
             """
-            SELECT c.projeto_id, c.papel, c.data_expiracao, c.usado,
+            SELECT c.projeto_id, c.papel, c.expiracao, c.aceito,
                    p.nome as projeto_nome, p.descricao as projeto_descricao
             FROM convites_equipes c
             JOIN projetos p ON c.projeto_id = p.id
@@ -955,11 +955,11 @@ async def validar_codigo(codigo: str):
         
         convite = convite[0]
         
-        if convite.get('usado'):
+        if convite.get('aceito'):
             return {"valido": False, "erro": "Código já utilizado"}
         
         try:
-            expiracao = datetime.fromisoformat(convite['data_expiracao'])
+            expiracao = datetime.fromisoformat(convite['expiracao'])
             if datetime.now() > expiracao:
                 return {"valido": False, "erro": "Código expirado"}
         except:

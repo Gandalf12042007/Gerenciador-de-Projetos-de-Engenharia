@@ -244,19 +244,25 @@ async def criar_projeto(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Cria novo projeto
+    Cria novo projeto com código de acesso automático
     """
     db = DatabaseHelper()
     
+    # Importar gerador de código
+    from utils.project_codes import gerar_codigo_unico
+    
     try:
-        # Inserir projeto
+        # Gerar código único para o projeto
+        codigo_acesso = gerar_codigo_unico()
+        
+        # Inserir projeto com código de acesso
         projeto_id = db.execute_insert(
             """
             INSERT INTO projetos (
                 nome, descricao, endereco, cliente, valor_total,
-                data_inicio, data_fim_prevista, status, criador_id
+                data_inicio, data_fim_prevista, status, criador_id, codigo_acesso
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 projeto.nome,
@@ -267,7 +273,8 @@ async def criar_projeto(
                 str(projeto.data_inicio) if projeto.data_inicio else None,
                 str(projeto.data_fim_prevista) if projeto.data_fim_prevista else None,
                 projeto.status,
-                current_user.get("user_id") or current_user.get("id")
+                current_user.get("user_id") or current_user.get("id"),
+                codigo_acesso
             )
         )
         
@@ -277,13 +284,17 @@ async def criar_projeto(
         from datetime import date as dt_date
         db.execute_insert(
             """
-            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo)
-            VALUES (%s, %s, 'gerente', %s, 1)
+            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, funcao)
+            VALUES (%s, %s, 'gerente', %s, 1, 'gerente')
             """,
             (projeto_id, user_id, str(dt_date.today()))
         )
         
-        return {"message": "Projeto criado com sucesso", "id": projeto_id}
+        return {
+            "message": "Projeto criado com sucesso", 
+            "id": projeto_id,
+            "codigo_acesso": codigo_acesso
+        }
     
     except Exception as e:
         raise HTTPException(
@@ -396,3 +407,167 @@ async def deletar_projeto(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao deletar projeto: {str(e)}"
         )
+
+
+# ============================================
+# SISTEMA DE CÓDIGOS DE ACESSO
+# ============================================
+
+class EntrarPorCodigoRequest(BaseModel):
+    codigo: str
+
+
+@router.post("/entrar-por-codigo")
+async def entrar_por_codigo(
+    request: EntrarPorCodigoRequest,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Permite usuário entrar em um projeto usando código de acesso.
+    Formato do código: LETRA + 4 NÚMEROS (ex: A1234)
+    """
+    from utils.project_codes import validar_formato_codigo, buscar_projeto_por_codigo, adicionar_usuario_ao_projeto
+    
+    codigo = request.codigo.strip().upper()
+    
+    # Validar formato
+    if not validar_formato_codigo(codigo):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Código inválido. O formato deve ser: 1 letra + 4 números (ex: A1234)"
+        )
+    
+    # Buscar projeto
+    db = DatabaseHelper()
+    projeto = db.execute_query(
+        "SELECT id, nome, descricao, cliente, status, codigo_acesso FROM projetos WHERE codigo_acesso = %s",
+        (codigo,),
+        fetch=True
+    )
+    
+    if not projeto or len(projeto) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Projeto não encontrado com este código"
+        )
+    
+    projeto = projeto[0]
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Adicionar usuário ao projeto
+    resultado = adicionar_usuario_ao_projeto(projeto['id'], user_id, "membro")
+    
+    return {
+        "message": resultado["message"],
+        "projeto": {
+            "id": projeto['id'],
+            "nome": projeto['nome'],
+            "descricao": projeto.get('descricao'),
+            "cliente": projeto.get('cliente'),
+            "status": projeto['status']
+        }
+    }
+
+
+@router.get("/{projeto_id}/codigo")
+async def obter_codigo_projeto(
+    projeto_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Obtém o código de acesso de um projeto (apenas gerentes/admins)
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar se usuário tem permissão (é gerente do projeto)
+    if not permission_manager.can_modify_project(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas gerentes do projeto podem ver o código de acesso"
+        )
+    
+    db = DatabaseHelper()
+    projeto = db.execute_query(
+        "SELECT codigo_acesso FROM projetos WHERE id = %s",
+        (projeto_id,),
+        fetch=True
+    )
+    
+    if not projeto or len(projeto) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Projeto não encontrado"
+        )
+    
+    codigo = projeto[0].get('codigo_acesso')
+    
+    # Se não tem código, gera um
+    if not codigo:
+        from utils.project_codes import gerar_codigo_unico
+        codigo = gerar_codigo_unico()
+        db.execute_query(
+            "UPDATE projetos SET codigo_acesso = %s WHERE id = %s",
+            (codigo, projeto_id)
+        )
+    
+    return {"codigo_acesso": codigo}
+
+
+@router.post("/{projeto_id}/regenerar-codigo")
+async def regenerar_codigo_projeto(
+    projeto_id: int,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Regenera o código de acesso de um projeto (apenas gerentes/admins)
+    """
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Verificar se usuário tem permissão
+    if not permission_manager.can_modify_project(user_id, projeto_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas gerentes do projeto podem regenerar o código"
+        )
+    
+    from utils.project_codes import gerar_codigo_unico
+    
+    db = DatabaseHelper()
+    novo_codigo = gerar_codigo_unico()
+    
+    try:
+        db.execute_query(
+            "UPDATE projetos SET codigo_acesso = %s WHERE id = %s",
+            (novo_codigo, projeto_id)
+        )
+        return {"message": "Código regenerado com sucesso", "codigo_acesso": novo_codigo}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao regenerar código: {str(e)}"
+        )
+
+
+@router.get("/verificar-codigo/{codigo}")
+async def verificar_codigo(codigo: str):
+    """
+    Verifica se um código de projeto existe (público, para validação no frontend)
+    """
+    from utils.project_codes import validar_formato_codigo
+    
+    codigo = codigo.strip().upper()
+    
+    if not validar_formato_codigo(codigo):
+        return {"valido": False, "message": "Formato de código inválido"}
+    
+    db = DatabaseHelper()
+    projeto = db.execute_query(
+        "SELECT id, nome FROM projetos WHERE codigo_acesso = %s",
+        (codigo,),
+        fetch=True
+    )
+    
+    if projeto and len(projeto) > 0:
+        return {"valido": True, "projeto_nome": projeto[0]['nome']}
+    
+    return {"valido": False, "message": "Código não encontrado"}

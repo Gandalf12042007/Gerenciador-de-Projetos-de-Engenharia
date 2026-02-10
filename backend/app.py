@@ -88,10 +88,31 @@ if WEB_DIR.exists():
     if assets_dir.exists():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
     
+    # Diretório de estilos globais
+    styles_dir = WEB_DIR / "styles"
+    if styles_dir.exists():
+        app.mount("/styles", StaticFiles(directory=str(styles_dir)), name="styles")
+    
     # Arquivos de projetos (CSS, JS específicos)
     projects_dir = WEB_DIR / "projects"
     if projects_dir.exists():
         app.mount("/projects", StaticFiles(directory=str(projects_dir), html=True), name="projects")
+    
+    # Rota para servir arquivos JS e CSS na raiz
+    @app.get("/api-client.js")
+    async def serve_api_client():
+        """Serve o api-client.js"""
+        return FileResponse(WEB_DIR / "api-client.js", media_type="application/javascript")
+    
+    @app.get("/app.js")
+    async def serve_app_js():
+        """Serve o app.js"""
+        return FileResponse(WEB_DIR / "app.js", media_type="application/javascript")
+    
+    @app.get("/styles.css")
+    async def serve_styles():
+        """Serve o styles.css"""
+        return FileResponse(WEB_DIR / "styles.css", media_type="text/css")
     
     # Rota para servir index.html na raiz
     @app.get("/app")
@@ -102,13 +123,65 @@ if WEB_DIR.exists():
             return FileResponse(index_file)
         return {"error": "Frontend not found"}
     
-    # Servir login.html
+    # Servir login.html (ambas rotas: /login e /login.html)
     @app.get("/login")
     async def serve_login():
         login_file = WEB_DIR / "login.html"
         if login_file.exists():
-            return FileResponse(login_file)
+            return FileResponse(login_file, media_type="text/html")
         return {"error": "Login page not found"}
+    
+    @app.get("/login.html")
+    async def serve_login_html():
+        login_file = WEB_DIR / "login.html"
+        if login_file.exists():
+            return FileResponse(login_file, media_type="text/html")
+        return {"error": "Login page not found"}
+    
+    # Servir register.html
+    @app.get("/register")
+    async def serve_register():
+        register_file = WEB_DIR / "register.html"
+        if register_file.exists():
+            return FileResponse(register_file, media_type="text/html")
+        return {"error": "Register page not found"}
+    
+    @app.get("/register.html")
+    async def serve_register_html():
+        register_file = WEB_DIR / "register.html"
+        if register_file.exists():
+            return FileResponse(register_file, media_type="text/html")
+        return {"error": "Register page not found"}
+    
+    # Servir entrar-projeto.html
+    @app.get("/entrar-projeto")
+    async def serve_entrar_projeto():
+        file = WEB_DIR / "entrar-projeto.html"
+        if file.exists():
+            return FileResponse(file, media_type="text/html")
+        return {"error": "Page not found"}
+    
+    @app.get("/entrar-projeto.html")
+    async def serve_entrar_projeto_html():
+        file = WEB_DIR / "entrar-projeto.html"
+        if file.exists():
+            return FileResponse(file, media_type="text/html")
+        return {"error": "Page not found"}
+    
+    # Servir forgot-password.html
+    @app.get("/forgot-password")
+    async def serve_forgot_password():
+        forgot_file = WEB_DIR / "forgot-password.html"
+        if forgot_file.exists():
+            return FileResponse(forgot_file, media_type="text/html")
+        return {"error": "Forgot password page not found"}
+    
+    @app.get("/forgot-password.html")
+    async def serve_forgot_password_html():
+        forgot_file = WEB_DIR / "forgot-password.html"
+        if forgot_file.exists():
+            return FileResponse(forgot_file, media_type="text/html")
+        return {"error": "Forgot password page not found"}
 
 
 if __name__ == "__main__":

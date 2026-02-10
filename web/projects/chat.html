@@ -4,15 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Chat do Projeto — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
   <link rel="stylesheet" href="chat.css">
+  <script src="layout.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>Chat do Projeto</h1>
-    <button id="kanbanBtn" class="btn">Kanban</button>
-    <button id="docsBtn" class="btn">Documentos</button>
-    <button id="backBtn" class="btn">Voltar</button>
-  </header>
+  <!-- Header será injetado pelo layout.js -->
+  
   <main class="chat-container">
     <div id="chatMessages" class="chat-messages"></div>
     <form id="chatForm" class="chat-form">

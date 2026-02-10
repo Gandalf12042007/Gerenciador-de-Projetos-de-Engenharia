@@ -4,17 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Documentos — Gerenciador de Projetos</title>
-  <link rel="stylesheet" href="docs.css?v=3">
-  <link rel="stylesheet" href="global.css?v=3">
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="docs.css">
+  <script src="layout.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>Documentos do Projeto</h1>
-    <button id="addDocBtn" class="btn primary">Novo Documento</button>
-    <button id="kanbanBtn" class="btn">Kanban</button>
-    <button id="chatBtn" class="btn">Chat</button>
-    <button id="backBtn" class="btn">Voltar</button>
-  </header>
+  <!-- Header será injetado pelo layout.js -->
+  
+  <!-- Botão de ação flutuante -->
+  <button id="addDocBtn" class="btn primary" style="position: fixed; bottom: 24px; right: 24px; z-index: 100; padding: 16px 24px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">➕ Novo Documento</button>
+  
   <main class="docs-container">
     <table class="docs-table" id="docsTable">
       <thead>

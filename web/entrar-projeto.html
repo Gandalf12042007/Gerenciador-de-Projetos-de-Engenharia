@@ -3,439 +3,491 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔑 Entrar em Projeto - Gerenciador de Projetos</title>
+    <title>Entrar em Projeto - Gerenciador de Projetos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/global.css">
     <style>
-        * { box-sizing: border-box; }
-        
         body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a2332 0%, #2d3748 100%);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #7c3aed 100%);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.3);
-        }
-        
-        .header h1 { color: white; margin: 0; font-size: 1.3rem; }
-        
-        .header-btn {
-            padding: 10px 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        
-        .header-btn:hover { background: rgba(255,255,255,0.2); }
-        
-        .container {
-            flex: 1;
-            display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            background: 
+                radial-gradient(ellipse at top left, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                var(--bg-primary);
         }
-        
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 500px;
+
+        .container {
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 480px;
+            animation: fadeInUp 0.5s ease forwards;
         }
-        
-        .card-icon {
-            font-size: 4rem;
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 32px;
         }
-        
-        .card h2 {
-            text-align: center;
-            color: #1a202c;
-            margin: 0 0 10px 0;
-            font-size: 1.8rem;
-        }
-        
-        .card p {
-            text-align: center;
-            color: #718096;
-            margin: 0 0 30px 0;
-        }
-        
-        .code-input-container {
+
+        .header-icon {
+            width: 72px;
+            height: 72px;
+            background: var(--gradient-success);
+            border-radius: 20px;
             display: flex;
-            gap: 8px;
+            align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin: 0 auto 20px;
+            font-size: 36px;
+            box-shadow: 0 8px 32px rgba(34, 197, 94, 0.35);
         }
-        
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .code-input-group {
+            margin-bottom: 24px;
+        }
+
         .code-input {
-            width: 50px;
-            height: 60px;
+            width: 100%;
+            padding: 20px;
+            font-size: 2rem;
+            font-weight: 700;
             text-align: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            letter-spacing: 12px;
             text-transform: uppercase;
-            transition: all 0.3s;
+            background: var(--bg-tertiary);
+            border: 3px solid var(--border-color);
+            border-radius: var(--border-radius-lg);
+            color: var(--text-primary);
+            transition: all var(--transition-normal);
         }
-        
+
+        .code-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: 8px;
+            font-size: 1.5rem;
+        }
+
         .code-input:focus {
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+            border-color: var(--color-success);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
         }
-        
-        .code-input.valid { border-color: #22c55e; background: #f0fdf4; }
-        .code-input.invalid { border-color: #ef4444; background: #fef2f2; }
-        
-        .btn-entrar {
-            width: 100%;
+
+        .code-input.valid {
+            border-color: var(--color-success);
+        }
+
+        .code-input.invalid {
+            border-color: var(--color-error);
+        }
+
+        .code-format {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 12px;
+        }
+
+        .code-format strong {
+            color: var(--text-secondary);
+        }
+
+        .project-preview {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--color-success);
+            border-radius: var(--border-radius-md);
             padding: 16px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-        }
-        
-        .btn-entrar:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
-        }
-        
-        .btn-entrar:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .projeto-preview {
+            margin-bottom: 24px;
             display: none;
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border: 2px solid #0ea5e9;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
         }
-        
-        .projeto-preview.show { display: block; }
-        
-        .projeto-preview h3 {
-            margin: 0 0 8px 0;
-            color: #0369a1;
-            font-size: 1.3rem;
+
+        .project-preview.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
-        
-        .projeto-preview p {
-            margin: 0;
-            color: #0c4a6e;
-            font-size: 0.9rem;
+
+        .project-preview-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
         }
-        
-        .projeto-preview .papel {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 5px 15px;
-            background: #0ea5e9;
-            color: white;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        
-        .mensagem {
-            padding: 15px;
+
+        .project-preview-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--color-success-light);
             border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
         }
-        
-        .mensagem.sucesso {
-            display: block;
-            background: #d1fae5;
-            color: #065f46;
-            border: 1px solid #10b981;
+
+        .project-preview-name {
+            font-weight: 600;
+            color: var(--text-primary);
         }
-        
-        .mensagem.erro {
-            display: block;
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #ef4444;
+
+        .project-preview-found {
+            color: var(--color-success);
+            font-size: 0.8125rem;
         }
-        
+
         .divider {
             display: flex;
             align-items: center;
-            margin: 30px 0;
-            color: #a0aec0;
+            margin: 32px 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
         }
-        
-        .divider::before, .divider::after {
+
+        .divider::before,
+        .divider::after {
             content: '';
             flex: 1;
             height: 1px;
-            background: #e2e8f0;
+            background: var(--border-color);
         }
-        
-        .divider span { padding: 0 15px; font-size: 0.9rem; }
-        
-        .criar-conta-link {
-            text-align: center;
-            color: #718096;
-            font-size: 0.9rem;
+
+        .divider span {
+            padding: 0 20px;
         }
-        
-        .criar-conta-link a {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 600;
+
+        .btn-dashboard {
+            width: 100%;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
-        
-        .criar-conta-link a:hover { text-decoration: underline; }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
+
+        .btn-dashboard:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-light);
         }
-        
-        .loading.show { display: block; }
-        
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #2563eb;
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--border-radius-md);
+            margin-bottom: 32px;
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-primary);
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-email {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--border-radius-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-logout:hover {
+            background: var(--bg-card);
+            color: var(--color-error);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake { animation: shake 0.5s ease-in-out; }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 24px;
+            }
+            
+            .code-input {
+                font-size: 1.5rem;
+                letter-spacing: 8px;
+                padding: 16px;
+            }
+            
+            .code-input::placeholder {
+                font-size: 1.25rem;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <h1>🔑 Entrar em Projeto</h1>
-        <div>
-            <a href="projects/index.html" class="header-btn">📁 Meus Projetos</a>
-            <a href="login.html" class="header-btn" id="loginBtn">🔐 Login</a>
-        </div>
-    </header>
-    
     <div class="container">
         <div class="card">
-            <div class="card-icon">🎟️</div>
-            <h2>Digite o Código de Convite</h2>
-            <p>Recebeu um código de um administrador ou gerente? Digite abaixo para entrar no projeto.</p>
-            
-            <div id="mensagem" class="mensagem"></div>
-            
-            <div class="code-input-container">
-                <input type="text" class="code-input" maxlength="1" data-index="0" autofocus>
-                <input type="text" class="code-input" maxlength="1" data-index="1">
-                <input type="text" class="code-input" maxlength="1" data-index="2">
-                <input type="text" class="code-input" maxlength="1" data-index="3">
-                <input type="text" class="code-input" maxlength="1" data-index="4">
-                <input type="text" class="code-input" maxlength="1" data-index="5">
+            <div class="user-info">
+                <div class="user-details">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div>
+                        <div class="user-name" id="userName">Usuário</div>
+                        <div class="user-email" id="userEmail">email@exemplo.com</div>
+                    </div>
+                </div>
+                <button class="btn-logout" id="btnLogout" title="Sair">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
             </div>
-            
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <span>Validando código...</span>
+
+            <div class="header">
+                <div class="header-icon">🔑</div>
+                <h1>Entrar em um Projeto</h1>
+                <p>Digite o código de acesso fornecido pelo gerente do projeto</p>
             </div>
-            
-            <div id="projetoPreview" class="projeto-preview">
-                <h3 id="projetoNome"></h3>
-                <p id="projetoDescricao"></p>
-                <span class="papel" id="papelUsuario"></span>
-            </div>
-            
-            <button id="btnEntrar" class="btn-entrar" disabled>
-                🚀 Entrar no Projeto
-            </button>
-            
+
+            <div id="alert" class="alert" style="display: none;"></div>
+
+            <form id="codeForm">
+                <div class="code-input-group">
+                    <input type="text" id="codigo" name="codigo" class="code-input" 
+                           placeholder="A1234" maxlength="5" autocomplete="off" 
+                           pattern="[A-Za-z][0-9]{4}" required>
+                    <div class="code-format">
+                        Formato: <strong>1 letra + 4 números</strong> (ex: A1234, B9876)
+                    </div>
+                </div>
+
+                <div class="project-preview" id="projectPreview">
+                    <div class="project-preview-header">
+                        <div class="project-preview-icon">📁</div>
+                        <div>
+                            <div class="project-preview-name" id="projectName">Nome do Projeto</div>
+                            <div class="project-preview-found">✓ Projeto encontrado</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success w-full" id="btnEntrar">
+                    <span id="btnText">Entrar no Projeto</span>
+                    <span id="btnLoading" class="loading-spinner" style="display: none;"></span>
+                </button>
+            </form>
+
             <div class="divider"><span>ou</span></div>
-            
-            <div class="criar-conta-link">
-                Não tem uma conta? <a href="login.html">Faça login ou cadastre-se</a>
-            </div>
+
+            <button type="button" class="btn-dashboard" id="btnDashboard">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Ir para o Dashboard
+            </button>
         </div>
     </div>
-    
+
+    <script src="api-client.js"></script>
     <script>
-        const API_BASE = 'http://localhost:8000';
-        const inputs = document.querySelectorAll('.code-input');
+        // Check authentication
+        if (!api.isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+
+        // User info
+        const user = api.user || {};
+        document.getElementById('userName').textContent = user.nome || 'Usuário';
+        document.getElementById('userEmail').textContent = user.email || '';
+        document.getElementById('userAvatar').textContent = (user.nome || 'U').charAt(0).toUpperCase();
+
+        const form = document.getElementById('codeForm');
+        const codigoInput = document.getElementById('codigo');
         const btnEntrar = document.getElementById('btnEntrar');
-        const mensagem = document.getElementById('mensagem');
-        const loading = document.getElementById('loading');
-        const projetoPreview = document.getElementById('projetoPreview');
-        
-        let codigoValidado = false;
-        let codigoAtual = '';
-        
-        // Auto-focus e navegação entre inputs
-        inputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                const value = e.target.value.toUpperCase();
-                e.target.value = value;
-                
-                if (value && index < inputs.length - 1) {
-                    inputs[index + 1].focus();
-                }
-                
-                checkCodigo();
-            });
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
+        const alertDiv = document.getElementById('alert');
+        const projectPreview = document.getElementById('projectPreview');
+        const projectName = document.getElementById('projectName');
+
+        let validatedProject = null;
+        let debounceTimer = null;
+
+        // Auto-uppercase and format
+        codigoInput.addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
             
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                    inputs[index - 1].focus();
-                }
-            });
+            // Ensure first char is letter
+            if (value.length > 0 && !/[A-Z]/.test(value[0])) {
+                value = value.substring(1);
+            }
             
-            input.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const pasteData = e.clipboardData.getData('text').toUpperCase().slice(0, 6);
-                pasteData.split('').forEach((char, i) => {
-                    if (inputs[i]) inputs[i].value = char;
-                });
-                checkCodigo();
-            });
+            // Limit to format: 1 letter + 4 digits
+            if (value.length > 1) {
+                const letter = value[0];
+                const numbers = value.substring(1).replace(/[^0-9]/g, '').substring(0, 4);
+                value = letter + numbers;
+            }
+            
+            e.target.value = value;
+            
+            // Validate on 5 characters
+            if (value.length === 5) {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => validateCode(value), 300);
+            } else {
+                projectPreview.classList.remove('active');
+                codigoInput.classList.remove('valid', 'invalid');
+                validatedProject = null;
+            }
         });
-        
-        async function checkCodigo() {
-            const codigo = Array.from(inputs).map(i => i.value).join('');
+
+        async function validateCode(codigo) {
+            try {
+                const response = await api.get(`/projetos/verificar-codigo/${codigo}`);
+                
+                if (response.valido) {
+                    codigoInput.classList.add('valid');
+                    codigoInput.classList.remove('invalid');
+                    projectName.textContent = response.projeto_nome;
+                    projectPreview.classList.add('active');
+                    validatedProject = codigo;
+                } else {
+                    codigoInput.classList.add('invalid');
+                    codigoInput.classList.remove('valid');
+                    projectPreview.classList.remove('active');
+                    validatedProject = null;
+                }
+            } catch (error) {
+                codigoInput.classList.add('invalid');
+                codigoInput.classList.remove('valid');
+                projectPreview.classList.remove('active');
+                validatedProject = null;
+            }
+        }
+
+        function showAlert(message, type = 'error') {
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'flex';
             
-            if (codigo.length !== 6) {
-                btnEntrar.disabled = true;
-                projetoPreview.classList.remove('show');
-                inputs.forEach(i => i.classList.remove('valid', 'invalid'));
+            if (type === 'error') {
+                alertDiv.classList.add('shake');
+                setTimeout(() => alertDiv.classList.remove('shake'), 500);
+            }
+        }
+
+        function setLoading(loading) {
+            btnEntrar.disabled = loading;
+            btnText.style.display = loading ? 'none' : 'inline';
+            btnLoading.style.display = loading ? 'inline-block' : 'none';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const codigo = codigoInput.value.trim().toUpperCase();
+            
+            if (codigo.length !== 5) {
+                showAlert('Código deve ter 5 caracteres (1 letra + 4 números)');
                 return;
             }
             
-            codigoAtual = codigo;
-            loading.classList.add('show');
-            
-            try {
-                const res = await fetch(`${API_BASE}/equipes/convites/validar/${codigo}`);
-                const data = await res.json();
-                
-                loading.classList.remove('show');
-                
-                if (data.valido) {
-                    inputs.forEach(i => i.classList.add('valid'));
-                    inputs.forEach(i => i.classList.remove('invalid'));
-                    
-                    document.getElementById('projetoNome').textContent = '🏗️ ' + data.projeto_nome;
-                    document.getElementById('projetoDescricao').textContent = data.projeto_descricao || 'Projeto de engenharia';
-                    document.getElementById('papelUsuario').textContent = 'Papel: ' + data.papel.toUpperCase();
-                    projetoPreview.classList.add('show');
-                    
-                    codigoValidado = true;
-                    btnEntrar.disabled = false;
-                    
-                    mostrarMensagem('Código válido! Clique para entrar.', 'sucesso');
-                } else {
-                    inputs.forEach(i => i.classList.add('invalid'));
-                    inputs.forEach(i => i.classList.remove('valid'));
-                    projetoPreview.classList.remove('show');
-                    codigoValidado = false;
-                    btnEntrar.disabled = true;
-                    
-                    mostrarMensagem(data.erro || 'Código inválido', 'erro');
-                }
-            } catch (e) {
-                loading.classList.remove('show');
-                mostrarMensagem('Erro ao validar código. Verifique sua conexão.', 'erro');
+            if (!/^[A-Z][0-9]{4}$/.test(codigo)) {
+                showAlert('Formato inválido. Use: 1 letra + 4 números (ex: A1234)');
+                return;
             }
-        }
-        
-        function mostrarMensagem(texto, tipo) {
-            mensagem.textContent = texto;
-            mensagem.className = 'mensagem ' + tipo;
-        }
-        
-        btnEntrar.addEventListener('click', async () => {
-            const token = localStorage.getItem('access_token');
-            
-            if (!token) {
-                mostrarMensagem('Você precisa fazer login primeiro!', 'erro');
+
+            setLoading(true);
+            alertDiv.style.display = 'none';
+
+            try {
+                const response = await api.post('/projetos/entrar-por-codigo', { codigo });
+                
+                showAlert(response.message || 'Você entrou no projeto!', 'success');
+                
+                // Salvar projeto atual
+                localStorage.setItem('current_project', JSON.stringify(response.projeto));
+                
                 setTimeout(() => {
-                    window.location.href = 'login.html?redirect=entrar-projeto.html';
-                }, 1500);
-                return;
-            }
-            
-            if (!codigoValidado || !codigoAtual) {
-                mostrarMensagem('Digite um código válido primeiro', 'erro');
-                return;
-            }
-            
-            btnEntrar.disabled = true;
-            btnEntrar.textContent = '⏳ Entrando...';
-            
-            try {
-                const res = await fetch(`${API_BASE}/equipes/convites/entrar`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
-                    },
-                    body: JSON.stringify({ codigo: codigoAtual })
-                });
-                
-                const data = await res.json();
-                
-                if (res.ok && data.success) {
-                    mostrarMensagem('🎉 ' + data.message, 'sucesso');
-                    btnEntrar.textContent = '✅ Você entrou!';
-                    
-                    setTimeout(() => {
-                        window.location.href = `projects/dashboard.html?project=${data.projeto_id}`;
-                    }, 2000);
-                } else {
-                    mostrarMensagem(data.detail || 'Erro ao entrar no projeto', 'erro');
-                    btnEntrar.disabled = false;
-                    btnEntrar.textContent = '🚀 Entrar no Projeto';
-                }
-            } catch (e) {
-                mostrarMensagem('Erro de conexão. Tente novamente.', 'erro');
-                btnEntrar.disabled = false;
-                btnEntrar.textContent = '🚀 Entrar no Projeto';
+                    window.location.href = 'projects/index.html';
+                }, 1000);
+
+            } catch (error) {
+                showAlert(error.message || 'Código não encontrado ou inválido');
+                setLoading(false);
             }
         });
-        
-        // Verificar se está logado
-        if (localStorage.getItem('access_token')) {
-            document.getElementById('loginBtn').textContent = '👤 Perfil';
-            document.getElementById('loginBtn').href = 'profile.html';
-        }
+
+        // Dashboard button
+        document.getElementById('btnDashboard').addEventListener('click', () => {
+            window.location.href = 'projects/index.html';
+        });
+
+        // Logout button
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            api.logout();
+            window.location.href = 'login.html?logout=true';
+        });
     </script>
 </body>
 </html>

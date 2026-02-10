@@ -1,172 +1,206 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Projetos — Gerenciador de Projetos de Engenharia</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="global.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projetos — Gerenciador de Projetos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="global.css">
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="layout.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>Projetos</h1>
-    <div class="top-controls">
-      <button id="newProjectBtn" class="btn primary">Criar novo projeto</button>
-      <button onclick="location.href='dashboard.html'" class="btn" style="margin-left:10px;">📊 Dashboard</button>
-      <button onclick="location.href='timeline.html'" class="btn" style="margin-left:10px;">📅 Timeline</button>
-      <button onclick="location.href='../chat.html'" class="btn" style="margin-left:10px;">💬 Chat</button>
-      <button id="notificationsBtn" class="btn" style="margin-left:10px; position:relative;">
-        🔔 <span id="notifBadge" style="display:none; position:absolute; top:-5px; right:-5px; background:#e53e3e; color:white; border-radius:50%; width:18px; height:18px; font-size:0.7rem; display:flex; align-items:center; justify-content:center;">0</span>
-      </button>
-      <button id="profileBtn" class="btn" style="margin-left:10px;">👤 Perfil</button>
-      <button id="logoutBtn" class="btn" style="margin-left:10px;">Sair</button>
-    </div>
-  </header>
+    <!-- Botão flutuante para criar projeto -->
+    <button id="newProjectBtn" class="fab-button" title="Novo Projeto">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
 
-  <main class="container">
-    <!-- Modal Projeto -->
-    <div id="projectModal" class="modal" style="display:none;">
-      <div class="modal-content">
-        <span class="close" id="closeProjectModal">&times;</span>
-        <h2 id="modalTitle">Novo Projeto</h2>
-        <form id="projectForm">
-          <input type="hidden" id="projectId" />
-          
-          <div class="form-group">
-            <label for="projectName">
-              Nome do Projeto *
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">📌 Digite um nome único e descritivo para identificar o projeto. Ex: "Edifício Residencial Vila Nova" ou "Reforma Shopping Center"</span>
-              </span>
-            </label>
-            <input type="text" id="projectName" required placeholder="Ex: Edifício Residencial Centro" />
-            <span class="input-hint info">💡 Use um nome que identifique facilmente o projeto</span>
-          </div>
-          
-          <div class="form-group">
-            <label for="projectCity">
-              Cidade/Localização
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">📍 Informe a cidade e estado onde a obra será realizada. Isso ajuda na organização por região.</span>
-              </span>
-            </label>
-            <input type="text" id="projectCity" placeholder="Ex: São Paulo, SP" />
-          </div>
-          
-          <div class="form-group">
-            <label for="projectManager">
-              Cliente/Gerente
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">👤 Nome do cliente contratante ou do gerente responsável pela obra.</span>
-              </span>
-            </label>
-            <input type="text" id="projectManager" placeholder="Nome do cliente ou gerente responsável" />
-          </div>
-          
-          <div class="form-group">
-            <label for="projectStart">
-              Data de Início
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">📅 Data prevista ou real de início das atividades do projeto.</span>
-              </span>
-            </label>
-            <input type="date" id="projectStart" min="2000-01-01" max="2100-12-31" />
-            <span class="input-hint">Datas válidas: 2000 a 2100</span>
-          </div>
-          
-          <div class="form-group">
-            <label for="projectEnd">
-              Data de Conclusão Prevista
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">🏁 Data estimada para entrega final do projeto. Será usada para calcular atrasos.</span>
-              </span>
-            </label>
-            <input type="date" id="projectEnd" min="2000-01-01" max="2100-12-31" />
-          </div>
-          
-          <div class="form-group">
-            <label for="projectStatus">
-              Status
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">📊 Situação atual do projeto:<br>• Planejamento: Em fase de estudos<br>• Em Andamento: Obra ativa<br>• Pausado: Temporariamente parado<br>• Concluído: Finalizado<br>• Cancelado: Não será executado</span>
-              </span>
-            </label>
-            <select id="projectStatus">
-              <option value="planejamento">📋 Planejamento</option>
-              <option value="em_andamento">🚧 Em Andamento</option>
-              <option value="pausado">⏸️ Pausado</option>
-              <option value="concluido">✅ Concluído</option>
-              <option value="cancelado">❌ Cancelado</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="projectProgress">
-              Progresso: <span id="progressValue">0</span>%
-              <span class="tooltip-container">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">📈 Porcentagem de conclusão do projeto. Arraste o controle para definir o progresso atual da obra.</span>
-              </span>
-            </label>
-            <input type="range" id="projectProgress" min="0" max="100" value="0" 
-                   oninput="document.getElementById('progressValue').textContent = this.value" 
-                   style="width:100%; cursor:pointer;" />
-            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#6b7280;">
-              <span>0%</span>
-              <span>50%</span>
-              <span>100%</span>
+    <main class="container">
+        <!-- Stats Cards -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-blue">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Projetos Ativos</span>
+                    <span class="stat-value" id="statActive">0</span>
+                </div>
             </div>
-          </div>
-          
-          <div style="display:flex; gap:10px; margin-top:20px;">
-            <button type="submit" class="btn primary" id="saveProjectBtn" style="flex:1;">💾 Salvar Projeto</button>
-            <button type="button" class="btn" onclick="closeProjectModal()" style="flex:0.5;">Cancelar</button>
-          </div>
-        </form>
-      </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-yellow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Tarefas Pendentes</span>
+                    <span class="stat-value" id="statPending">0</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-red">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Atrasadas</span>
+                    <span class="stat-value" id="statDelayed">0</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-green">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Progresso Médio</span>
+                    <span class="stat-value" id="statProgress">0%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtros e Busca -->
+        <section class="filters-section">
+            <div class="search-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Buscar projetos..." class="search-input">
+            </div>
+            
+            <div class="filter-group">
+                <select id="filterStatus" class="filter-select">
+                    <option value="all">Todos os status</option>
+                    <option value="planejamento">📋 Planejamento</option>
+                    <option value="em_andamento">🚧 Em Andamento</option>
+                    <option value="pausado">⏸️ Pausado</option>
+                    <option value="concluido">✅ Concluído</option>
+                    <option value="cancelado">❌ Cancelado</option>
+                </select>
+                
+                <button id="clearFilters" class="btn btn-ghost">
+                    Limpar Filtros
+                </button>
+            </div>
+        </section>
+
+        <!-- Lista de Projetos -->
+        <section class="projects-grid" id="projectsGrid">
+            <!-- Cards serão renderizados via JavaScript -->
+        </section>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">📁</div>
+            <h3>Nenhum projeto encontrado</h3>
+            <p>Crie seu primeiro projeto clicando no botão "+" abaixo</p>
+        </div>
+    </main>
+
+    <!-- Modal de Projeto -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Novo Projeto</h2>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            
+            <form id="projectForm">
+                <input type="hidden" id="projectId">
+                
+                <div class="form-group">
+                    <label class="form-label">Nome do Projeto *</label>
+                    <input type="text" id="projectName" class="form-input" placeholder="Ex: Edifício Residencial Centro" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Cidade/Localização</label>
+                        <input type="text" id="projectCity" class="form-input" placeholder="Ex: São Paulo, SP">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Cliente/Gerente</label>
+                        <input type="text" id="projectManager" class="form-input" placeholder="Nome do responsável">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Data de Início</label>
+                        <input type="date" id="projectStart" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Data de Conclusão</label>
+                        <input type="date" id="projectEnd" class="form-input">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="projectStatus" class="form-input">
+                            <option value="planejamento">📋 Planejamento</option>
+                            <option value="em_andamento">🚧 Em Andamento</option>
+                            <option value="pausado">⏸️ Pausado</option>
+                            <option value="concluido">✅ Concluído</option>
+                            <option value="cancelado">❌ Cancelado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Progresso: <span id="progressValue">0</span>%</label>
+                        <input type="range" id="projectProgress" class="form-range" min="0" max="100" value="0">
+                    </div>
+                </div>
+                
+                <!-- Código de Acesso (somente visualização na edição) -->
+                <div class="form-group" id="codeGroup" style="display: none;">
+                    <label class="form-label">Código de Acesso</label>
+                    <div class="code-display">
+                        <span id="projectCode">-</span>
+                        <button type="button" id="copyCode" class="btn btn-ghost btn-sm" title="Copiar código">
+                            📋 Copiar
+                        </button>
+                    </div>
+                    <small class="text-muted">Compartilhe este código para que outros possam entrar no projeto</small>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <span id="saveBtnText">Criar Projeto</span>
+                        <span class="loading-spinner" id="saveBtnLoading" style="display: none;"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-    <section class="dashboard">
-      <div class="metrics">
-        <div class="metric">Obras ativas<br><strong id="count-active">0</strong></div>
-        <div class="metric">Tarefas pendentes<br><strong id="count-pending">0</strong></div>
-        <div class="metric">Tarefas atrasadas<br><strong id="count-delayed">0</strong></div>
-        <div class="metric">% Progresso médio<br><strong id="avg-progress">0%</strong></div>
-      </div>
 
-      <div class="filters">
-        <label>
-          Status:
-          <select id="filter-status">
-            <option value="all">Todos</option>
-            <option value="planejamento">Planejamento</option>
-            <option value="em_andamento">Em Andamento</option>
-            <option value="pausado">Pausado</option>
-            <option value="concluido">Concluído</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-        </label>
-
-        <label>
-          Procurar:
-          <input id="filter-q" placeholder="Nome do projeto, cidade..." />
-        </label>
-
-        <button id="clearFilters" class="btn">Limpar</button>
-      </div>
-    </section>
-
-    <section class="project-list" id="projectList">
-      <!-- Cards will be rendered here -->
-    </section>
-  </main>
-
-  <script src="../api-client.js"></script>
-  <script src="app.js"></script>
+    <script src="../api-client.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

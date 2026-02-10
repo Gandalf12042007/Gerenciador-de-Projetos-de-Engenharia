@@ -4,21 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Equipes — Gerenciador de Projetos</title>
-  <link rel="stylesheet" href="equipes.css">
   <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="equipes.css">
+  <script src="layout.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>👥 Equipe do Projeto</h1>
-    <div class="top-controls">
-      <button id="addMemberBtn" class="btn primary">➕ Adicionar Membro</button>
-      <button id="generateCodeBtn" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🔑 Gerar Código</button>
-      <button id="inviteBtn" class="btn">✉️ Convidar por Email</button>
-      <button onclick="location.href='kanban.html?project='+projectId" class="btn">📋 Quadro</button>
-      <button onclick="location.href='docs.html?project='+projectId" class="btn">📄 Documentos</button>
-      <button onclick="location.href='index.html'" class="btn">🏠 Projetos</button>
-    </div>
-  </header>
+  <!-- Header será injetado pelo layout.js -->
+  
+  <!-- Botões de ação flutuantes -->
+  <div style="position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 10px; flex-wrap: wrap;">
+    <button id="addMemberBtn" class="btn primary" style="padding: 14px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">➕ Adicionar</button>
+    <button id="generateCodeBtn" class="btn" style="padding: 14px 20px; border-radius: 50px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">🔑 Código</button>
+    <button id="inviteBtn" class="btn" style="padding: 14px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">✉️ Convidar</button>
+  </div>
   
   <main class="equipes-container">
     <!-- Resumo da Equipe -->

@@ -85,37 +85,82 @@ async def login(credentials: LoginRequest, request: Request):
         Token JWT e dados do usuário
     """
     # ═══════════════════════════════════════════════════════════════════════
-    # ADMINISTRADORES DO SISTEMA (Acesso Total)
+    # USUÁRIOS DO SISTEMA - Credenciais Atualizadas
     # ═══════════════════════════════════════════════════════════════════════
     USUARIOS_ADMIN = {
+        # ADMINISTRADORES (Acesso Total)
         "vicentedesouza762@gmail.com": {
             "id": 1,
             "nome": "Vicente de Souza", 
             "email": "vicentedesouza762@gmail.com",
-            "senha": "Abacaxi371",
+            "senha": "Admin@2026",
             "telefone": "11 99999-0001",
             "cargo": "Administrador",
-            "role": "admin",  # Acesso total
+            "role": "admin",
             "ativo": True
         },
-        "francisco@gmail.com": {
+        "francisco@projeto.com": {
             "id": 2,
             "nome": "Francisco",
-            "email": "francisco@gmail.com", 
-            "senha": "Teste123@",
+            "email": "francisco@projeto.com", 
+            "senha": "Admin@2026",
             "telefone": "11 99999-0002",
             "cargo": "Desenvolvedor",
-            "role": "admin",  # Acesso total
+            "role": "admin",
             "ativo": True
         },
-        "professor@gmail.com": {
+        "professor@projeto.com": {
             "id": 3,
             "nome": "Professor",
-            "email": "professor@gmail.com", 
-            "senha": "Prof2024@",  # Você pode alterar depois
+            "email": "professor@projeto.com", 
+            "senha": "Admin@2026",
             "telefone": "11 99999-0003",
             "cargo": "Professor",
-            "role": "admin",  # Acesso total
+            "role": "admin",
+            "ativo": True
+        },
+        # GERENTE
+        "gerenteteste@projeto.com": {
+            "id": 4,
+            "nome": "Gerente Teste",
+            "email": "gerenteteste@projeto.com", 
+            "senha": "Gerente@123",
+            "telefone": "11 99999-0004",
+            "cargo": "Gerente de Projetos",
+            "role": "gerente",
+            "ativo": True
+        },
+        # ENGENHEIRO
+        "engenheiroteste@projeto.com": {
+            "id": 5,
+            "nome": "Engenheiro Teste",
+            "email": "engenheiroteste@projeto.com", 
+            "senha": "Engenheiro@123",
+            "telefone": "11 99999-0005",
+            "cargo": "Engenheiro Civil",
+            "role": "engenheiro",
+            "ativo": True
+        },
+        # TÉCNICO
+        "tecnicoteste@projeto.com": {
+            "id": 6,
+            "nome": "Técnico Teste",
+            "email": "tecnicoteste@projeto.com", 
+            "senha": "Tecnico@123",
+            "telefone": "11 99999-0006",
+            "cargo": "Técnico em Edificações",
+            "role": "tecnico",
+            "ativo": True
+        },
+        # CLIENTE
+        "clienteteste@projeto.com": {
+            "id": 7,
+            "nome": "Cliente Teste",
+            "email": "clienteteste@projeto.com", 
+            "senha": "Cliente@123",
+            "telefone": "11 99999-0007",
+            "cargo": "Cliente",
+            "role": "cliente",
             "ativo": True
         }
     }

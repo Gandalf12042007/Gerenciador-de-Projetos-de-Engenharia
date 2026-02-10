@@ -3,116 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Gerenciador de Projetos</title>
+    <title>Criar Conta - Gerenciador de Projetos de Engenharia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/global.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --bg-input: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --color-primary: #3B82F6;
+            --color-accent: #F59E0B;
+            --color-accent-light: #FBBF24;
+            --color-success: #22C55E;
+            --color-error: #EF4444;
+            --border-color: #334155;
+            --gradient-vibrant: linear-gradient(135deg, #F59E0B 0%, #EA580C 50%, #DC2626 100%);
+            --gradient-success: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: 
-                radial-gradient(ellipse at top, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom right, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-                var(--bg-primary);
+            background: var(--bg-dark);
+            color: var(--text-primary);
         }
 
-        .register-container {
+        .split-container {
+            display: flex;
             width: 100%;
-            max-width: 450px;
-            animation: fadeInUp 0.5s ease forwards;
+            min-height: 100vh;
         }
 
-        .register-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-xl);
-            padding: 40px;
-            box-shadow: var(--shadow-xl);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .logo-icon {
-            width: 64px;
-            height: 64px;
-            background: var(--gradient-secondary);
-            border-radius: 16px;
+        /* Lado Esquerdo - Imagem */
+        .image-side {
+            flex: 1;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 16px;
-            font-size: 32px;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35);
+            overflow: hidden;
+            background: url('assets/images/engenharia-office.jpg') center/cover no-repeat;
         }
 
-        .logo h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: var(--gradient-secondary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 4px;
+        .image-side::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(34, 197, 94, 0.85) 0%,
+                rgba(22, 163, 74, 0.8) 40%,
+                rgba(15, 23, 42, 0.95) 100%
+            );
         }
 
-        .logo p {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin: 0;
+        .image-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 40px;
+            max-width: 500px;
         }
 
-        .password-requirements {
-            background: var(--bg-tertiary);
-            border-radius: var(--border-radius-md);
-            padding: 12px 16px;
-            margin-top: 8px;
-            font-size: 0.8125rem;
-        }
-
-        .password-requirements ul {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .password-requirements li {
+        .brand-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            margin-bottom: 4px;
+            justify-content: center;
+            margin: 0 auto 32px;
+            font-size: 56px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: float 3s ease-in-out infinite;
         }
 
-        .password-requirements li:last-child {
-            margin-bottom: 0;
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        .password-requirements li.valid {
-            color: var(--color-success);
+        .brand-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 16px;
         }
 
-        .password-requirements li .icon {
-            width: 16px;
-            text-align: center;
+        .brand-subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            line-height: 1.6;
         }
 
-        .input-wrapper {
-            position: relative;
+        .benefits-list {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
-        .input-wrapper .form-input {
-            padding-right: 48px;
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: white;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 14px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
-        .password-toggle {
+        .benefit-icon { font-size: 1.5rem; }
+
+        /* Lado Direito - Formulário */
+        .form-side {
+            width: 520px;
+            min-width: 420px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 50px;
+            background: var(--bg-dark);
+            overflow-y: auto;
+        }
+
+        .form-header {
+            margin-bottom: 28px;
+        }
+
+        .form-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 1rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            transition: all 0.25s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-success);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .input-wrapper { position: relative; }
+
+        .toggle-password {
             position: absolute;
             right: 14px;
             top: 50%;
@@ -122,180 +203,286 @@
             color: var(--text-muted);
             cursor: pointer;
             padding: 4px;
+            font-size: 1.25rem;
         }
 
-        .password-toggle:hover {
-            color: var(--text-secondary);
+        .password-requirements {
+            margin-top: 8px;
+            font-size: 0.8125rem;
         }
+
+        .requirement {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            transition: color 0.2s;
+        }
+
+        .requirement.valid { color: var(--color-success); }
+        .requirement.valid .check { display: block; }
+        .requirement .check { display: none; }
+        .requirement .x { display: block; }
+        .requirement.valid .x { display: none; }
+
+        .btn-register {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            background: var(--gradient-success);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+            margin-top: 8px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(34, 197, 94, 0.5);
+        }
+
+        .btn-register:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .divider span { padding: 0 16px; }
 
         .login-link {
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-color);
             text-align: center;
             color: var(--text-secondary);
             font-size: 0.9375rem;
         }
 
         .login-link a {
-            color: var(--color-primary);
+            color: var(--color-success);
+            text-decoration: none;
             font-weight: 600;
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        .login-link a:hover { color: #4ADE80; }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 10px;
         }
 
-        .shake {
-            animation: shake 0.5s ease-in-out;
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .image-side { display: none; }
+            .form-side {
+                width: 100%;
+                min-width: auto;
+                max-width: 520px;
+                margin: 0 auto;
+            }
+            body {
+                background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, transparent 50%), var(--bg-dark);
+            }
         }
 
         @media (max-width: 480px) {
-            .register-card {
-                padding: 24px;
-            }
+            .form-side { padding: 24px; }
+            .form-row { grid-template-columns: 1fr; }
         }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in { animation: fadeInUp 0.5s ease forwards; }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <div class="register-card">
-            <div class="logo">
-                <div class="logo-icon">👤</div>
-                <h1>Criar Conta</h1>
-                <p>Junte-se à nossa plataforma</p>
+    <div class="split-container">
+        <!-- Lado Esquerdo -->
+        <div class="image-side">
+            <div class="image-content">
+                <div class="brand-icon">🚀</div>
+                <h1 class="brand-title">Comece Agora!</h1>
+                <p class="brand-subtitle">
+                    Junte-se a centenas de engenheiros que já gerenciam suas obras com eficiência
+                </p>
+                
+                <div class="benefits-list">
+                    <div class="benefit-item">
+                        <span class="benefit-icon">✅</span>
+                        <span>Conta gratuita para sempre</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">⚡</span>
+                        <span>Configure em menos de 2 minutos</span>
+                    </div>
+                    <div class="benefit-item">
+                        <span class="benefit-icon">🔒</span>
+                        <span>Seus dados 100% seguros</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lado Direito - Formulário -->
+        <div class="form-side animate-in">
+            <div class="form-header">
+                <h2>Criar sua conta 🎉</h2>
+                <p>Preencha os dados para começar a gerenciar suas obras</p>
             </div>
 
-            <div id="alert" class="alert" style="display: none;"></div>
+            <div id="alert" class="alert"></div>
 
             <form id="registerForm">
                 <div class="form-group">
-                    <label class="form-label" for="nome">Nome Completo</label>
-                    <input type="text" id="nome" name="nome" class="form-input" 
-                           required placeholder="Seu nome completo" minlength="3">
+                    <label class="form-label">Nome completo</label>
+                    <input type="text" id="nome" class="form-input" placeholder="Seu nome" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="email">Email</label>
-                    <input type="email" id="email" name="email" class="form-input" 
-                           required placeholder="seu@email.com" autocomplete="email">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Telefone</label>
+                        <input type="tel" id="telefone" class="form-input" placeholder="(11) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cargo</label>
+                        <select id="cargo" class="form-input">
+                            <option value="engenheiro">Engenheiro</option>
+                            <option value="gerente">Gerente</option>
+                            <option value="tecnico">Técnico</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="senha">Senha</label>
+                    <label class="form-label">Senha</label>
                     <div class="input-wrapper">
-                        <input type="password" id="senha" name="senha" class="form-input" 
-                               required placeholder="Mínimo 8 caracteres" minlength="8">
-                        <button type="button" class="password-toggle" data-target="senha">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
+                        <input type="password" id="senha" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="toggle-password" id="toggleSenha">👁️</button>
                     </div>
-                    <div class="password-requirements" id="passwordRequirements">
-                        <ul>
-                            <li id="req-length"><span class="icon">○</span> Mínimo 8 caracteres</li>
-                            <li id="req-upper"><span class="icon">○</span> Uma letra maiúscula</li>
-                            <li id="req-number"><span class="icon">○</span> Um número</li>
-                        </ul>
+                    <div class="password-requirements">
+                        <div class="requirement" id="reqLength">
+                            <span class="check">✓</span><span class="x">○</span>
+                            <span>Mínimo 8 caracteres</span>
+                        </div>
+                        <div class="requirement" id="reqUpper">
+                            <span class="check">✓</span><span class="x">○</span>
+                            <span>Uma letra maiúscula</span>
+                        </div>
+                        <div class="requirement" id="reqNumber">
+                            <span class="check">✓</span><span class="x">○</span>
+                            <span>Um número</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="confirmarSenha">Confirmar Senha</label>
-                    <div class="input-wrapper">
-                        <input type="password" id="confirmarSenha" name="confirmarSenha" class="form-input" 
-                               required placeholder="Repita a senha">
-                        <button type="button" class="password-toggle" data-target="confirmarSenha">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
+                    <label class="form-label">Confirmar senha</label>
+                    <input type="password" id="confirmarSenha" class="form-input" placeholder="••••••••" required>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-full" id="btnRegister">
-                    <span id="btnText">Criar Conta</span>
+                <button type="submit" class="btn-register" id="btnRegister">
+                    <span id="btnText">Criar minha conta</span>
                     <span id="btnLoading" class="loading-spinner" style="display: none;"></span>
                 </button>
             </form>
 
-            <div class="login-link">
-                Já tem conta? <a href="login.html">Fazer login</a>
-            </div>
+            <div class="divider"><span>ou</span></div>
+
+            <p class="login-link">
+                Já tem uma conta? <a href="login.html">Fazer login</a>
+            </p>
         </div>
     </div>
 
     <script src="api-client.js"></script>
     <script>
         const form = document.getElementById('registerForm');
-        const btnRegister = document.getElementById('btnRegister');
-        const btnText = document.getElementById('btnText');
-        const btnLoading = document.getElementById('btnLoading');
-        const alertDiv = document.getElementById('alert');
         const senhaInput = document.getElementById('senha');
+        const confirmarInput = document.getElementById('confirmarSenha');
+        const alertDiv = document.getElementById('alert');
 
-        // Password toggles
-        document.querySelectorAll('.password-toggle').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const targetId = btn.dataset.target;
-                const input = document.getElementById(targetId);
-                input.type = input.type === 'password' ? 'text' : 'password';
-            });
+        // Toggle password visibility
+        document.getElementById('toggleSenha').addEventListener('click', function() {
+            senhaInput.type = senhaInput.type === 'password' ? 'text' : 'password';
+            this.textContent = senhaInput.type === 'password' ? '👁️' : '🙈';
         });
 
-        // Password validation
+        // Password requirements validation
         senhaInput.addEventListener('input', () => {
             const senha = senhaInput.value;
             
-            updateRequirement('req-length', senha.length >= 8);
-            updateRequirement('req-upper', /[A-Z]/.test(senha));
-            updateRequirement('req-number', /[0-9]/.test(senha));
+            document.getElementById('reqLength').classList.toggle('valid', senha.length >= 8);
+            document.getElementById('reqUpper').classList.toggle('valid', /[A-Z]/.test(senha));
+            document.getElementById('reqNumber').classList.toggle('valid', /[0-9]/.test(senha));
         });
-
-        function updateRequirement(id, valid) {
-            const el = document.getElementById(id);
-            if (valid) {
-                el.classList.add('valid');
-                el.querySelector('.icon').textContent = '✓';
-            } else {
-                el.classList.remove('valid');
-                el.querySelector('.icon').textContent = '○';
-            }
-        }
 
         function showAlert(message, type = 'error') {
             alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
+            alertDiv.innerHTML = message;
             alertDiv.style.display = 'flex';
-            
-            if (type === 'error') {
-                alertDiv.classList.add('shake');
-                setTimeout(() => alertDiv.classList.remove('shake'), 500);
-            }
-            
-            if (type !== 'error') {
-                setTimeout(() => {
-                    alertDiv.style.display = 'none';
-                }, 5000);
-            }
         }
 
         function setLoading(loading) {
-            btnRegister.disabled = loading;
-            btnText.style.display = loading ? 'none' : 'inline';
-            btnLoading.style.display = loading ? 'inline-block' : 'none';
-        }
-
-        function validatePassword(senha) {
-            if (senha.length < 8) return false;
-            if (!/[A-Z]/.test(senha)) return false;
-            if (!/[0-9]/.test(senha)) return false;
-            return true;
+            document.getElementById('btnRegister').disabled = loading;
+            document.getElementById('btnText').style.display = loading ? 'none' : 'inline';
+            document.getElementById('btnLoading').style.display = loading ? 'inline-block' : 'none';
         }
 
         form.addEventListener('submit', async (e) => {
@@ -303,21 +490,28 @@
             
             const nome = document.getElementById('nome').value.trim();
             const email = document.getElementById('email').value.trim();
-            const senha = document.getElementById('senha').value;
-            const confirmarSenha = document.getElementById('confirmarSenha').value;
+            const telefone = document.getElementById('telefone').value.trim();
+            const cargo = document.getElementById('cargo').value;
+            const senha = senhaInput.value;
+            const confirmar = confirmarInput.value;
 
-            // Validações
-            if (nome.length < 3) {
-                showAlert('Nome deve ter no mínimo 3 caracteres');
+            // Validations
+            if (senha.length < 8) {
+                showAlert('A senha deve ter no mínimo 8 caracteres');
                 return;
             }
 
-            if (!validatePassword(senha)) {
-                showAlert('Senha não atende aos requisitos mínimos');
+            if (!/[A-Z]/.test(senha)) {
+                showAlert('A senha deve conter pelo menos uma letra maiúscula');
                 return;
             }
 
-            if (senha !== confirmarSenha) {
+            if (!/[0-9]/.test(senha)) {
+                showAlert('A senha deve conter pelo menos um número');
+                return;
+            }
+
+            if (senha !== confirmar) {
                 showAlert('As senhas não coincidem');
                 return;
             }
@@ -326,12 +520,12 @@
             alertDiv.style.display = 'none';
 
             try {
-                const response = await api.register(nome, email, senha);
+                await api.post('/auth/register', { nome, email, telefone, cargo, senha });
                 
                 showAlert('Conta criada com sucesso! Redirecionando...', 'success');
                 
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = 'login.html?registered=true';
                 }, 1500);
 
             } catch (error) {

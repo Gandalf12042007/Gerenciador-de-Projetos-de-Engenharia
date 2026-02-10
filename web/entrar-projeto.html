@@ -3,86 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar em Projeto - Gerenciador de Projetos</title>
+    <title>Entrar em Projeto - Gerenciador de Projetos de Engenharia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/global.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --bg-input: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --color-primary: #3B82F6;
+            --color-accent: #F59E0B;
+            --color-success: #22C55E;
+            --color-error: #EF4444;
+            --border-color: #334155;
+            --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 50%, #1E3A8A 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
+            display: flex;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+        }
+
+        .split-container {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* Lado Esquerdo - Imagem */
+        .image-side {
+            flex: 1;
+            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            background: 
-                radial-gradient(ellipse at top left, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                var(--bg-primary);
+            overflow: hidden;
+            background: url('assets/images/dashboard-tech.jpg') center/cover no-repeat;
         }
 
-        .container {
-            width: 100%;
-            max-width: 480px;
-            animation: fadeInUp 0.5s ease forwards;
+        .image-side::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.85) 0%,
+                rgba(29, 78, 216, 0.8) 40%,
+                rgba(15, 23, 42, 0.95) 100%
+            );
         }
 
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-xl);
-            padding: 40px;
-            box-shadow: var(--shadow-xl);
-        }
-
-        .header {
+        .image-content {
+            position: relative;
+            z-index: 2;
             text-align: center;
-            margin-bottom: 32px;
+            padding: 40px;
+            max-width: 500px;
         }
 
-        .header-icon {
-            width: 72px;
-            height: 72px;
-            background: var(--gradient-success);
+        .brand-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            font-size: 56px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px 10px rgba(59,130,246,0.3); }
+        }
+
+        .brand-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .brand-subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .info-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .info-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: white;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .info-icon { font-size: 1.5rem; }
+
+        /* Lado Direito - Formulário */
+        .form-side {
+            width: 520px;
+            min-width: 420px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            background: var(--bg-dark);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .form-header-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-blue);
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 36px;
-            box-shadow: 0 8px 32px rgba(34, 197, 94, 0.35);
+            margin: 0 auto 24px;
+            font-size: 40px;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
         }
 
-        .header h1 {
+        .form-header h2 {
             font-size: 1.75rem;
             font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
-        .header p {
+        .form-header p {
             color: var(--text-secondary);
             font-size: 1rem;
-            margin: 0;
+            line-height: 1.5;
         }
 
-        .code-input-group {
-            margin-bottom: 24px;
+        .code-input-wrapper { margin-bottom: 24px; }
+
+        .code-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-align: center;
         }
 
         .code-input {
             width: 100%;
-            padding: 20px;
-            font-size: 2rem;
+            padding: 24px;
+            font-size: 2.25rem;
             font-weight: 700;
             text-align: center;
-            letter-spacing: 12px;
+            letter-spacing: 14px;
             text-transform: uppercase;
-            background: var(--bg-tertiary);
+            background: var(--bg-input);
             border: 3px solid var(--border-color);
-            border-radius: var(--border-radius-lg);
+            border-radius: 16px;
             color: var(--text-primary);
-            transition: all var(--transition-normal);
+            transition: all 0.3s ease;
         }
 
         .code-input::placeholder {
@@ -93,367 +201,299 @@
 
         .code-input:focus {
             outline: none;
-            border-color: var(--color-success);
-            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
         }
 
         .code-input.valid {
             border-color: var(--color-success);
+            box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.2);
         }
 
         .code-input.invalid {
             border-color: var(--color-error);
+            box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.2);
         }
 
-        .code-format {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin-top: 12px;
-        }
-
-        .code-format strong {
-            color: var(--text-secondary);
-        }
-
-        .project-preview {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--color-success);
-            border-radius: var(--border-radius-md);
-            padding: 16px;
-            margin-bottom: 24px;
-            display: none;
-        }
-
-        .project-preview.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .project-preview-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .project-preview-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--color-success-light);
-            border-radius: 10px;
+        .validation-feedback {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 0.875rem;
+            min-height: 24px;
         }
 
-        .project-preview-name {
+        .validation-feedback.valid { color: var(--color-success); }
+        .validation-feedback.invalid { color: var(--color-error); }
+        .validation-feedback.checking { color: var(--color-primary); }
+
+        .btn-enter {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.125rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: white;
+            background: var(--gradient-blue);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
         }
 
-        .project-preview-found {
-            color: var(--color-success);
-            font-size: 0.8125rem;
+        .btn-enter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
         }
+
+        .btn-enter:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .divider {
             display: flex;
             align-items: center;
-            margin: 32px 0;
+            margin: 28px 0;
             color: var(--text-muted);
-            font-size: 0.875rem;
+            font-size: 0.8125rem;
         }
 
-        .divider::before,
-        .divider::after {
+        .divider::before, .divider::after {
             content: '';
             flex: 1;
             height: 1px;
             background: var(--border-color);
         }
 
-        .divider span {
-            padding: 0 20px;
+        .divider span { padding: 0 16px; }
+
+        .links {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .btn-dashboard {
-            width: 100%;
-            padding: 16px;
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-md);
-            font-size: 1rem;
+        .links a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-size: 0.9375rem;
             font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition-normal);
-            display: flex;
+            transition: color 0.2s;
+        }
+
+        .links a:hover { color: #60A5FA; }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: none;
             align-items: center;
+            gap: 10px;
             justify-content: center;
-            gap: 12px;
         }
 
-        .btn-dashboard:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--border-light);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            background: var(--bg-tertiary);
-            border-radius: var(--border-radius-md);
-            margin-bottom: 32px;
-        }
-
-        .user-details {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-avatar {
-            width: 44px;
-            height: 44px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 1rem;
-            color: white;
-        }
-
-        .user-name {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .user-email {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-        }
-
-        .btn-logout {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: var(--border-radius-sm);
-            transition: all var(--transition-fast);
-        }
-
-        .btn-logout:hover {
-            background: var(--bg-card);
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
             color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        .alert-success {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
 
-        .shake { animation: shake 0.5s ease-in-out; }
+        @media (max-width: 1024px) {
+            .image-side { display: none; }
+            .form-side {
+                width: 100%;
+                min-width: auto;
+                max-width: 520px;
+                margin: 0 auto;
+            }
+            body {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 50%), var(--bg-dark);
+            }
+        }
 
         @media (max-width: 480px) {
-            .card {
-                padding: 24px;
-            }
-            
-            .code-input {
-                font-size: 1.5rem;
-                letter-spacing: 8px;
-                padding: 16px;
-            }
-            
-            .code-input::placeholder {
-                font-size: 1.25rem;
-            }
+            .form-side { padding: 24px; }
+            .code-input { letter-spacing: 8px; font-size: 1.75rem; }
         }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in { animation: fadeInUp 0.5s ease forwards; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="user-info">
-                <div class="user-details">
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <div>
-                        <div class="user-name" id="userName">Usuário</div>
-                        <div class="user-email" id="userEmail">email@exemplo.com</div>
+    <div class="split-container">
+        <!-- Lado Esquerdo -->
+        <div class="image-side">
+            <div class="image-content">
+                <div class="brand-icon">🔗</div>
+                <h1 class="brand-title">Acesso ao Projeto</h1>
+                <p class="brand-subtitle">
+                    Use o código de 6 caracteres compartilhado pelo gerente do projeto
+                </p>
+                
+                <div class="info-cards">
+                    <div class="info-card">
+                        <span class="info-icon">📧</span>
+                        <span>Código enviado por e-mail ou WhatsApp</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-icon">👷</span>
+                        <span>Acesso instantâneo ao projeto da obra</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-icon">🔐</span>
+                        <span>Código único e seguro por projeto</span>
                     </div>
                 </div>
-                <button class="btn-logout" id="btnLogout" title="Sair">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                </button>
+            </div>
+        </div>
+
+        <!-- Lado Direito - Formulário -->
+        <div class="form-side animate-in">
+            <div class="form-header">
+                <div class="form-header-icon">🏗️</div>
+                <h2>Entrar no Projeto</h2>
+                <p>Digite o código de acesso de 6 caracteres para entrar no projeto</p>
             </div>
 
-            <div class="header">
-                <div class="header-icon">🔑</div>
-                <h1>Entrar em um Projeto</h1>
-                <p>Digite o código de acesso fornecido pelo gerente do projeto</p>
-            </div>
+            <div id="alert" class="alert"></div>
 
-            <div id="alert" class="alert" style="display: none;"></div>
-
-            <form id="codeForm">
-                <div class="code-input-group">
-                    <input type="text" id="codigo" name="codigo" class="code-input" 
-                           placeholder="A1234" maxlength="5" autocomplete="off" 
-                           pattern="[A-Za-z][0-9]{4}" required>
-                    <div class="code-format">
-                        Formato: <strong>1 letra + 4 números</strong> (ex: A1234, B9876)
-                    </div>
+            <form id="projectForm">
+                <div class="code-input-wrapper">
+                    <label class="code-label">Código de Acesso</label>
+                    <input 
+                        type="text" 
+                        id="codigo" 
+                        class="code-input" 
+                        placeholder="ABC123"
+                        maxlength="6"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+                    <div id="feedback" class="validation-feedback"></div>
                 </div>
 
-                <div class="project-preview" id="projectPreview">
-                    <div class="project-preview-header">
-                        <div class="project-preview-icon">📁</div>
-                        <div>
-                            <div class="project-preview-name" id="projectName">Nome do Projeto</div>
-                            <div class="project-preview-found">✓ Projeto encontrado</div>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-success w-full" id="btnEntrar">
-                    <span id="btnText">Entrar no Projeto</span>
+                <button type="submit" class="btn-enter" id="btnEnter" disabled>
+                    <span id="btnText">🚀 Entrar no Projeto</span>
                     <span id="btnLoading" class="loading-spinner" style="display: none;"></span>
                 </button>
             </form>
 
-            <div class="divider"><span>ou</span></div>
+            <div class="divider"><span>precisa de ajuda?</span></div>
 
-            <button type="button" class="btn-dashboard" id="btnDashboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                </svg>
-                Ir para o Dashboard
-            </button>
+            <div class="links">
+                <a href="login.html">← Voltar para o login</a>
+                <a href="#">Não tenho o código de acesso</a>
+            </div>
         </div>
     </div>
 
     <script src="api-client.js"></script>
     <script>
-        // Check authentication
-        if (!api.isAuthenticated()) {
-            window.location.href = 'login.html';
-        }
-
-        // User info
-        const user = api.user || {};
-        document.getElementById('userName').textContent = user.nome || 'Usuário';
-        document.getElementById('userEmail').textContent = user.email || '';
-        document.getElementById('userAvatar').textContent = (user.nome || 'U').charAt(0).toUpperCase();
-
-        const form = document.getElementById('codeForm');
-        const codigoInput = document.getElementById('codigo');
-        const btnEntrar = document.getElementById('btnEntrar');
-        const btnText = document.getElementById('btnText');
-        const btnLoading = document.getElementById('btnLoading');
+        const codeInput = document.getElementById('codigo');
+        const feedback = document.getElementById('feedback');
+        const btnEnter = document.getElementById('btnEnter');
         const alertDiv = document.getElementById('alert');
-        const projectPreview = document.getElementById('projectPreview');
-        const projectName = document.getElementById('projectName');
+        const form = document.getElementById('projectForm');
 
-        let validatedProject = null;
-        let debounceTimer = null;
+        let debounceTimer;
 
-        // Auto-uppercase and format
-        codigoInput.addEventListener('input', (e) => {
+        // Format and validate input
+        codeInput.addEventListener('input', (e) => {
             let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-            
-            // Ensure first char is letter
-            if (value.length > 0 && !/[A-Z]/.test(value[0])) {
-                value = value.substring(1);
-            }
-            
-            // Limit to format: 1 letter + 4 digits
-            if (value.length > 1) {
-                const letter = value[0];
-                const numbers = value.substring(1).replace(/[^0-9]/g, '').substring(0, 4);
-                value = letter + numbers;
-            }
-            
             e.target.value = value;
-            
-            // Validate on 5 characters
-            if (value.length === 5) {
+
+            // Reset states
+            codeInput.classList.remove('valid', 'invalid');
+            btnEnter.disabled = true;
+            feedback.textContent = '';
+            feedback.className = 'validation-feedback';
+
+            if (value.length === 6) {
+                feedback.innerHTML = '⏳ Verificando código...';
+                feedback.className = 'validation-feedback checking';
+                
                 clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => validateCode(value), 300);
-            } else {
-                projectPreview.classList.remove('active');
-                codigoInput.classList.remove('valid', 'invalid');
-                validatedProject = null;
+                debounceTimer = setTimeout(() => validateCode(value), 500);
+            } else if (value.length > 0) {
+                feedback.textContent = `${6 - value.length} caracteres restantes`;
             }
         });
 
-        async function validateCode(codigo) {
+        async function validateCode(code) {
             try {
-                const response = await api.get(`/projetos/verificar-codigo/${codigo}`);
+                const response = await api.get(`/projetos/validar-codigo/${code}`);
                 
                 if (response.valido) {
-                    codigoInput.classList.add('valid');
-                    codigoInput.classList.remove('invalid');
-                    projectName.textContent = response.projeto_nome;
-                    projectPreview.classList.add('active');
-                    validatedProject = codigo;
+                    codeInput.classList.add('valid');
+                    codeInput.classList.remove('invalid');
+                    feedback.innerHTML = `✅ Projeto encontrado: <strong>${response.projeto_nome}</strong>`;
+                    feedback.className = 'validation-feedback valid';
+                    btnEnter.disabled = false;
                 } else {
-                    codigoInput.classList.add('invalid');
-                    codigoInput.classList.remove('valid');
-                    projectPreview.classList.remove('active');
-                    validatedProject = null;
+                    throw new Error('Código inválido');
                 }
             } catch (error) {
-                codigoInput.classList.add('invalid');
-                codigoInput.classList.remove('valid');
-                projectPreview.classList.remove('active');
-                validatedProject = null;
+                codeInput.classList.add('invalid');
+                codeInput.classList.remove('valid');
+                feedback.innerHTML = '❌ Código não encontrado';
+                feedback.className = 'validation-feedback invalid';
+                btnEnter.disabled = true;
             }
         }
 
         function showAlert(message, type = 'error') {
             alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
+            alertDiv.innerHTML = message;
             alertDiv.style.display = 'flex';
-            
-            if (type === 'error') {
-                alertDiv.classList.add('shake');
-                setTimeout(() => alertDiv.classList.remove('shake'), 500);
-            }
         }
 
         function setLoading(loading) {
-            btnEntrar.disabled = loading;
-            btnText.style.display = loading ? 'none' : 'inline';
-            btnLoading.style.display = loading ? 'inline-block' : 'none';
+            btnEnter.disabled = loading;
+            document.getElementById('btnText').style.display = loading ? 'none' : 'inline';
+            document.getElementById('btnLoading').style.display = loading ? 'inline-block' : 'none';
         }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const codigo = codigoInput.value.trim().toUpperCase();
+            const codigo = codeInput.value.trim().toUpperCase();
             
-            if (codigo.length !== 5) {
-                showAlert('Código deve ter 5 caracteres (1 letra + 4 números)');
-                return;
-            }
-            
-            if (!/^[A-Z][0-9]{4}$/.test(codigo)) {
-                showAlert('Formato inválido. Use: 1 letra + 4 números (ex: A1234)');
+            if (codigo.length !== 6) {
+                showAlert('O código deve ter exatamente 6 caracteres');
                 return;
             }
 
@@ -461,33 +501,25 @@
             alertDiv.style.display = 'none';
 
             try {
-                const response = await api.post('/projetos/entrar-por-codigo', { codigo });
+                const response = await api.post('/projetos/entrar', { codigo_acesso: codigo });
                 
-                showAlert(response.message || 'Você entrou no projeto!', 'success');
+                showAlert('Conectando ao projeto...', 'success');
                 
-                // Salvar projeto atual
-                localStorage.setItem('current_project', JSON.stringify(response.projeto));
+                // Store project info and redirect
+                localStorage.setItem('projeto_atual', JSON.stringify(response.projeto));
                 
                 setTimeout(() => {
-                    window.location.href = 'projects/index.html';
+                    window.location.href = `projects/index.html?projeto=${codigo}`;
                 }, 1000);
 
             } catch (error) {
-                showAlert(error.message || 'Código não encontrado ou inválido');
+                showAlert(error.message || 'Não foi possível entrar no projeto. Verifique o código.');
                 setLoading(false);
             }
         });
 
-        // Dashboard button
-        document.getElementById('btnDashboard').addEventListener('click', () => {
-            window.location.href = 'projects/index.html';
-        });
-
-        // Logout button
-        document.getElementById('btnLogout').addEventListener('click', () => {
-            api.logout();
-            window.location.href = 'login.html?logout=true';
-        });
+        // Focus on input on load
+        codeInput.focus();
     </script>
 </body>
 </html>

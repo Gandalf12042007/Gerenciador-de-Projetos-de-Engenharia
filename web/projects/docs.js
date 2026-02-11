@@ -88,8 +88,9 @@ function closeDocModal() {
 document.addEventListener('DOMContentLoaded', () => {
   projectId = getProjectIdFromUrlOrStorage();
   if (!projectId) {
-    alert('Projeto não especificado!');
-    window.location.href = 'index.html';
+    localStorage.removeItem('current_project_id');
+    alert('Selecione um projeto na tela inicial para acessar o sistema.');
+    window.location.href = '../index.html';
     return;
   }
   localStorage.setItem('current_project_id', projectId);

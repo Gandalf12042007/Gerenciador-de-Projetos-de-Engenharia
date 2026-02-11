@@ -378,6 +378,11 @@ async function saveProjectHandler(e) {
     await loadProjects();
   } catch (error) {
     showToast('Erro ao salvar projeto: ' + error.message, 'error');
+    console.error('Erro detalhado ao criar/atualizar projeto:', error);
+    if (error.response) {
+      console.error('Resposta da API:', error.response);
+      showToast('Detalhes: ' + JSON.stringify(error.response), 'error');
+    }
   } finally {
     if (saveBtn) saveBtn.disabled = false;
     if (saveBtnText) saveBtnText.style.display = 'inline';
@@ -422,7 +427,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
       applyFilters(); 
     });
   }
-  if (newProjectBtn) newProjectBtn.addEventListener('click', createNewProject);
+  if (newProjectBtn) {
+    newProjectBtn.addEventListener('click', () => {
+      // Forçar exibição do modal
+      const modal = document.getElementById('projectModal');
+      if (modal) modal.classList.add('active');
+      openProjectModal('Novo Projeto');
+    });
+  }
   
   // Botão de logout se existir
   const logoutBtn = document.getElementById('logoutBtn');
@@ -432,4 +444,12 @@ window.addEventListener('DOMContentLoaded', ()=>{
   
   // Carregar projetos da API
   loadProjects();
+    // Corrigir navegação: se houver apenas um projeto, selecionar automaticamente
+    setTimeout(() => {
+      const list = projects;
+      if (list.length === 1) {
+        localStorage.setItem('current_project_id', list[0].id);
+        window.location.href = `kanban.html?project=${list[0].id}`;
+      }
+    }, 1500);
 });

@@ -30,6 +30,9 @@ class PermissionManager:
         "colaborador": 1
     }
     
+    # IDs de administradores do sistema (sincronizado com auth.py)
+    ADMIN_USER_IDS = {1, 2, 3}  # Vicente, Francisco, Professor
+    
     def __init__(self):
         pass  # Usando db_helper, não precisa de config
     
@@ -44,20 +47,8 @@ class PermissionManager:
         Returns:
             True se é admin, False caso contrário
         """
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            query = "SELECT is_admin FROM usuarios WHERE id = %s"
-            cursor.execute(query, (user_id,))
-            result = cursor.fetchone()
-            if result:
-                is_admin = result['is_admin'] if isinstance(result, dict) else result[0]
-                return bool(is_admin)
-            return False
-        finally:
-            cursor.close()
-            conn.close()
+        # Verificar pela lista de IDs de admin (hardcoded, sincronizado com auth.py)
+        return user_id in self.ADMIN_USER_IDS
     
     def _get_connection(self):
         """Cria conexão com banco de dados (compatível MySQL/SQLite)"""

@@ -265,8 +265,8 @@ async def register(user_data: RegisterRequest, request: Request):
     try:
         db.execute_query(
             """
-            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo, data_criacao)
-            VALUES (%s, %s, %s, %s, %s, TRUE, NOW())
+            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
+            VALUES (%s, %s, %s, %s, %s, 1)
             """,
             (user_data.nome.strip(), user_data.email.lower(), senha_hash, user_data.telefone, user_data.cargo)
         )

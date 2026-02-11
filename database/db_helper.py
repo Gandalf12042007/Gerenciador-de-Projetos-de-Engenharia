@@ -250,7 +250,11 @@ class DatabaseHelper:
                     return result
                 else:
                     conn.commit()
-                    return None
+                    # Retornar lastrowid para operações INSERT
+                    try:
+                        return cursor.lastrowid
+                    except:
+                        return None
                     
             except Exception as e:
                 conn.rollback()

@@ -1,8 +1,7 @@
-version: '3.8'
-
 # Gerenciador de Projetos de Engenharia Civil
 # Docker Compose - PRODUÇÃO
 # Desenvolvido por: Vicente de Souza
+# Atualizado em: 10/02/2026
 
 services:
   # ===== BANCO DE DADOS =====

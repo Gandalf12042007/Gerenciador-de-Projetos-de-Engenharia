@@ -47,7 +47,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            background: url('assets/images/dashboard-tech.jpg') center/cover no-repeat;
+            background: url('assets/images/bg-login.jpg') center/cover no-repeat;
         }
 
         .image-side::before {
@@ -390,6 +390,26 @@
 
             <div id="alert" class="alert"></div>
 
+            <!-- SEÇÃO PARA ADMIN: Lista todos os projetos -->
+            <div id="adminSection" style="display: none;">
+                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <p style="color: #3B82F6; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">👑</span>
+                        <strong>Modo Administrador:</strong> Você tem acesso total a todos os projetos
+                    </p>
+                </div>
+                
+                <label class="code-label">Selecione um Projeto</label>
+                <select id="adminProjectSelect" class="code-input" style="letter-spacing: 0; text-align: left; padding: 16px;">
+                    <option value="">Carregando projetos...</option>
+                </select>
+                
+                <button type="button" class="btn-enter" id="btnAdminEnter" style="margin-top: 20px;">
+                    <span>🚀 Acessar Projeto</span>
+                </button>
+            </div>
+
+            <!-- SEÇÃO PARA USUÁRIOS NORMAIS: Pede código -->
             <form id="projectForm">
                 <div class="code-input-wrapper">
                     <label class="code-label">Código de Acesso</label>
@@ -428,6 +448,82 @@
         const btnEnter = document.getElementById('btnEnter');
         const alertDiv = document.getElementById('alert');
         const form = document.getElementById('projectForm');
+        const adminSection = document.getElementById('adminSection');
+        const adminProjectSelect = document.getElementById('adminProjectSelect');
+        const btnAdminEnter = document.getElementById('btnAdminEnter');
+
+        // ========================================
+        // VERIFICAR SE É ADMIN
+        // ========================================
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        const isAdmin = userData.is_admin === true;
+
+        if (isAdmin) {
+            // Mostrar seção de admin, esconder formulário de código
+            adminSection.style.display = 'block';
+            form.style.display = 'none';
+            
+            // Carregar todos os projetos
+            loadAllProjects();
+        }
+
+        async function loadAllProjects() {
+            try {
+                const api = new ApiClient();
+                const projetos = await api.get('/projetos/');
+                
+                if (projetos && projetos.length > 0) {
+                    adminProjectSelect.innerHTML = '<option value="">Selecione um projeto...</option>';
+                    projetos.forEach(p => {
+                        const statusEmoji = {
+                            'planejamento': '📋',
+                            'em_andamento': '🚧',
+                            'pausado': '⏸️',
+                            'concluido': '✅',
+                            'cancelado': '❌'
+                        };
+                        const emoji = statusEmoji[p.status] || '📁';
+                        const option = document.createElement('option');
+                        option.value = p.id;
+                        option.textContent = `${emoji} ${p.nome} (${p.cliente || 'Sem cliente'})`;
+                        adminProjectSelect.appendChild(option);
+                    });
+                } else {
+                    adminProjectSelect.innerHTML = '<option value="">Nenhum projeto encontrado</option>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar projetos:', error);
+                adminProjectSelect.innerHTML = '<option value="">Erro ao carregar projetos</option>';
+            }
+        }
+
+        // Evento de entrar como admin
+        btnAdminEnter?.addEventListener('click', async () => {
+            const projetoId = adminProjectSelect.value;
+            if (!projetoId) {
+                showAlert('Selecione um projeto da lista');
+                return;
+            }
+
+            btnAdminEnter.disabled = true;
+            btnAdminEnter.innerHTML = '<span class="loading-spinner"></span>';
+
+            try {
+                const api = new ApiClient();
+                const response = await api.post('/projetos/admin/entrar-projeto', { projeto_id: parseInt(projetoId) });
+                
+                showAlert('Acessando projeto...', 'success');
+                localStorage.setItem('projeto_atual', JSON.stringify(response.projeto));
+                
+                setTimeout(() => {
+                    window.location.href = 'projects/index.html';
+                }, 500);
+            } catch (error) {
+                showAlert(error.message || 'Erro ao acessar projeto');
+                btnAdminEnter.disabled = false;
+                btnAdminEnter.innerHTML = '<span>🚀 Acessar Projeto</span>';
+            }
+        });
 
         let debounceTimer;
 

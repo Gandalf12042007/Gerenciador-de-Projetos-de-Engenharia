@@ -55,7 +55,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            background: url('assets/images/engenharia-office.jpg') center/cover no-repeat;
+            background: url('assets/images/bg-engineering.jpg') center/cover no-repeat;
         }
 
         .image-side::before {
@@ -523,10 +523,25 @@
             try {
                 const response = await api.login(email, password);
                 
+                // Salvar token e dados do usuário
+                const userData = {
+                    id: response.user_id,
+                    nome: response.nome,
+                    email: response.email,
+                    role: response.role || 'usuario'
+                };
+                api.setAuth(response.access_token, userData);
+                
                 showAlert('Login realizado com sucesso! Redirecionando...', 'success');
                 
+                // Administradores vão direto para o dashboard (acesso total)
+                // Outros usuários precisam informar o código do projeto
                 setTimeout(() => {
-                    window.location.href = 'entrar-projeto.html';
+                    if (response.role === 'admin') {
+                        window.location.href = 'projects/dashboard.html';
+                    } else {
+                        window.location.href = 'entrar-projeto.html';
+                    }
                 }, 1000);
 
             } catch (error) {

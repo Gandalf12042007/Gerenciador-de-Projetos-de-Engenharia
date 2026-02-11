@@ -188,17 +188,27 @@ function updateUserInfo() {
     
     if (userData.nome && userAvatar) {
         userAvatar.textContent = userData.nome.charAt(0).toUpperCase();
+        // Adicionar estilo especial para admin
+        if (userData.is_admin) {
+            userAvatar.style.background = 'linear-gradient(135deg, #F59E0B, #D97706)';
+            userAvatar.style.border = '2px solid #FCD34D';
+        }
     }
     
-    if (userData.cargo && userRole) {
-        const cargoMap = {
-            'admin': 'Administrador',
-            'gerente': 'Gerente',
-            'engenheiro': 'Engenheiro',
-            'tecnico': 'Técnico',
-            'colaborador': 'Colaborador'
-        };
-        userRole.textContent = cargoMap[userData.cargo] || userData.cargo;
+    if (userRole) {
+        // Se é admin, mostrar badge especial
+        if (userData.is_admin) {
+            userRole.innerHTML = '<span style="color: #F59E0B; font-weight: 600;">👑 Administrador</span>';
+        } else if (userData.cargo) {
+            const cargoMap = {
+                'admin': 'Administrador',
+                'gerente': 'Gerente',
+                'engenheiro': 'Engenheiro',
+                'tecnico': 'Técnico',
+                'colaborador': 'Colaborador'
+            };
+            userRole.textContent = cargoMap[userData.cargo] || userData.cargo;
+        }
     }
 }
 

@@ -71,16 +71,44 @@ async def listar_projetos(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Lista projetos do usuário (onde é membro da equipe)
+    Lista projetos do usuário (onde é membro da equipe).
+    ADMINISTRADORES veem TODOS os projetos do sistema.
     
     Query params:
         status_filter: Filtrar por status (opcional)
     """
     db = DatabaseHelper()
     user_id = current_user.get("user_id") or current_user.get("id")
+    is_admin = current_user.get("is_admin", False)
     
-    # Listar apenas projetos onde usuário é membro da equipe
-    if status_filter:
+    # ADMIN vê TODOS os projetos
+    if is_admin:
+        if status_filter:
+            projetos = db.execute_query(
+                """
+                SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
+                       p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
+                       p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
+                FROM projetos p
+                WHERE p.status = %s
+                ORDER BY p.criado_em DESC
+                """,
+                (status_filter,),
+                fetch=True
+            )
+        else:
+            projetos = db.execute_query(
+                """
+                SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
+                       p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
+                       p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
+                FROM projetos p
+                ORDER BY p.criado_em DESC
+                """,
+                fetch=True
+            )
+    # Usuário normal: apenas projetos onde é membro
+    elif status_filter:
         projetos = db.execute_query(
             """
             SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
@@ -188,12 +216,14 @@ async def buscar_projeto(
     current_user: dict = Depends(get_current_active_user)
 ):
     """
-    Busca projeto por ID (apenas membros da equipe)
+    Busca projeto por ID.
+    ADMINISTRADORES têm acesso a qualquer projeto.
     """
     user_id = current_user.get("user_id") or current_user.get("id")
+    is_admin = current_user.get("is_admin", False)
     
-    # Verificar se usuário tem acesso ao projeto
-    if not permission_manager.is_project_member(user_id, projeto_id):
+    # Verificar se usuário tem acesso ao projeto (admin tem acesso total)
+    if not permission_manager.is_project_member(user_id, projeto_id, is_admin=is_admin):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você não tem acesso a este projeto"
@@ -415,6 +445,63 @@ async def deletar_projeto(
 
 class EntrarPorCodigoRequest(BaseModel):
     codigo: str
+
+
+class EntrarProjetoAdminRequest(BaseModel):
+    projeto_id: int
+
+
+@router.post("/admin/entrar-projeto")
+async def admin_entrar_projeto(
+    request: EntrarProjetoAdminRequest,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    [ADMIN ONLY] Permite administrador acessar qualquer projeto diretamente,
+    sem precisar de código de acesso.
+    """
+    from utils.project_codes import adicionar_usuario_ao_projeto
+    
+    # Verificar se é admin
+    if not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Apenas administradores podem usar esta função"
+        )
+    
+    db = DatabaseHelper()
+    projeto = db.execute_query(
+        "SELECT id, nome, descricao, cliente, status FROM projetos WHERE id = %s",
+        (request.projeto_id,),
+        fetch=True
+    )
+    
+    if not projeto or len(projeto) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Projeto não encontrado"
+        )
+    
+    projeto = projeto[0]
+    user_id = current_user.get("user_id") or current_user.get("id")
+    
+    # Adicionar admin como gerente do projeto (para ter todas as permissões)
+    try:
+        resultado = adicionar_usuario_ao_projeto(projeto['id'], user_id, "gerente")
+    except:
+        # Já é membro, ok
+        pass
+    
+    return {
+        "message": "Acesso concedido ao projeto (Admin)",
+        "projeto": {
+            "id": projeto['id'],
+            "nome": projeto['nome'],
+            "descricao": projeto.get('descricao'),
+            "cliente": projeto.get('cliente'),
+            "status": projeto['status']
+        }
+    }
 
 
 @router.post("/entrar-por-codigo")

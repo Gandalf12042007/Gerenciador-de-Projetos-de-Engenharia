@@ -68,6 +68,7 @@ class TokenResponse(BaseModel):
     user_id: int
     nome: str
     email: str
+    role: str = "usuario"
 
 
 class VerifyOTPRequest(BaseModel):
@@ -187,7 +188,8 @@ async def login(credentials: LoginRequest, request: Request):
                 access_token=access_token,
                 user_id=user["id"],
                 nome=user["nome"],
-                email=user["email"]
+                email=user["email"],
+                role=user["role"]
             )
     
     # Se não encontrou usuário de teste

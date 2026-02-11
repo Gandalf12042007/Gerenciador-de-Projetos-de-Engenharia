@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Carregar dados
-    await loadDashboardData();
+    loadDashboardData();
 });
 
 /**

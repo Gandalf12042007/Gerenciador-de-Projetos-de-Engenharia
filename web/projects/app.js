@@ -39,7 +39,7 @@ async function loadProjects() {
     loading = false;
     showLoading(false);
   }
-}
+// ...existing code...
 
 // Mostrar loading
 function showLoading(show) {

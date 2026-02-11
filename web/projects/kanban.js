@@ -2,6 +2,13 @@
 let tasks = [];
 let projectId = null;
 
+function getProjectIdFromUrlOrStorage() {
+  const params = new URLSearchParams(window.location.search);
+  let pid = params.get('project');
+  if (!pid) pid = localStorage.getItem('current_project_id');
+  return pid || null;
+}
+
 // Backend usa: a_fazer, em_andamento, em_revisao, concluida
 const columns = [
   { key: 'a_fazer', label: 'A Fazer' },
@@ -9,11 +16,6 @@ const columns = [
   { key: 'em_revisao', label: 'Em Revisão' },
   { key: 'concluida', label: 'Concluída' }
 ];
-
-function getProjectIdFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('project') || null;
-}
 
 async function loadTasks() {
   if (!projectId) return;
@@ -177,12 +179,13 @@ function closeTaskModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  projectId = getProjectIdFromUrl();
+  projectId = getProjectIdFromUrlOrStorage();
   if (!projectId) {
     alert('Projeto não especificado!');
     window.location.href = 'index.html';
     return;
   }
+  localStorage.setItem('current_project_id', projectId);
   document.getElementById('addTaskBtn').onclick = () => openTaskModal('Nova Tarefa');
   document.getElementById('closeTaskModal').onclick = closeTaskModal;
   document.getElementById('taskModal').onclick = (e) => { if (e.target === e.currentTarget) closeTaskModal(); };

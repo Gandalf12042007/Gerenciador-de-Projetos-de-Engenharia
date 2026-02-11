@@ -188,22 +188,27 @@ function applyFilters(){
 
 // actions
 function viewProject(id){
+  localStorage.setItem('current_project_id', id);
   window.location.href = `kanban.html?project=${id}`;
 }
 
 function viewDocs(id){
+  localStorage.setItem('current_project_id', id);
   window.location.href = `docs.html?project=${id}`;
 }
 
 function viewTeam(id){
+  localStorage.setItem('current_project_id', id);
   window.location.href = `equipes.html?project=${id}`;
 }
 
 function viewMaterials(id){
+  localStorage.setItem('current_project_id', id);
   window.location.href = `materials.html?project=${id}`;
 }
 
 function viewBudget(id){
+  localStorage.setItem('current_project_id', id);
   window.location.href = `budget.html?project=${id}`;
 }
 

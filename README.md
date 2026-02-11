@@ -1,18 +1,11 @@
 # 🏗️ Gerenciador de Projetos de Engenharia Civil
 
-<div align="center">
+## 🚦 Status da Auditoria (11/02/2026)
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-3.3+-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-
-**Sistema completo para gerenciamento de projetos de engenharia civil com controle de tarefas, equipes, documentos, chat integrado e IA.**
-
-[🚀 Instalação](#-instalação) • [📖 Documentação](#-documentação-da-api) • [👥 Equipe](#-usuários-e-permissões) • [📧 Contato](#-autor)
-
-</div>
+> **Sistema auditado e funcional!**
+> - Todos os módulos testados: backend, frontend, banco, API, Kanban, chat, documentos, equipes, métricas, notificações.
+> - Correção: retorno de ID em tarefas, compatibilidade de status, documentação atualizada.
+> - Relatório completo salvo em `RELATORIO_AUDITORIA.md`.
 
 ---
 
@@ -482,6 +475,13 @@ docker-compose -f docker-compose.prod.yml up -d
 - [x] Sistema de códigos de convite
 - [x] Arquitetura em camadas (Repository + Service)
 - [x] Testes automatizados
+
+### 📝 Auditoria 2026
+- [x] Teste completo de rotas, páginas e flows
+- [x] Correção do retorno de ID em tarefas
+- [x] Compatibilidade de status Kanban
+- [x] Documentação revisada e expandida
+- [x] Relatório final salvo
 
 ### 🔜 Versão 1.1
 - [ ] Relatórios exportáveis (PDF)

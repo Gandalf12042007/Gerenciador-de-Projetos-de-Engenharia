@@ -2,9 +2,11 @@
 let docs = [];
 let projectId = null;
 
-function getProjectIdFromUrl() {
+function getProjectIdFromUrlOrStorage() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('project') || null;
+  let pid = params.get('project');
+  if (!pid) pid = localStorage.getItem('current_project_id');
+  return pid || null;
 }
 
 async function loadDocs() {
@@ -84,12 +86,13 @@ function closeDocModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  projectId = getProjectIdFromUrl();
+  projectId = getProjectIdFromUrlOrStorage();
   if (!projectId) {
     alert('Projeto não especificado!');
     window.location.href = 'index.html';
     return;
   }
+  localStorage.setItem('current_project_id', projectId);
   document.getElementById('addDocBtn').onclick = () => openDocModal('Novo Documento');
   document.getElementById('closeDocModal').onclick = closeDocModal;
   document.getElementById('docModal').onclick = (e) => { if (e.target === e.currentTarget) closeDocModal(); };

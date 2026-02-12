@@ -47,17 +47,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Registrar rotas
-app.include_router(auth.router)
-app.include_router(projetos.router)
-app.include_router(tarefas.router)
-app.include_router(equipes.router)
-app.include_router(documentos.router)
-app.include_router(materiais.router)
-app.include_router(orcamentos.router)
-app.include_router(chat.router)
-app.include_router(metricas.router)
-app.include_router(notificacoes.router)
+# Registrar rotas com prefixo /api
+app.include_router(auth.router, prefix="/api")
+app.include_router(projetos.router, prefix="/api")
+app.include_router(tarefas.router, prefix="/api")
+app.include_router(equipes.router, prefix="/api")
+app.include_router(documentos.router, prefix="/api")
+app.include_router(materiais.router, prefix="/api")
+app.include_router(orcamentos.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(metricas.router, prefix="/api")
+app.include_router(notificacoes.router, prefix="/api")
 
 
 @app.get("/")

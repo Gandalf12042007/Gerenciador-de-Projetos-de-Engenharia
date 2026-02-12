@@ -78,7 +78,7 @@ class TestAuthService:
     
     def test_verify_expired_token(self):
         """Testa rejeição de token expirado"""
-        import jwt
+        from jose import jwt
         import os
         from datetime import datetime, timedelta
         

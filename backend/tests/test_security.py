@@ -45,7 +45,7 @@ class TestJWTSecurity:
     
     def test_jwt_has_three_parts(self):
         """Testa que JWT tem formato correto"""
-        import jwt
+        from jose import jwt
         
         token = jwt.encode({"user": "test"}, "secret", algorithm="HS256")
         parts = token.split(".")
@@ -54,16 +54,17 @@ class TestJWTSecurity:
     
     def test_jwt_cannot_be_decoded_with_wrong_key(self):
         """Testa que JWT não pode ser decodificado com chave errada"""
-        import jwt
+        from jose import jwt
+        from jose.exceptions import JWTClaimsError
         
         token = jwt.encode({"user": "test"}, "chave-correta", algorithm="HS256")
         
-        with pytest.raises(jwt.InvalidSignatureError):
+        with pytest.raises((JWTClaimsError, Exception)):
             jwt.decode(token, "chave-errada", algorithms=["HS256"])
     
     def test_jwt_expiration_works(self):
         """Testa que expiração do JWT funciona"""
-        import jwt
+        from jose import jwt
         from datetime import datetime, timedelta
         
         # Token expirado

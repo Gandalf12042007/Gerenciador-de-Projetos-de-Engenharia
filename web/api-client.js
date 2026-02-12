@@ -198,7 +198,7 @@ class ApiClient {
     // ============ AUTENTICAÇÃO ============
 
     async register(nome, email, senha, cargo) {
-        return this.post('/auth/register', {
+        return this.post('/api/auth/register', {
             nome,
             email,
             senha,
@@ -207,21 +207,21 @@ class ApiClient {
     }
 
     async login(email, senha) {
-        return this.post('/auth/login', {
+        return this.post('/api/auth/login', {
             email,
             senha,
         });
     }
 
     async verify2FA(email, codigo_otp) {
-        return this.post('/auth/verify-2fa', {
+        return this.post('/api/auth/verify-2fa', {
             email,
             codigo_otp,
         });
     }
 
     async resendOTP(email) {
-        return this.post('/auth/resend-otp', {
+        return this.post('/api/auth/resend-otp', {
             email,
         });
     }
@@ -252,49 +252,49 @@ class ApiClient {
     // ============ PROJETOS ============
 
     async getProjetos(skip = 0, limit = 100) {
-        return this.get('/projetos/');
+        return this.get('/api/projetos/');
     }
 
     async getProjetoById(id) {
-        return this.get(`/projetos/${id}`);
+        return this.get(`/api/projetos/${id}`);
     }
 
     async createProjeto(dados) {
-        return this.post('/projetos/', dados);
+        return this.post('/api/projetos/', dados);
     }
 
     async updateProjeto(id, dados) {
-        return this.put(`/projetos/${id}`, dados);
+        return this.put(`/api/projetos/${id}`, dados);
     }
 
     async deleteProjeto(id) {
-        return this.delete(`/projetos/${id}`);
+        return this.delete(`/api/projetos/${id}`);
     }
 
     // ============ TAREFAS ============
 
     async getTarefasByProjeto(projeto_id, status = null) {
-        let url = `/tarefas/projeto/${projeto_id}`;
+        let url = `/api/tarefas/projeto/${projeto_id}`;
         if (status) url += `?status=${status}`;
         return this.get(url);
     }
 
     async createTarefa(dados) {
-        return this.post('/tarefas/', dados);
+        return this.post('/api/tarefas/', dados);
     }
 
     async updateTarefa(id, dados) {
-        return this.put(`/tarefas/${id}`, dados);
+        return this.put(`/api/tarefas/${id}`, dados);
     }
 
     async deleteTarefa(id) {
-        return this.delete(`/tarefas/${id}`);
+        return this.delete(`/api/tarefas/${id}`);
     }
 
     // ============ DOCUMENTOS ============
 
     async getDocumentosByProjeto(projeto_id) {
-        return this.get(`/documentos/projeto/${projeto_id}`);
+        return this.get(`/api/documentos/projeto/${projeto_id}`);
     }
 
     async uploadDocumento(projeto_id, file, categoria = 'outros', descricao = '', nome = '') {
@@ -307,7 +307,7 @@ class ApiClient {
             if (descricao) params.append('descricao', descricao);
             if (nome) params.append('nome', nome);
             
-            const url = `${API_URL}/documentos/projeto/${projeto_id}/upload?${params.toString()}`;
+            const url = `${API_URL}/api/documentos/projeto/${projeto_id}/upload?${params.toString()}`;
             
             const options = {
                 method: 'POST',
@@ -335,65 +335,65 @@ class ApiClient {
     }
 
     async deleteDocumento(id) {
-        return this.delete(`/documentos/${id}`);
+        return this.delete(`/api/documentos/${id}`);
     }
 
     async getVersoes(documento_id) {
-        return this.get(`/documentos/${documento_id}/versoes`);
+        return this.get(`/api/documentos/${documento_id}/versoes`);
     }
 
     downloadDocumentoUrl(id) {
-        return `${API_URL}/documentos/${id}/download`;
+        return `${API_URL}/api/documentos/${id}/download`;
     }
 
     // ============ EQUIPES ============
 
     async getEquipesByProjeto(projeto_id) {
-        return this.get(`/equipes/projeto/${projeto_id}`);
+        return this.get(`/api/equipes/projeto/${projeto_id}`);
     }
 
     async addMemberToTeam(dados) {
         // dados: { projeto_id, usuario_id, papel, data_entrada }
-        return this.post('/equipes/', dados);
+        return this.post('/api/equipes/', dados);
     }
 
     async updateMember(membro_id, dados) {
-        return this.put(`/equipes/${membro_id}`, dados);
+        return this.put(`/api/equipes/${membro_id}`, dados);
     }
 
     async removeMemberFromTeam(membro_id) {
-        return this.delete(`/equipes/${membro_id}`);
+        return this.delete(`/api/equipes/${membro_id}`);
     }
 
     async enviarConvite(dados) {
         // dados: { projeto_id, email_convidado, papel }
-        return this.post('/equipes/convite', dados);
+        return this.post('/api/equipes/convite', dados);
     }
 
     // ============ MATERIAIS ============
 
     async getMateriaisByProjeto(projeto_id, categoria = null) {
-        let url = `/materiais/projeto/${projeto_id}`;
+        let url = `/api/materiais/projeto/${projeto_id}`;
         if (categoria) url += `?categoria=${categoria}`;
         return this.get(url);
     }
 
     async createMaterial(projeto_id, dados) {
-        return this.post(`/materiais/projeto/${projeto_id}`, dados);
+        return this.post(`/api/materiais/projeto/${projeto_id}`, dados);
     }
 
     async updateMaterial(id, dados) {
-        return this.put(`/materiais/${id}`, dados);
+        return this.put(`/api/materiais/${id}`, dados);
     }
 
     async deleteMaterial(id) {
-        return this.delete(`/materiais/${id}`);
+        return this.delete(`/api/materiais/${id}`);
     }
 
     // ============ ORÇAMENTOS ============
 
     async getOrcamentosByProjeto(projeto_id, categoria = null, status = null) {
-        let url = `/orcamentos/projeto/${projeto_id}`;
+        let url = `/api/orcamentos/projeto/${projeto_id}`;
         const params = [];
         if (categoria) params.push(`categoria=${categoria}`);
         if (status) params.push(`status=${status}`);
@@ -402,91 +402,91 @@ class ApiClient {
     }
 
     async getResumoOrcamento(projeto_id) {
-        return this.get(`/orcamentos/projeto/${projeto_id}/resumo`);
+        return this.get(`/api/orcamentos/projeto/${projeto_id}/resumo`);
     }
 
     async createOrcamento(projeto_id, dados) {
-        return this.post(`/orcamentos/projeto/${projeto_id}`, dados);
+        return this.post(`/api/orcamentos/projeto/${projeto_id}`, dados);
     }
 
     async updateOrcamento(id, dados) {
-        return this.put(`/orcamentos/${id}`, dados);
+        return this.put(`/api/orcamentos/${id}`, dados);
     }
 
     async deleteOrcamento(id) {
-        return this.delete(`/orcamentos/${id}`);
+        return this.delete(`/api/orcamentos/${id}`);
     }
 
     async registrarPagamento(orcamento_id, dados) {
-        return this.post(`/orcamentos/${orcamento_id}/registrar-pagamento`, dados);
+        return this.post(`/api/orcamentos/${orcamento_id}/registrar-pagamento`, dados);
     }
 
     // ============ CHAT ============
 
     async sendMessage(projeto_id, conteudo) {
-        return this.post(`/chat/${projeto_id}/mensagens`, {
+        return this.post(`/api/chat/${projeto_id}/mensagens`, {
             conteudo,
         });
     }
 
     async getMessages(projeto_id, skip = 0, limit = 50) {
-        return this.get(`/chat/${projeto_id}/mensagens?skip=${skip}&limit=${limit}`);
+        return this.get(`/api/chat/${projeto_id}/mensagens?skip=${skip}&limit=${limit}`);
     }
 
     // ============ MÉTRICAS ============
 
     async getMetricas(projeto_id) {
-        return this.get(`/metricas/${projeto_id}/dashboard`);
+        return this.get(`/api/metricas/${projeto_id}/dashboard`);
     }
 
     async getMetricasTimeline(projeto_id) {
-        return this.get(`/metricas/${projeto_id}/timeline`);
+        return this.get(`/api/metricas/${projeto_id}/timeline`);
     }
 
     // ============ COMENTÁRIOS DE TAREFAS ============
 
     async getComentariosTarefa(tarefa_id) {
-        return this.get(`/tarefas/${tarefa_id}/comentarios`);
+        return this.get(`/api/tarefas/${tarefa_id}/comentarios`);
     }
 
     async addComentarioTarefa(tarefa_id, comentario) {
-        return this.post(`/tarefas/${tarefa_id}/comentarios`, { comentario });
+        return this.post(`/api/tarefas/${tarefa_id}/comentarios`, { comentario });
     }
 
     async updateComentarioTarefa(tarefa_id, comentario_id, comentario) {
-        return this.put(`/tarefas/${tarefa_id}/comentarios/${comentario_id}`, { comentario });
+        return this.put(`/api/tarefas/${tarefa_id}/comentarios/${comentario_id}`, { comentario });
     }
 
     async deleteComentarioTarefa(tarefa_id, comentario_id) {
-        return this.delete(`/tarefas/${tarefa_id}/comentarios/${comentario_id}`);
+        return this.delete(`/api/tarefas/${tarefa_id}/comentarios/${comentario_id}`);
     }
 
     // ============ NOTIFICAÇÕES ============
 
     async getNotificacoes(apenas_nao_lidas = false, limite = 50) {
-        return this.get(`/notificacoes/?apenas_nao_lidas=${apenas_nao_lidas}&limite=${limite}`);
+        return this.get(`/api/notificacoes/?apenas_nao_lidas=${apenas_nao_lidas}&limite=${limite}`);
     }
 
     async getNotificacoesNaoLidasCount() {
-        return this.get('/notificacoes/nao-lidas/contagem');
+        return this.get('/api/notificacoes/nao-lidas/contagem');
     }
 
     async marcarNotificacaoLida(notificacao_id) {
-        return this.put(`/notificacoes/${notificacao_id}/marcar-lida`, {});
+        return this.put(`/api/notificacoes/${notificacao_id}/marcar-lida`, {});
     }
 
     async marcarTodasNotificacoesLidas() {
-        return this.put('/notificacoes/marcar-todas-lidas', {});
+        return this.put('/api/notificacoes/marcar-todas-lidas', {});
     }
 
     async deleteNotificacao(notificacao_id) {
-        return this.delete(`/notificacoes/${notificacao_id}`);
+        return this.delete(`/api/notificacoes/${notificacao_id}`);
     }
 
     // ============ HEALTH CHECK ============
 
     async healthCheck() {
-        return this.get('/health');
+        return this.get('/api/health');
     }
 }
 
@@ -527,13 +527,13 @@ const API = {
             formData.get('descricao') || '',
             formData.get('nome') || ''
         ),
-        atualizar: (id, formData) => api.put(`/documentos/${id}`, {
+        atualizar: (id, formData) => api.put(`/api/documentos/${id}`, {
             descricao: formData.get('descricao'),
             categoria: formData.get('categoria')
         }),
         deletar: (id) => api.deleteDocumento(id),
         download: (id) => Promise.resolve(api.downloadDocumentoUrl(id)),
-        visualizar: (id) => Promise.resolve(`${API_URL}/documentos/${id}/visualizar`)
+        visualizar: (id) => Promise.resolve(`${API_URL}/api/documentos/${id}/visualizar`)
     },
     Equipes: {
         listarPorProjeto: (projeto_id) => api.getEquipesByProjeto(projeto_id),

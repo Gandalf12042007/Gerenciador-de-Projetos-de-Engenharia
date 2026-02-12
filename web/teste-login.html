@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🧪 Teste Direto de Login</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+        .console {
+            background: #000;
+            border: 2px solid #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 600px;
+            overflow-y: auto;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #33ff33;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 300px;
+            background: #333;
+            color: #0f0;
+            border: 1px solid #0f0;
+        }
+        h1 { color: #ffff00; }
+        .error { color: #ff3333; }
+        .success { color: #33ff33; }
+        .info { color: #33ccff; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Direto de Login - Console</h1>
+    
+    <div>
+        <h3>Dados de Teste:</h3>
+        <input type="email" id="email" value="vicentedesouza762@gmail.com" placeholder="Email">
+        <input type="password" id="senha" value="Admin@2026" placeholder="Senha">
+        <button onclick="testarLogin()">TESTAR LOGIN (POST)</button>
+        <button onclick="limparConsole()">LIMPAR CONSOLE</button>
+    </div>
+
+    <div class="console" id="console"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        function log(msg, type = 'info') {
+            const console_el = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            let prefix = '';
+            
+            if (type === 'error') prefix = '❌ ';
+            else if (type === 'success') prefix = '✅ ';
+            else if (type === 'info') prefix = 'ℹ️  ';
+            
+            const line = `[${timestamp}] ${prefix}${msg}\n`;
+            console_el.innerHTML += `<span class="${type}">${escapeHtml(line)}</span>`;
+            console_el.scrollTop = console_el.scrollHeight;
+            
+            console.log(`[${type}]`, msg);
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function limparConsole() {
+            document.getElementById('console').innerHTML = '';
+        }
+
+        async function testarLogin() {
+            limparConsole();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            
+            log(`Iniciando teste de login...`, 'info');
+            log(`Email: ${email}`, 'info');
+            log(`Senha: ${senha.substring(0, 3)}***`, 'info');
+            log(`URL: ${API_BASE}/api/auth/login`, 'info');
+            log(``, 'info');
+            
+            try {
+                log(`Enviando requisição POST...`, 'info');
+                
+                const payload = {
+                    email: email,
+                    senha: senha
+                };
+                
+                log(`Payload: ${JSON.stringify(payload, null, 2)}`, 'info');
+                log(``, 'info');
+                
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                log(`Status HTTP: ${response.status} ${response.statusText}`, 'info');
+                log(`Headers da resposta:`, 'info');
+                for (const [key, value] of response.headers.entries()) {
+                    log(`  ${key}: ${value}`, 'info');
+                }
+                log(``, 'info');
+                
+                const contentType = response.headers.get('content-type');
+                let data;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                    log(`Resposta (JSON):`, 'info');
+                    log(JSON.stringify(data, null, 2), 'info');
+                } else {
+                    data = await response.text();
+                    log(`Resposta (Texto):`, 'info');
+                    log(data, 'info');
+                }
+                
+                log(``, 'info');
+                
+                if (response.ok) {
+                    log(`✅✅✅ LOGIN SUCESSO! ✅✅✅`, 'success');
+                    log(`Token recebido: ${data.access_token.substring(0, 50)}...`, 'success');
+                    log(`Usuário: ${data.nome} (${data.role})`, 'success');
+                    
+                    // Salvar no localStorage
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify({
+                        id: data.user_id,
+                        nome: data.nome,
+                        email: data.email,
+                        role: data.role
+                    }));
+                    
+                    log(`Dados salvos no localStorage!`, 'success');
+                    log(`Redirecionando em 2 segundos...`, 'info');
+                    
+                    setTimeout(() => {
+                        if (data.role === 'admin') {
+                            window.location.href = '/projects/dashboard.html';
+                        } else {
+                            window.location.href = '/entrar-projeto.html';
+                        }
+                    }, 2000);
+                } else {
+                    log(`❌❌❌ ERRO NO LOGIN! ❌❌❌`, 'error');
+                    log(`Status: ${response.status}`, 'error');
+                    log(`Resposta: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ ERRO NA REQUISIÇÃO!`, 'error');
+                log(`Tipo: ${error.name}`, 'error');
+                log(`Mensagem: ${error.message}`, 'error');
+                log(`Stack: ${error.stack}`, 'error');
+            }
+        }
+        
+        // Auto-test ao carregar
+        window.addEventListener('load', () => {
+            log(`Página carregada. Clique em TESTAR LOGIN ou edite os dados e clique.`, 'info');
+            log(`Browser: ${navigator.userAgent.substring(0, 50)}...`, 'info');
+        });
+    </script>
+</body>
+</html>

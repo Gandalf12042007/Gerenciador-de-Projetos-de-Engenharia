@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🧹 Limpar Cache e Tentar Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0F172A;
+            color: #F1F5F9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: #1E293B;
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+            border: 2px solid #F59E0B;
+        }
+        h1 { color: #F59E0B; margin-top: 0; }
+        p { line-height: 1.6; }
+        button {
+            background: #F59E0B;
+            color: #000;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #FBBF24;
+            transform: scale(1.05);
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: #0F172A;
+            border-left: 4px solid #22C55E;
+            text-align: left;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpar Tudo e Tentar Login</h1>
+        
+        <p>
+            Se o login não está funcionando, clique no botão abaixo para:
+        </p>
+        
+        <ul style="text-align: left;">
+            <li>✓ Limpar localStorage completamente</li>
+            <li>✓ Limpar sessionStorage completamente</li>
+            <li>✓ Limpar todos os caches do navegador</li>
+            <li>✓ Redirecionar para a página de login</li>
+        </ul>
+
+        <div class="status" id="status"></div>
+
+        <button onclick="limparTudo()">🧹 LIMPAR TUDO E IR PARA LOGIN</button>
+        <button onclick="irParaLogin()">➡️ IR PARA LOGIN (SEM LIMPAR)</button>
+    </div>
+
+    <script>
+        function atualizarStatus(msg, tipo = 'info') {
+            const status = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString();
+            const emoji = tipo === 'success' ? '✅' : tipo === 'error' ? '❌' : 'ℹ️';
+            status.innerHTML += `<p>${emoji} [${timestamp}] ${msg}</p>`;
+        }
+
+        async function limparTudo() {
+            atualizarStatus('Iniciando limpeza...');
+            
+            try {
+                // Limpar localStorage
+                atualizarStatus('Limpando localStorage...');
+                localStorage.clear();
+                
+                // Limpar sessionStorage
+                atualizarStatus('Limpando sessionStorage...');
+                sessionStorage.clear();
+                
+                // Limpar IndexedDB
+                atualizarStatus('Limpando IndexedDB...');
+                if ('indexedDB' in window) {
+                    const dbs = await (window.indexedDB.databases?.() || Promise.resolve([]));
+                    for (const db of dbs) {
+                        window.indexedDB.deleteDatabase(db.name);
+                    }
+                }
+                
+                // Limpar caches
+                atualizarStatus('Limpando Service Worker caches...');
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                    }
+                }
+                
+                // Limpar cookies (JavaScript não pode limpar cookies HTTP-only)
+                atualizarStatus('Limpando cookies acessíveis...');
+                document.cookie.split(";").forEach(c => {
+                    document.cookie = c
+                        .replace(/^ +/, "")
+                        .replace(/=.*/, "=" + "")
+                        .split("=")[0] + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+                });
+                
+                atualizarStatus('Cache completamente limpo! ✨', 'success');
+                atualizarStatus('Redirecionando para login em 2 segundos...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+                
+            } catch (error) {
+                atualizarStatus(`Erro: ${error.message}`, 'error');
+            }
+        }
+
+        function irParaLogin() {
+            window.location.href = '/login.html';
+        }
+
+        window.addEventListener('load', () => {
+            atualizarStatus('Página de limpeza carregada', 'info');
+            atualizarStatus(`LocalStorage tem ${Object.keys(localStorage).length} items`, 'info');
+            atualizarStatus(`SessionStorage tem ${Object.keys(sessionStorage).length} items`, 'info');
+        });
+    </script>
+</body>
+</html>

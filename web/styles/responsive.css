@@ -1,0 +1,482 @@
+/* ============================================
+   RESPONSIVIDADE - Mobile-First
+   ============================================ */
+
+/* ========== MOBILE (0-480px) - PADRÃO ========== */
+
+html, body {
+  font-size: 16px;
+}
+
+.container {
+  padding: var(--spacing-4);
+}
+
+.header {
+  padding: var(--spacing-4);
+}
+
+.main-content {
+  padding: var(--spacing-4);
+}
+
+.sidebar {
+  display: none; /* Esconder sidebar em mobile */
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-4);
+}
+
+.grid-2 {
+  grid-template-columns: 1fr;
+}
+
+.grid-3 {
+  grid-template-columns: 1fr;
+}
+
+.grid-4 {
+  grid-template-columns: 1fr;
+}
+
+.flex-row-mobile {
+  flex-direction: column;
+}
+
+/* ========== TABLET (481px - 768px) ========== */
+
+@media screen and (min-width: 481px) {
+  html, body {
+    font-size: 16px;
+  }
+
+  .container {
+    padding: var(--spacing-5);
+  }
+
+  .header {
+    padding: var(--spacing-5);
+  }
+
+  .main-content {
+    padding: var(--spacing-5);
+  }
+
+  .sidebar {
+    display: block;
+    width: 200px;
+    position: relative;
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .flex-row-mobile {
+    flex-direction: row;
+  }
+
+  .hidden-tablet {
+    display: none !important;
+  }
+}
+
+/* ========== SMALL DESKTOP (769px - 1024px) ========== */
+
+@media screen and (min-width: 769px) {
+  html, body {
+    font-size: 16px;
+  }
+
+  .container {
+    max-width: 960px;
+    padding: var(--spacing-6);
+  }
+
+  .header {
+    padding: var(--spacing-6);
+  }
+
+  .main-content {
+    padding: var(--spacing-6);
+    display: flex;
+    gap: var(--spacing-6);
+  }
+
+  .sidebar {
+    width: 250px;
+    flex-shrink: 0;
+  }
+
+  .content-area {
+    flex: 1;
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .hidden-desktop-small {
+    display: none !important;
+  }
+}
+
+/* ========== LARGE DESKTOP (1025px+) ========== */
+
+@media screen and (min-width: 1025px) {
+  html, body {
+    font-size: 17px;
+  }
+
+  .container {
+    max-width: 1200px;
+    padding: var(--spacing-8);
+  }
+
+  .header {
+    padding: var(--spacing-8);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .main-content {
+    padding: var(--spacing-8);
+    display: flex;
+    gap: var(--spacing-8);
+  }
+
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    position: sticky;
+    top: var(--spacing-8);
+    height: fit-content;
+  }
+
+  .content-area {
+    flex: 1;
+  }
+
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .hidden-desktop-large {
+    display: none !important;
+  }
+}
+
+/* ========== EXTRA LARGE (1441px+) ========== */
+
+@media screen and (min-width: 1441px) {
+  .container {
+    max-width: 1400px;
+  }
+
+  .sidebar {
+    width: 300px;
+  }
+}
+
+/* ============================================
+   COMPONENTES RESPONSIVOS
+   ============================================ */
+
+/* Tabelas responsivas */
+@media screen and (max-width: 768px) {
+  table {
+    font-size: var(--font-size-sm);
+  }
+
+  table thead {
+    display: none;
+  }
+
+  table tbody tr {
+    display: block;
+    margin-bottom: var(--spacing-4);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-base);
+    padding: var(--spacing-4);
+  }
+
+  [data-theme="dark"] table tbody tr {
+    border-color: var(--color-neutral-700);
+  }
+
+  table td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-2) 0;
+    border-bottom: 1px solid var(--color-neutral-100);
+  }
+
+  [data-theme="dark"] table td {
+    border-bottom-color: var(--color-neutral-800);
+  }
+
+  table td:before {
+    content: attr(data-label);
+    font-weight: var(--font-weight-bold);
+    width: 40%;
+  }
+
+  table td:last-child {
+    border-bottom: none;
+  }
+}
+
+/* Cards responsivos */
+.card {
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-base);
+  transition: all var(--transition-normal);
+}
+
+@media screen and (min-width: 769px) {
+  .card {
+    padding: var(--spacing-6);
+    box-shadow: var(--shadow-md);
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+}
+
+/* Buttons responsivos */
+button, .btn {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-base);
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media screen and (min-width: 769px) {
+  button, .btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    min-height: auto;
+  }
+}
+
+/* Input responsivos */
+input, textarea, select {
+  min-height: 44px;
+  font-size: 16px; /* Evita zoom em iOS */
+  padding: var(--spacing-3);
+}
+
+@media screen and (min-width: 769px) {
+  input, textarea, select {
+    min-height: auto;
+    font-size: var(--font-size-base);
+  }
+}
+
+/* ============================================
+   NAVEGAÇÃO RESPONSIVA
+   ============================================ */
+
+.nav-mobile-toggle {
+  display: block;
+  background: none;
+  border: none;
+  font-size: var(--font-size-2xl);
+  cursor: pointer;
+  padding: var(--spacing-2);
+}
+
+@media screen and (min-width: 769px) {
+  .nav-mobile-toggle {
+    display: none;
+  }
+}
+
+.nav-menu {
+  display: none;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: var(--color-neutral-50);
+  border-bottom: 1px solid var(--color-neutral-200);
+  z-index: var(--z-dropdown);
+}
+
+[data-theme="dark"] .nav-menu {
+  background: var(--color-neutral-800);
+  border-color: var(--color-neutral-700);
+}
+
+.nav-menu.active {
+  display: block;
+}
+
+@media screen and (min-width: 769px) {
+  .nav-menu {
+    display: flex !important;
+    position: static;
+    background: transparent;
+    border: none;
+    gap: var(--spacing-6);
+  }
+
+  .nav-menu.active {
+    display: flex !important;
+  }
+}
+
+/* ============================================
+   IMAGENS RESPONSIVAS
+   ============================================ */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-responsive {
+  width: 100%;
+  height: auto;
+}
+
+.img-cover {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* ============================================
+   LAYOUT RESPONSIVO
+   ============================================ */
+
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.layout-header {
+  flex-shrink: 0;
+}
+
+.layout-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-sidebar {
+  order: -1; /* Sidebar antes em mobile */
+}
+
+@media screen and (min-width: 769px) {
+  .layout-body {
+    flex-direction: row;
+  }
+
+  .layout-sidebar {
+    order: 0;
+  }
+}
+
+/* ============================================
+   UTILITÁRIOS MÓVEIS
+   ============================================ */
+
+.show-mobile {
+  display: block;
+}
+
+.hide-mobile {
+  display: none;
+}
+
+@media screen and (min-width: 481px) {
+  .show-mobile {
+    display: none;
+  }
+
+  .hide-mobile {
+    display: block;
+  }
+}
+
+.show-tablet {
+  display: none;
+}
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  .show-tablet {
+    display: block;
+  }
+}
+
+.show-desktop {
+  display: none;
+}
+
+@media screen and (min-width: 769px) {
+  .show-desktop {
+    display: block;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .no-print,
+  .nav-mobile-toggle,
+  .theme-toggle,
+  .btn-secondary,
+  .btn-ghost {
+    display: none !important;
+  }
+
+  body {
+    background-color: white;
+    color: black;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  .page-break {
+    page-break-after: always;
+  }
+}

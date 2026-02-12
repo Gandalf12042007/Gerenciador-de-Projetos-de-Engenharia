@@ -418,13 +418,13 @@ window.addEventListener('DOMContentLoaded', ()=>{
   const clearFilters = document.getElementById('clearFilters');
   const newProjectBtn = document.getElementById('newProjectBtn');
   
-  if (filterStatus) filterStatus.addEventListener('change', applyFilters);
-  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  if (filterStatus && typeof applyFilters === 'function') filterStatus.addEventListener('change', applyFilters);
+  if (searchInput && typeof applyFilters === 'function') searchInput.addEventListener('input', applyFilters);
   if (clearFilters) {
     clearFilters.addEventListener('click', ()=>{ 
       if (searchInput) searchInput.value = ''; 
       if (filterStatus) filterStatus.value = 'all'; 
-      applyFilters(); 
+      if (typeof applyFilters === 'function') applyFilters(); 
     });
   }
   if (newProjectBtn) {

@@ -21,7 +21,7 @@ logging.basicConfig(
 class Settings:
     """Configurações da aplicação"""
     
-    # Tipo de Banco de Dados (mysql ou sqlite)
+    # Tipo de Banco de Dados (sqlite, mysql, postgresql)
     DB_TYPE: str = os.getenv("DB_TYPE", "sqlite").lower()
     
     # Banco de Dados MySQL
@@ -30,6 +30,13 @@ class Settings:
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
     DB_NAME: str = os.getenv("DB_NAME", "gerenciador_projetos")
     DB_PORT: int = int(os.getenv("DB_PORT", 3306))
+    
+    # Banco de Dados PostgreSQL
+    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
+    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "gerenciador_projetos")
+    POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", 5432))
     
     # Banco de Dados SQLite
     SQLITE_PATH: str = os.getenv("SQLITE_PATH", os.path.join(
@@ -80,6 +87,14 @@ class Settings:
                 'charset': 'utf8mb4',
                 'collation': 'utf8mb4_unicode_ci'
             }
+        elif self.DB_TYPE == "postgresql":
+            return {
+                'host': self.POSTGRES_HOST,
+                'user': self.POSTGRES_USER,
+                'password': self.POSTGRES_PASSWORD,
+                'database': self.POSTGRES_DB,
+                'port': self.POSTGRES_PORT
+            }
         else:
             return {
                 'database': self.SQLITE_PATH
@@ -94,6 +109,11 @@ class Settings:
     def is_mysql(self) -> bool:
         """Verifica se está usando MySQL"""
         return self.DB_TYPE == "mysql"
+    
+    @property
+    def is_postgresql(self) -> bool:
+        """Verifica se está usando PostgreSQL"""
+        return self.DB_TYPE == "postgresql"
 
 
 settings = Settings()

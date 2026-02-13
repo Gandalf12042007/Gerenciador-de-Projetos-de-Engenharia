@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar em Projeto - Gerenciador de Projetos de Engenharia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --bg-input: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --color-primary: #3B82F6;
+            --color-accent: #F59E0B;
+            --color-success: #22C55E;
+            --color-error: #EF4444;
+            --border-color: #334155;
+            --gradient-blue: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 50%, #1E3A8A 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+        }
+
+        .split-container {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* Lado Esquerdo - Imagem */
+        .image-side {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: url('assets/images/bg-login.jpg') center/cover no-repeat;
+        }
+
+        .image-side::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(59, 130, 246, 0.85) 0%,
+                rgba(29, 78, 216, 0.8) 40%,
+                rgba(15, 23, 42, 0.95) 100%
+            );
+        }
+
+        .image-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 40px;
+            max-width: 500px;
+        }
+
+        .brand-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            font-size: 56px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px 10px rgba(59,130,246,0.3); }
+        }
+
+        .brand-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .brand-subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .info-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .info-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: white;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .info-icon { font-size: 1.5rem; }
+
+        /* Lado Direito - Formulário */
+        .form-side {
+            width: 520px;
+            min-width: 420px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            background: var(--bg-dark);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .form-header-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-blue);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+        }
+
+        .form-header h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .code-input-wrapper { margin-bottom: 24px; }
+
+        .code-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .code-input {
+            width: 100%;
+            padding: 24px;
+            font-size: 2.25rem;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 14px;
+            text-transform: uppercase;
+            background: var(--bg-input);
+            border: 3px solid var(--border-color);
+            border-radius: 16px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .code-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: 8px;
+            font-size: 1.5rem;
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+        }
+
+        .code-input.valid {
+            border-color: var(--color-success);
+            box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.2);
+        }
+
+        .code-input.invalid {
+            border-color: var(--color-error);
+            box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.2);
+        }
+
+        .validation-feedback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 0.875rem;
+            min-height: 24px;
+        }
+
+        .validation-feedback.valid { color: var(--color-success); }
+        .validation-feedback.invalid { color: var(--color-error); }
+        .validation-feedback.checking { color: var(--color-primary); }
+
+        .btn-enter {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: white;
+            background: var(--gradient-blue);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-enter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-enter:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 28px 0;
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .divider span { padding: 0 16px; }
+
+        .links {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .links a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .links a:hover { color: #60A5FA; }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .image-side { display: none; }
+            .form-side {
+                width: 100%;
+                min-width: auto;
+                max-width: 520px;
+                margin: 0 auto;
+            }
+            body {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, transparent 50%), var(--bg-dark);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-side { padding: 24px; }
+            .code-input { letter-spacing: 8px; font-size: 1.75rem; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in { animation: fadeInUp 0.5s ease forwards; }
+    </style>
+</head>
+<body>
+    <div class="split-container">
+        <!-- Lado Esquerdo -->
+        <div class="image-side">
+            <div class="image-content">
+                <div class="brand-icon">🔗</div>
+                <h1 class="brand-title">Acesso ao Projeto</h1>
+                <p class="brand-subtitle">
+                    Use o código de 6 caracteres compartilhado pelo gerente do projeto
+                </p>
+                
+                <div class="info-cards">
+                    <div class="info-card">
+                        <span class="info-icon">📧</span>
+                        <span>Código enviado por e-mail ou WhatsApp</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-icon">👷</span>
+                        <span>Acesso instantâneo ao projeto da obra</span>
+                    </div>
+                    <div class="info-card">
+                        <span class="info-icon">🔐</span>
+                        <span>Código único e seguro por projeto</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lado Direito - Formulário -->
+        <div class="form-side animate-in">
+            <div class="form-header">
+                <div class="form-header-icon">🏗️</div>
+                <h2>Entrar no Projeto</h2>
+                <p>Digite o código de acesso de 6 caracteres para entrar no projeto</p>
+            </div>
+
+            <div id="alert" class="alert"></div>
+
+            <!-- SEÇÃO PARA ADMIN: Lista todos os projetos -->
+            <div id="adminSection" style="display: none;">
+                <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                    <p style="color: #3B82F6; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2rem;">👑</span>
+                        <strong>Modo Administrador:</strong> Você tem acesso total a todos os projetos
+                    </p>
+                </div>
+                
+                <label class="code-label">Selecione um Projeto</label>
+                <select id="adminProjectSelect" class="code-input" style="letter-spacing: 0; text-align: left; padding: 16px;">
+                    <option value="">Carregando projetos...</option>
+                </select>
+                
+                <button type="button" class="btn-enter" id="btnAdminEnter" style="margin-top: 20px;">
+                    <span>🚀 Acessar Projeto</span>
+                </button>
+            </div>
+
+            <!-- SEÇÃO PARA USUÁRIOS NORMAIS: Pede código -->
+            <form id="projectForm">
+                <div class="code-input-wrapper">
+                    <label class="code-label">Código de Acesso</label>
+                    <input 
+                        type="text" 
+                        id="codigo" 
+                        class="code-input" 
+                        placeholder="ABC123"
+                        maxlength="6"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+                    <div id="feedback" class="validation-feedback"></div>
+                </div>
+
+                <button type="submit" class="btn-enter" id="btnEnter" disabled>
+                    <span id="btnText">🚀 Entrar no Projeto</span>
+                    <span id="btnLoading" class="loading-spinner" style="display: none;"></span>
+                </button>
+            </form>
+
+            <div class="divider"><span>precisa de ajuda?</span></div>
+
+            <div class="links">
+                <a href="login.html">← Voltar para o login</a>
+                <a href="#">Não tenho o código de acesso</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        const codeInput = document.getElementById('codigo');
+        const feedback = document.getElementById('feedback');
+        const btnEnter = document.getElementById('btnEnter');
+        const alertDiv = document.getElementById('alert');
+        const form = document.getElementById('projectForm');
+        const adminSection = document.getElementById('adminSection');
+        const adminProjectSelect = document.getElementById('adminProjectSelect');
+        const btnAdminEnter = document.getElementById('btnAdminEnter');
+
+        // ========================================
+        // VERIFICAR SE É ADMIN
+        // ========================================
+        const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+        const isAdmin = userData.is_admin === true;
+
+        if (isAdmin) {
+            // Mostrar seção de admin, esconder formulário de código
+            adminSection.style.display = 'block';
+            form.style.display = 'none';
+            
+            // Carregar todos os projetos
+            loadAllProjects();
+        }
+
+        async function loadAllProjects() {
+            try {
+                const api = new ApiClient();
+                const projetos = await api.get('/projetos/');
+                
+                if (projetos && projetos.length > 0) {
+                    adminProjectSelect.innerHTML = '<option value="">Selecione um projeto...</option>';
+                    projetos.forEach(p => {
+                        const statusEmoji = {
+                            'planejamento': '📋',
+                            'em_andamento': '🚧',
+                            'pausado': '⏸️',
+                            'concluido': '✅',
+                            'cancelado': '❌'
+                        };
+                        const emoji = statusEmoji[p.status] || '📁';
+                        const option = document.createElement('option');
+                        option.value = p.id;
+                        option.textContent = `${emoji} ${p.nome} (${p.cliente || 'Sem cliente'})`;
+                        adminProjectSelect.appendChild(option);
+                    });
+                } else {
+                    adminProjectSelect.innerHTML = '<option value="">Nenhum projeto encontrado</option>';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar projetos:', error);
+                adminProjectSelect.innerHTML = '<option value="">Erro ao carregar projetos</option>';
+            }
+        }
+
+        // Evento de entrar como admin
+        btnAdminEnter?.addEventListener('click', async () => {
+            const projetoId = adminProjectSelect.value;
+            if (!projetoId) {
+                showAlert('Selecione um projeto da lista');
+                return;
+            }
+
+            btnAdminEnter.disabled = true;
+            btnAdminEnter.innerHTML = '<span class="loading-spinner"></span>';
+
+            try {
+                const api = new ApiClient();
+                const response = await api.post('/projetos/admin/entrar-projeto', { projeto_id: parseInt(projetoId) });
+                
+                showAlert('Acessando projeto...', 'success');
+                localStorage.setItem('projeto_atual', JSON.stringify(response.projeto));
+                
+                setTimeout(() => {
+                    window.location.href = 'projects/index.html';
+                }, 500);
+            } catch (error) {
+                showAlert(error.message || 'Erro ao acessar projeto');
+                btnAdminEnter.disabled = false;
+                btnAdminEnter.innerHTML = '<span>🚀 Acessar Projeto</span>';
+            }
+        });
+
+        let debounceTimer;
+
+        // Format and validate input
+        codeInput.addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            e.target.value = value;
+
+            // Reset states
+            codeInput.classList.remove('valid', 'invalid');
+            btnEnter.disabled = true;
+            feedback.textContent = '';
+            feedback.className = 'validation-feedback';
+
+            if (value.length === 6) {
+                feedback.innerHTML = '⏳ Verificando código...';
+                feedback.className = 'validation-feedback checking';
+                
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => validateCode(value), 500);
+            } else if (value.length > 0) {
+                feedback.textContent = `${6 - value.length} caracteres restantes`;
+            }
+        });
+
+        async function validateCode(code) {
+            try {
+                const response = await api.get(`/projetos/validar-codigo/${code}`);
+                
+                if (response.valido) {
+                    codeInput.classList.add('valid');
+                    codeInput.classList.remove('invalid');
+                    feedback.innerHTML = `✅ Projeto encontrado: <strong>${response.projeto_nome}</strong>`;
+                    feedback.className = 'validation-feedback valid';
+                    btnEnter.disabled = false;
+                } else {
+                    throw new Error('Código inválido');
+                }
+            } catch (error) {
+                codeInput.classList.add('invalid');
+                codeInput.classList.remove('valid');
+                feedback.innerHTML = '❌ Código não encontrado';
+                feedback.className = 'validation-feedback invalid';
+                btnEnter.disabled = true;
+            }
+        }
+
+        function showAlert(message, type = 'error') {
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message;
+            alertDiv.style.display = 'flex';
+        }
+
+        function setLoading(loading) {
+            btnEnter.disabled = loading;
+            document.getElementById('btnText').style.display = loading ? 'none' : 'inline';
+            document.getElementById('btnLoading').style.display = loading ? 'inline-block' : 'none';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const codigo = codeInput.value.trim().toUpperCase();
+            
+            if (codigo.length !== 6) {
+                showAlert('O código deve ter exatamente 6 caracteres');
+                return;
+            }
+
+            setLoading(true);
+            alertDiv.style.display = 'none';
+
+            try {
+                const response = await api.post('/projetos/entrar', { codigo_acesso: codigo });
+                
+                showAlert('Conectando ao projeto...', 'success');
+                
+                // Store project info and redirect
+                localStorage.setItem('projeto_atual', JSON.stringify(response.projeto));
+                
+                setTimeout(() => {
+                    window.location.href = `projects/index.html?projeto=${codigo}`;
+                }, 1000);
+
+            } catch (error) {
+                showAlert(error.message || 'Não foi possível entrar no projeto. Verifique o código.');
+                setLoading(false);
+            }
+        });
+
+        // Focus on input on load
+        codeInput.focus();
+    </script>
+</body>
+</html>

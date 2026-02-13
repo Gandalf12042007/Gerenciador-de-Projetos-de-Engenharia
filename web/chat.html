@@ -379,7 +379,7 @@
         let isGoogleLoggedIn = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             if (!token) { window.location.href = 'login.html'; return; }
 
             try {
@@ -444,7 +444,7 @@
 
         async function loadUsers() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('access_token');
                 const res = await fetch(API_BASE + '/chat/usuarios-disponiveis', { headers: { 'Authorization': 'Bearer ' + token } });
                 if (res.ok) { renderUsers((await res.json()).usuarios); }
                 else { renderUsers([{ id: 1, nome: 'Vicente', cargo: 'Admin', icone: '👑' }, { id: 2, nome: 'Francisco', cargo: 'Admin', icone: '👑' }, { id: 3, nome: 'Professor', cargo: 'Admin', icone: '👑' }]); }
@@ -492,11 +492,12 @@
                     msgs.innerHTML = '<div class="message received ia"><div class="message-sender">🤖 Assistente IA</div>🔒 Faça login com Google para usar.<div class="message-time">Agora</div></div>';
                 }
             } else {
-                document.getElementById('chatStatusText').textContent = '👤 Chat direto';
+                document.getElementById('chatStatusText').textContent = '👤 Chat direto - Carregando...';
                 input.disabled = false;
                 input.placeholder = 'Digite sua mensagem...';
                 btn.disabled = false;
-                msgs.innerHTML = '<div class="message received"><div class="message-sender">💬 Sistema</div>Conversa com ' + name + '.<div class="message-time">Agora</div></div>';
+                // Carregar histórico de mensagens diretas
+                loadDirectMessages(userId);
             }
             input.focus();
         }
@@ -538,8 +539,8 @@
             msgs.scrollTop = msgs.scrollHeight;
 
             try {
-                var token = localStorage.getItem('token');
-                var res = await fetch(API_BASE + '/chat/assistente-ia', {
+                var token = localStorage.getItem('access_token');
+                var res = await fetch(API_BASE + '/chat/ia/perguntar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ mensagem: message, contexto_projeto: null })
@@ -560,14 +561,53 @@
             var msgs = document.getElementById('chatMessages');
             var now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             try {
-                var token = localStorage.getItem('token');
-                await fetch(API_BASE + '/chat/mensagem-direta', {
+                var token = localStorage.getItem('access_token');
+                var res = await fetch(API_BASE + '/chat/direto/enviar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                     body: JSON.stringify({ destinatario_id: currentChat.id, conteudo: message })
                 });
-                msgs.innerHTML += '<div class="message received"><div class="message-sender">✅ Sistema</div>Mensagem enviada para ' + currentChat.name + '!<div class="message-time">' + now + '</div></div>';
-            } catch (e) {}
+                if (res.ok) {
+                    // Mensagem já foi adicionada na função sendMessage
+                } else {
+                    msgs.innerHTML += '<div class="message received"><div class="message-sender">❌ Erro</div>Falha ao enviar mensagem.<div class="message-time">' + now + '</div></div>';
+                }
+            } catch (e) {
+                msgs.innerHTML += '<div class="message received"><div class="message-sender">❌ Erro</div>Erro de conexão.<div class="message-time">' + now + '</div></div>';
+            }
+        }
+
+        async function loadDirectMessages(userId) {
+            var msgs = document.getElementById('chatMessages');
+            msgs.innerHTML = '<div class="typing-indicator"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+            
+            try {
+                var token = localStorage.getItem('access_token');
+                var res = await fetch(API_BASE + '/chat/direto/' + userId + '?limit=50', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                
+                if (res.ok) {
+                    var data = await res.json();
+                    msgs.innerHTML = '';
+                    
+                    if (data.mensagens && data.mensagens.length > 0) {
+                        // Inverter para mostrar mais antigas primeiro
+                        data.mensagens.reverse().forEach(function(m) {
+                            var isMe = m.autor_id === (currentUser.id || currentUser.user_id);
+                            var time = m.enviada_em ? new Date(m.enviada_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+                            msgs.innerHTML += '<div class="message ' + (isMe ? 'sent' : 'received') + '"><div class="message-sender">' + (isMe ? '👤 Você' : m.remetente_nome) + '</div>' + escapeHtml(m.conteudo) + '<div class="message-time">' + time + '</div></div>';
+                        });
+                    } else {
+                        msgs.innerHTML = '<div class="message received"><div class="message-sender">💬 Sistema</div>Nenhuma mensagem ainda. Inicie a conversa!<div class="message-time">Agora</div></div>';
+                    }
+                } else {
+                    msgs.innerHTML = '<div class="message received"><div class="message-sender">💬 Sistema</div>Inicie uma conversa com este usuário!<div class="message-time">Agora</div></div>';
+                }
+            } catch (e) {
+                msgs.innerHTML = '<div class="message received"><div class="message-sender">❌ Erro</div>Erro ao carregar mensagens.<div class="message-time">Agora</div></div>';
+            }
+            msgs.scrollTop = msgs.scrollHeight;
         }
 
         function escapeHtml(text) { var div = document.createElement('div'); div.textContent = text; return div.innerHTML; }

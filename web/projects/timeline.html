@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Timeline — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
   <link rel="stylesheet" href="styles.css">
+  <script src="layout.js" defer></script>
   <style>
     .timeline-container {
       padding: 20px;
@@ -264,14 +267,7 @@
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <h1>📅 Timeline</h1>
-    <div class="top-controls">
-      <button onclick="location.href='index.html'" class="btn">📁 Projetos</button>
-      <button onclick="location.href='dashboard.html'" class="btn">📊 Dashboard</button>
-      <button id="logoutBtn" class="btn">Sair</button>
-    </div>
-  </header>
+  <!-- Header será injetado pelo layout.js -->
 
   <main class="timeline-container">
     <div class="timeline-header">

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Raw API Test</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+        pre { background: #111; padding: 15px; border: 1px solid #0f0; }
+        button { background: #0f0; color: #000; padding: 10px 20px; margin: 10px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Raw POST Test</h1>
+    <button onclick="test()">Test POST /api/auth/login</button>
+    <pre id="out"></pre>
+    <script>
+        async function test() {
+            const out = document.getElementById('out');
+            out.textContent = '';
+            
+            const url = 'http://localhost:8000/api/auth/login';
+            const payload = {
+                email: 'francisco@projeto.com',
+                senha: 'Admin@2026'
+            };
+            
+            out.textContent += 'URL: ' + url + '\n';
+            out.textContent += 'Payload: ' + JSON.stringify(payload) + '\n\n';
+            out.textContent += 'Enviando...\n\n';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                out.textContent += 'Response Status: ' + response.status + ' ' + response.statusText + '\n';
+                out.textContent += 'Response Headers:\n';
+                for (const [k, v] of response.headers.entries()) {
+                    out.textContent += '  ' + k + ': ' + v + '\n';
+                }
+                
+                const data = await response.json();
+                out.textContent += '\nResponse JSON:\n' + JSON.stringify(data, null, 2);
+                
+            } catch (e) {
+                out.textContent += 'ERROR: ' + e.message + '\n' + e.stack;
+            }
+        }
+    </script>
+</body>
+</html>

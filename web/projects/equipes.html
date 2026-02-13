@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Equipes — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="equipes.css">
+  <script src="layout.js" defer></script>
+</head>
+<body>
+  <!-- Header será injetado pelo layout.js -->
+  
+  <!-- Botões de ação flutuantes -->
+  <div style="position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 10px; flex-wrap: wrap;">
+    <button id="addMemberBtn" class="btn primary" style="padding: 14px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">➕ Adicionar</button>
+    <button id="generateCodeBtn" class="btn" style="padding: 14px 20px; border-radius: 50px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">🔑 Código</button>
+    <button id="inviteBtn" class="btn" style="padding: 14px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">✉️ Convidar</button>
+  </div>
+  
+  <main class="equipes-container">
+    <!-- Resumo da Equipe -->
+    <section class="team-summary">
+      <div class="summary-card">
+        <div class="icon">👥</div>
+        <div class="value" id="totalMembers">0</div>
+        <div class="label">Total de Membros</div>
+      </div>
+      <div class="summary-card">
+        <div class="icon">👷</div>
+        <div class="value" id="activeMembers">0</div>
+        <div class="label">Membros Ativos</div>
+      </div>
+      <div class="summary-card">
+        <div class="icon">📧</div>
+        <div class="value" id="pendingInvites">0</div>
+        <div class="label">Convites Pendentes</div>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section class="filters">
+      <label>
+        🔍 Buscar:
+        <input type="text" id="searchMember" placeholder="Nome ou email..." />
+      </label>
+      <label>
+        📋 Papel:
+        <select id="filterRole">
+          <option value="">Todos</option>
+          <option value="gerente">Gerente</option>
+          <option value="engenheiro">Engenheiro</option>
+          <option value="tecnico">Técnico</option>
+          <option value="colaborador">Colaborador</option>
+        </select>
+      </label>
+      <label>
+        ✅ Status:
+        <select id="filterStatus">
+          <option value="">Todos</option>
+          <option value="ativo">Ativos</option>
+          <option value="inativo">Inativos</option>
+        </select>
+      </label>
+    </section>
+
+    <!-- Lista de Membros -->
+    <section class="members-grid" id="membersGrid">
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <h3>Nenhum membro na equipe</h3>
+        <p>Adicione membros ou envie convites por email</p>
+      </div>
+    </section>
+
+    <!-- Convites Pendentes -->
+    <section class="invites-section" id="invitesSection" style="display:none;">
+      <h2>✉️ Convites Pendentes</h2>
+      <div class="invites-list" id="invitesList"></div>
+    </section>
+  </main>
+
+  <!-- Modal Adicionar Membro -->
+  <div id="memberModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeMemberModal">&times;</span>
+      <h2 id="modalMemberTitle">➕ Adicionar Membro</h2>
+      <form id="memberForm">
+        <input type="hidden" id="memberId" />
+        <div class="form-group">
+          <label for="memberUser">Usuário</label>
+          <select id="memberUser" required>
+            <option value="">Selecione um usuário...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="memberRole">Papel na Equipe</label>
+          <select id="memberRole" required>
+            <option value="colaborador">👤 Colaborador</option>
+            <option value="tecnico">🔧 Técnico</option>
+            <option value="engenheiro">👷 Engenheiro</option>
+            <option value="gerente">👔 Gerente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="memberStartDate">Data de Entrada</label>
+          <input type="date" id="memberStartDate" />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Salvar</button>
+          <button type="button" class="btn" onclick="closeMemberModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Convidar por Email (SendGrid) -->
+  <div id="inviteModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <span class="close" id="closeInviteModal">&times;</span>
+      <h2>✉️ Convidar por Email</h2>
+      <p style="color: #718096; margin-bottom: 20px;">O convidado receberá um email com o código de acesso ao projeto</p>
+      
+      <form id="inviteForm">
+        <div class="form-group">
+          <label for="inviteEmail">📧 Email do Convidado</label>
+          <input type="email" id="inviteEmail" required placeholder="email@exemplo.com" 
+                 style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 1rem;" />
+        </div>
+        <div class="form-group">
+          <label for="inviteRole">👤 Papel na Equipe</label>
+          <select id="inviteRole" required style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0;">
+            <option value="cliente">🏠 Cliente</option>
+            <option value="colaborador">👤 Colaborador</option>
+            <option value="tecnico">🔧 Técnico</option>
+            <option value="engenheiro">👷 Engenheiro</option>
+            <option value="gerente">👔 Gerente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="inviteExpiration">⏰ Válido por</label>
+          <select id="inviteExpiration" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0;">
+            <option value="24">1 dia</option>
+            <option value="72">3 dias</option>
+            <option value="168" selected>7 dias</option>
+            <option value="720">30 dias</option>
+          </select>
+        </div>
+        <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="submit" class="btn primary" id="sendInviteBtn" style="flex: 1; padding: 14px; font-size: 1rem;">
+            📤 Enviar Convite
+          </button>
+          <button type="button" class="btn" onclick="closeInviteModal()" style="padding: 14px;">Cancelar</button>
+        </div>
+      </form>
+      
+      <div id="inviteResult" style="display: none; margin-top: 20px;">
+        <div id="inviteResultContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Gerar Código de Convite -->
+  <div id="codeModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 450px; text-align: center;">
+      <span class="close" id="closeCodeModal">&times;</span>
+      <h2 style="margin-bottom: 10px;">🔑 Gerar Código de Convite</h2>
+      <p style="color: #718096; margin-bottom: 20px;">Gere um código simples para compartilhar com clientes ou membros da equipe</p>
+      
+      <div id="codeForm" style="display: block;">
+        <div class="form-group">
+          <label for="codePapel">Papel do Convidado</label>
+          <select id="codePapel" required style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0;">
+            <option value="cliente">🏠 Cliente</option>
+            <option value="colaborador">👤 Colaborador</option>
+            <option value="tecnico">🔧 Técnico</option>
+            <option value="engenheiro">👷 Engenheiro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="codeDias">Válido por</label>
+          <select id="codeDias" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #e2e8f0;">
+            <option value="24">1 dia</option>
+            <option value="72">3 dias</option>
+            <option value="168" selected>7 dias</option>
+            <option value="720">30 dias</option>
+          </select>
+        </div>
+        <button type="button" class="btn primary" onclick="gerarCodigo()" style="width: 100%; padding: 12px; font-size: 1rem;">
+          ✨ Gerar Código
+        </button>
+      </div>
+      
+      <div id="codeResult" style="display: none;">
+        <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <p style="color: #166534; margin: 0 0 10px 0; font-size: 0.9rem;">Código gerado com sucesso!</p>
+          <div id="codigoGerado" style="font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; color: #15803d; font-family: monospace;"></div>
+        </div>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;">
+          Compartilhe este código com o convidado. Ele deve acessar:<br>
+          <strong style="color: #2563eb;">http://localhost:3000/entrar-projeto.html</strong>
+        </p>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn primary" onclick="copiarCodigo()" style="flex: 1; padding: 10px;">
+            📋 Copiar Código
+          </button>
+          <button type="button" class="btn" onclick="novoCodigoForm()" style="flex: 1; padding: 10px;">
+            🔄 Novo Código
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../api-client.js"></script>
+  <script>
+    let projectId = null;
+    let members = [];
+    let invites = [];
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      projectId = params.get('project');
+      
+      if (!projectId) {
+        alert('Projeto não especificado');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Event listeners
+      document.getElementById('addMemberBtn').onclick = openAddMemberModal;
+      document.getElementById('inviteBtn').onclick = openInviteModal;
+      document.getElementById('generateCodeBtn').onclick = openCodeModal;
+      document.getElementById('closeMemberModal').onclick = closeMemberModal;
+      document.getElementById('closeInviteModal').onclick = closeInviteModal;
+      document.getElementById('closeCodeModal').onclick = closeCodeModal;
+      document.getElementById('memberForm').onsubmit = saveMember;
+      document.getElementById('inviteForm').onsubmit = sendInvite;
+      document.getElementById('searchMember').oninput = filterMembers;
+      document.getElementById('filterRole').onchange = filterMembers;
+      document.getElementById('filterStatus').onchange = filterMembers;
+
+      await loadMembers();
+      await loadInvites();
+      await loadAvailableUsers();
+    });
+
+    // Carregar membros
+    async function loadMembers() {
+      try {
+        const response = await api.get(`/equipes/projeto/${projectId}`);
+        members = response.membros || response || [];
+        renderMembers();
+        updateSummary();
+      } catch (error) {
+        console.error('Erro ao carregar membros:', error);
+        members = [];
+        renderMembers();
+      }
+    }
+
+    // Carregar convites pendentes
+    async function loadInvites() {
+      try {
+        const response = await api.get(`/equipes/projeto/${projectId}/convites`);
+        invites = response.convites || response || [];
+        renderInvites();
+        updateSummary();
+      } catch (error) {
+        console.error('Erro ao carregar convites:', error);
+        invites = [];
+      }
+    }
+
+    // Carregar usuários disponíveis
+    async function loadAvailableUsers() {
+      try {
+        const response = await api.get('/auth/usuarios');
+        const users = response.usuarios || response || [];
+        const select = document.getElementById('memberUser');
+        select.innerHTML = '<option value="">Selecione um usuário...</option>';
+        users.forEach(user => {
+          select.innerHTML += `<option value="${user.id}">${user.nome} (${user.email})</option>`;
+        });
+      } catch (error) {
+        console.error('Erro ao carregar usuários:', error);
+      }
+    }
+
+    // Renderizar membros
+    function renderMembers() {
+      const grid = document.getElementById('membersGrid');
+      
+      if (members.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <h3>Nenhum membro na equipe</h3>
+            <p>Adicione membros ou envie convites por email</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = members.map(member => `
+        <div class="member-card ${member.ativo ? '' : 'inactive'}">
+          <div class="member-avatar">
+            ${member.usuario_nome ? member.usuario_nome.charAt(0).toUpperCase() : '?'}
+          </div>
+          <div class="member-info">
+            <h3>${member.usuario_nome || 'Usuário'}</h3>
+            <p class="member-email">${member.usuario_email || ''}</p>
+            <span class="role-badge ${member.papel}">${getRoleLabel(member.papel)}</span>
+          </div>
+          <div class="member-meta">
+            <span class="status-indicator ${member.ativo ? 'active' : 'inactive'}">
+              ${member.ativo ? '● Ativo' : '○ Inativo'}
+            </span>
+            <span class="join-date">Desde ${formatDate(member.data_entrada)}</span>
+          </div>
+          <div class="member-actions">
+            <button class="btn btn-sm" onclick="editMember(${member.id})">✏️</button>
+            <button class="btn btn-sm btn-danger" onclick="removeMember(${member.id})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Renderizar convites
+    function renderInvites() {
+      const section = document.getElementById('invitesSection');
+      const list = document.getElementById('invitesList');
+      
+      if (invites.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      list.innerHTML = invites.map(invite => `
+        <div class="invite-card">
+          <div class="invite-info">
+            <span class="invite-email">📧 ${invite.email_convidado}</span>
+            <span class="invite-role">${getRoleLabel(invite.papel)}</span>
+          </div>
+          <div class="invite-status">
+            <span class="invite-expiry">Expira em ${formatDate(invite.expira_em)}</span>
+            <button class="btn btn-sm btn-danger" onclick="cancelInvite(${invite.id})">Cancelar</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Atualizar resumo
+    function updateSummary() {
+      document.getElementById('totalMembers').textContent = members.length;
+      document.getElementById('activeMembers').textContent = members.filter(m => m.ativo).length;
+      document.getElementById('pendingInvites').textContent = invites.length;
+    }
+
+    // Utilitários
+    function getRoleLabel(role) {
+      const roles = {
+        'gerente': '👔 Gerente',
+        'engenheiro': '👷 Engenheiro',
+        'tecnico': '🔧 Técnico',
+        'colaborador': '👤 Colaborador'
+      };
+      return roles[role] || role;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      return new Date(dateStr).toLocaleDateString('pt-BR');
+    }
+
+    // Modais
+    function openAddMemberModal() {
+      document.getElementById('memberId').value = '';
+      document.getElementById('memberForm').reset();
+      document.getElementById('modalMemberTitle').textContent = '➕ Adicionar Membro';
+      document.getElementById('memberModal').style.display = 'flex';
+    }
+
+    function closeMemberModal() {
+      document.getElementById('memberModal').style.display = 'none';
+    }
+
+    function openInviteModal() {
+      document.getElementById('inviteForm').reset();
+      document.getElementById('inviteModal').style.display = 'flex';
+    }
+
+    function closeInviteModal() {
+      document.getElementById('inviteModal').style.display = 'none';
+      document.getElementById('inviteResult').style.display = 'none';
+      document.getElementById('inviteForm').reset();
+    }
+
+    // CRUD
+    async function saveMember(e) {
+      e.preventDefault();
+      const data = {
+        projeto_id: parseInt(projectId),
+        usuario_id: parseInt(document.getElementById('memberUser').value),
+        papel: document.getElementById('memberRole').value,
+        data_entrada: document.getElementById('memberStartDate').value || null
+      };
+
+      try {
+        await api.post('/equipes/', data);
+        closeMemberModal();
+        await loadMembers();
+        alert('Membro adicionado com sucesso!');
+      } catch (error) {
+        alert('Erro ao adicionar membro: ' + error.message);
+      }
+    }
+
+    async function sendInvite(e) {
+      e.preventDefault();
+      const btn = document.getElementById('sendInviteBtn');
+      const resultDiv = document.getElementById('inviteResult');
+      const resultContent = document.getElementById('inviteResultContent');
+      
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Enviando...';
+      resultDiv.style.display = 'none';
+      
+      const data = {
+        projeto_id: parseInt(projectId),
+        email_destinatario: document.getElementById('inviteEmail').value,
+        papel: document.getElementById('inviteRole').value,
+        expiracao_horas: parseInt(document.getElementById('inviteExpiration').value)
+      };
+
+      try {
+        const response = await api.post('/equipes/convites/enviar-email', data);
+        
+        if (response.success) {
+          if (response.email_enviado) {
+            // Email enviado com sucesso
+            resultContent.innerHTML = `
+              <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
+                <h3 style="color: #15803d; margin: 0 0 10px 0;">Email Enviado!</h3>
+                <p style="color: #166534; margin: 0;">O convite foi enviado para <strong>${data.email_destinatario}</strong></p>
+                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px;">
+                  <p style="margin: 0 0 5px 0; font-size: 0.85rem; color: #64748b;">Código gerado:</p>
+                  <div style="font-size: 1.8rem; font-weight: bold; letter-spacing: 6px; color: #15803d; font-family: monospace;">
+                    ${response.codigo}
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (response.warning) {
+            // Código gerado mas email falhou
+            resultContent.innerHTML = `
+              <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
+                <h3 style="color: #d97706; margin: 0 0 10px 0;">Código Gerado</h3>
+                <p style="color: #92400e; margin: 0 0 15px 0;">O email não pôde ser enviado, mas o código foi gerado:</p>
+                <div style="font-size: 2rem; font-weight: bold; letter-spacing: 6px; color: #d97706; font-family: monospace; padding: 15px; background: white; border-radius: 8px;">
+                  ${response.codigo}
+                </div>
+                <p style="color: #92400e; font-size: 0.85rem; margin-top: 15px;">Compartilhe este código manualmente com o convidado.</p>
+              </div>
+            `;
+          }
+          resultDiv.style.display = 'block';
+          document.getElementById('inviteForm').reset();
+        } else {
+          throw new Error(response.detail || 'Erro desconhecido');
+        }
+      } catch (error) {
+        resultContent.innerHTML = `
+          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 2px solid #ef4444; border-radius: 12px; padding: 20px; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">❌</div>
+            <h3 style="color: #dc2626; margin: 0 0 10px 0;">Erro ao Enviar</h3>
+            <p style="color: #b91c1c; margin: 0;">${error.message || 'Erro de conexão'}</p>
+          </div>
+        `;
+        resultDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '📤 Enviar Convite';
+      }
+    }
+
+    async function removeMember(memberId) {
+      if (!confirm('Tem certeza que deseja remover este membro?')) return;
+      
+      try {
+        await api.delete(`/equipes/${memberId}`);
+        await loadMembers();
+        alert('Membro removido com sucesso!');
+      } catch (error) {
+        alert('Erro ao remover membro: ' + error.message);
+      }
+    }
+
+    async function cancelInvite(inviteId) {
+      if (!confirm('Cancelar este convite?')) return;
+      
+      try {
+        await api.delete(`/equipes/convite/${inviteId}`);
+        await loadInvites();
+        alert('Convite cancelado!');
+      } catch (error) {
+        alert('Erro ao cancelar convite: ' + error.message);
+      }
+    }
+
+    function filterMembers() {
+      const search = document.getElementById('searchMember').value.toLowerCase();
+      const role = document.getElementById('filterRole').value;
+      const status = document.getElementById('filterStatus').value;
+
+      const filtered = members.filter(m => {
+        const matchSearch = !search || 
+          (m.usuario_nome && m.usuario_nome.toLowerCase().includes(search)) ||
+          (m.usuario_email && m.usuario_email.toLowerCase().includes(search));
+        const matchRole = !role || m.papel === role;
+        const matchStatus = !status || 
+          (status === 'ativo' && m.ativo) || 
+          (status === 'inativo' && !m.ativo);
+        return matchSearch && matchRole && matchStatus;
+      });
+
+      const grid = document.getElementById('membersGrid');
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><p>Nenhum membro encontrado</p></div>`;
+      } else {
+        const originalMembers = members;
+        members = filtered;
+        renderMembers();
+        members = originalMembers;
+      }
+    }
+
+    // ===== FUNÇÕES DO CÓDIGO DE CONVITE =====
+    let codigoAtualGerado = '';
+
+    function openCodeModal() {
+      document.getElementById('codeModal').style.display = 'flex';
+      document.getElementById('codeForm').style.display = 'block';
+      document.getElementById('codeResult').style.display = 'none';
+    }
+
+    function closeCodeModal() {
+      document.getElementById('codeModal').style.display = 'none';
+    }
+
+    function novoCodigoForm() {
+      document.getElementById('codeForm').style.display = 'block';
+      document.getElementById('codeResult').style.display = 'none';
+    }
+
+    async function gerarCodigo() {
+      const papel = document.getElementById('codePapel').value;
+      const horas = parseInt(document.getElementById('codeDias').value);
+      
+      try {
+        const response = await api.post('/equipes/convites/gerar-codigo', {
+          projeto_id: parseInt(projectId),
+          papel: papel,
+          expiracao_horas: horas
+        });
+        
+        if (response.success) {
+          codigoAtualGerado = response.codigo;
+          document.getElementById('codigoGerado').textContent = response.codigo;
+          document.getElementById('codeForm').style.display = 'none';
+          document.getElementById('codeResult').style.display = 'block';
+        } else {
+          alert('Erro ao gerar código: ' + (response.detail || 'Erro desconhecido'));
+        }
+      } catch (error) {
+        alert('Erro ao gerar código: ' + (error.message || 'Erro de conexão'));
+      }
+    }
+
+    function copiarCodigo() {
+      if (codigoAtualGerado) {
+        navigator.clipboard.writeText(codigoAtualGerado).then(() => {
+          alert('Código copiado: ' + codigoAtualGerado);
+        }).catch(() => {
+          prompt('Copie o código:', codigoAtualGerado);
+        });
+      }
+    }
+
+    // Fechar modal ao clicar fora
+    document.getElementById('codeModal').onclick = (e) => {
+      if (e.target === e.currentTarget) closeCodeModal();
+    };
+  </script>
+</body>
+</html>

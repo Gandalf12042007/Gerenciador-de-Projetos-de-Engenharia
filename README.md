@@ -1,479 +1,546 @@
 # 🏗️ Gerenciador de Projetos de Engenharia Civil
 
-[![Status](https://img.shields.io/badge/Status-MVP%20Funcional-yellow)]()
-[![Backend](https://img.shields.io/badge/Backend-FastAPI-009688)]()
-[![Frontend](https://img.shields.io/badge/Frontend-JavaScript-F7DF1E)]()
-[![Database](https://img.shields.io/badge/Database-MySQL-4479A1)]()
-[![License](https://img.shields.io/badge/License-Academic-blue)]()
+## 🚦 Status da Auditoria (11/02/2026)
 
-Sistema web para gerenciamento completo de projetos de engenharia civil, desenvolvido como projeto acadêmico com foco em **arquitetura profissional, boas práticas e tecnologias modernas**.
-
-**Desenvolvedor:** Vicente de Souza  
-**Desenvolvedor:** Francisco.....
-**Data:** Dezembro 2025
+> **Sistema auditado e funcional!**
+> - Todos os módulos testados: backend, frontend, banco, API, Kanban, chat, documentos, equipes, métricas, notificações.
+> - Correção: retorno de ID em tarefas, compatibilidade de status, documentação atualizada.
+> - Relatório completo salvo em `RELATORIO_AUDITORIA.md`.
 
 ---
 
 ## 📋 Índice
 
 - [Sobre o Projeto](#-sobre-o-projeto)
-- [Status de Implementação](#-status-de-implementação)
-- [Tecnologias](#-tecnologias)
 - [Funcionalidades](#-funcionalidades)
+- [Tecnologias](#-tecnologias)
+- [Arquitetura](#-arquitetura)
 - [Instalação](#-instalação)
-- [Uso](#-uso)
-- [Estrutura do Projeto](#-estrutura-do-projeto)
-- [Documentação](#-documentação)
+- [Configuração](#-configuração)
+- [Usuários e Permissões](#-usuários-e-permissões)
+- [Sistema de Convites](#-sistema-de-convites)
+- [Documentação da API](#-documentação-da-api)
+- [Deploy](#-deploy)
 - [Roadmap](#-roadmap)
-- [Contribuição](#-contribuição)
+- [Autor](#-autor)
 
 ---
 
-## 🎯 Sobre o Projeto
+## 📝 Sobre o Projeto
 
-Sistema desenvolvido para **gerenciar obras de engenharia civil**, incluindo:
-- Gestão de projetos e equipes
-- Controle de tarefas (Kanban)
-- Upload de documentos técnicos
-- Gestão de materiais e orçamentos
-- Chat interno por projeto
-- Métricas e relatórios de progresso
+O **Gerenciador de Projetos de Engenharia Civil** é uma aplicação web full-stack desenvolvida para auxiliar engenheiros, arquitetos e equipes de construção no gerenciamento completo de projetos.
 
-### Status Atual: 🟡 **MVP Funcional (45% completo)**
+### 🎯 Objetivos
 
-Este é um **protótipo funcional** com as features essenciais implementadas. A base técnica está sólida e preparada para expansão. Veja [`ANALISE_IMPLEMENTACAO.md`](./ANALISE_IMPLEMENTACAO.md) para análise detalhada.
+- ✅ Centralizar informações de projetos de engenharia
+- ✅ Facilitar a colaboração entre equipes
+- ✅ Automatizar o controle de prazos e tarefas
+- ✅ Gerenciar documentos técnicos de forma organizada
+- ✅ Permitir que clientes acompanhem seus projetos
+- ✅ Integrar IA para assistência técnica
 
 ---
 
-## ✅ Status de Implementação
+## ⭐ Funcionalidades
 
-### 🟢 Completo e Funcional
+### 📊 Dashboard Interativo
+- Visão geral de todos os projetos
+- Gráficos de progresso e estatísticas
+- Alertas de tarefas atrasadas
+- Métricas de desempenho
 
-| Módulo | Status | Descrição |
-|--------|--------|-----------|
-| **Database** | 95% | 18 tabelas normalizadas (3FN), migrations, seeds, testes |
-| **Autenticação** | 100% | JWT + Bcrypt, login, registro, validação |
-| **API - Projetos** | 100% | CRUD completo (5 endpoints) |
-| **API - Tarefas** | 100% | CRUD por projeto (4 endpoints) |
-| **Frontend - Login** | 100% | Interface moderna com validação |
-| **Frontend - Dashboard** | 80% | Cards, filtros, métricas, integração API |
+### 🏗️ Gestão de Projetos
+- CRUD completo de projetos
+- Definição de status e progresso
+- Controle de datas e prazos
+- Associação com clientes
 
-### 🟡 Parcialmente Implementado
+### 📋 Quadro de Tarefas (Kanban)
+- **Arrastar e soltar** tarefas entre colunas
+- Colunas: A Fazer → Em Andamento → Em Revisão → Concluída
+- Priorização por níveis (Urgente, Alta, Média, Baixa)
+- Campos técnicos de engenharia (Etapa, ART, Responsável Técnico)
+- Atribuição de responsáveis
+- Datas de início e previsão de término
 
-| Módulo | Status | Faltando |
-|--------|--------|----------|
-| **API - Equipes** | 0% | CRUD + permissões |
-| **API - Documentos** | 0% | Upload e versionamento |
-| **Frontend - Páginas** | 20% | Register, profile, detalhes, kanban |
+### 👥 Controle de Equipes
+- Gestão de membros por projeto
+- Níveis de permissão (Admin, Gerente, Engenheiro, Técnico, Cliente)
+- **Sistema de códigos de convite** (6 caracteres)
+- Convites por email
+- Histórico de atividades
 
-### 🔴 Não Implementado
+### 📄 Gestão de Documentos
+- Upload de arquivos técnicos
+- Suporte a DWG, PDF, DOC, XLS, imagens
+- **Visualização direta** sem download (iframe)
+- Nomes personalizados para documentos
+- Categorização flexível
+- Download individual
 
-- ❌ Chat interno (WebSocket)
-- ❌ Materiais e Orçamentos (API)
-- ❌ Métricas e Relatórios
-- ❌ Notificações
-- ❌ Aplicativo Mobile (Flutter)
-- ❌ OAuth (Google/Microsoft)
-- ❌ Deploy em produção
+### 💬 Chat Integrado
+- **Chat direto** entre usuários
+- Chat por projeto
+- Histórico de mensagens persistente
+- Lista de todos os usuários cadastrados
+
+### 🤖 Assistente IA
+- Integração com **Google Gemini**
+- Suporte a OpenAI GPT
+- Respostas técnicas de engenharia
+- Login via Google OAuth
+
+### 🔐 Segurança
+- Autenticação JWT
+- Hash de senhas com bcrypt (12 rounds)
+- Rate limiting (100 req/min)
+- Proteção CORS
+- Validação de inputs
+- Logs de auditoria
+
+### 🔔 Notificações
+- Alertas em tempo real
+- Notificações de prazos
+- Avisos de atribuições
 
 ---
 
 ## 🛠️ Tecnologias
 
 ### Backend
-- **Python 3.11** - Linguagem principal
-- **FastAPI** - Framework web moderno e rápido
-- **MySQL 8.0+** - Banco de dados relacional
-- **JWT** - Autenticação via tokens
-- **Bcrypt** - Hash de senhas
-- **Uvicorn** - Servidor ASGI
-- **Docker** - Containerização
+| Tecnologia | Versão | Descrição |
+|------------|--------|-----------|
+| Python | 3.11+ | Linguagem principal |
+| FastAPI | 0.100+ | Framework web assíncrono |
+| Pydantic | 2.0+ | Validação de dados |
+| SQLite | 3.3+ | Banco de dados |
+| bcrypt | 4.0+ | Hash de senhas |
+| PyJWT | 2.8+ | Autenticação JWT |
+| SlowAPI | 0.1.9 | Rate limiting |
+| Uvicorn | 0.23+ | Servidor ASGI |
 
 ### Frontend
-- **HTML5/CSS3** - Estrutura e estilo
-- **JavaScript (Vanilla)** - Lógica e integração
-- **Fetch API** - Requisições HTTP
-- **localStorage** - Persistência de tokens
-
-### Database
-- **MySQL Connector** - Driver Python
-- **Connection Pooling** - Gerenciamento de conexões
-- **Migrations** - Controle de versão do schema
+| Tecnologia | Descrição |
+|------------|-----------|
+| HTML5 | Estrutura semântica |
+| CSS3 | Estilos modernos com gradientes |
+| JavaScript (ES6+) | Lógica do cliente |
+| Chart.js | Gráficos interativos |
 
 ### DevOps
-- **Docker & Docker Compose** - Ambiente de desenvolvimento
-- **GitHub Actions** - CI/CD
-- **Railway/Render** - Deploy em produção
-
-### DevOps
-- **Git/GitHub** - Controle de versão
-- **PowerShell** - Scripts de automação
+| Tecnologia | Descrição |
+|------------|-----------|
+| Docker | Containerização |
+| Docker Compose | Orquestração |
+| Nginx | Proxy reverso |
+| Railway | Deploy em nuvem |
 
 ---
 
-## 🚀 Funcionalidades
+## 🏛️ Arquitetura
 
-### ✅ Implementadas
+O projeto segue uma arquitetura em camadas profissional:
 
-#### Autenticação
-- [x] Login com JWT (30min de expiração)
-- [x] Registro de novos usuários
-- [x] Hash seguro de senhas (Bcrypt)
-- [x] Validação de tokens
-- [x] Middleware de autenticação
-
-#### Projetos
-- [x] Listar projetos (com filtros)
-- [x] Criar novo projeto
-- [x] Editar projeto
-- [x] Deletar projeto
-- [x] Métricas do dashboard
-
-#### Tarefas
-- [x] Listar tarefas por projeto
-- [x] Criar tarefa
-- [x] Atualizar tarefa
-- [x] Deletar tarefa
-- [x] Filtros por status
-
-#### Interface Web
-- [x] Tela de login responsiva
-- [x] Dashboard de projetos
-- [x] Cards com informações
-- [x] Filtros e busca
-- [x] Botão de logout
-- [x] Loading states
-- [x] Error handling
-
-### 🔲 Planejadas
-
-#### Equipes
-- [X] Gerenciar membros
-- [X] Definir papéis (gerente, engenheiro, técnico)
-- [ ] Controle de permissões
-
-#### Documentos
-- [ ] Upload de arquivos
-- [ ] Versionamento
-- [ ] Preview de PDFs
-- [ ] Controle de acesso
-      
-#### Relatórios
-- [ ] Curva S (planejado vs realizado)
-- [ ] Gráficos de Gantt
-- [ ] Dashboard executivo
-- [ ] Exportação PDF
-
----
-
-## 📦 Instalação
-
-### 🐳 **Opção 1: Docker (RECOMENDADO - Mais Fácil)**
-
-#### Pré-requisitos
-- Docker Desktop instalado ([Download](https://www.docker.com/products/docker-desktop))
-- Git
-
-#### Passos
-
-1. **Clone o repositório**
-```bash
-git clone https://github.com/Gandalf12042007/Gerenciador-de-Projetos-de-Engenharia.git
-cd Gerenciador-de-Projetos-de-Engenharia
+```
+📁 Gerenciador-de-Projetos-de-Engenharia/
+│
+├── 📁 backend/                    # API FastAPI
+│   ├── 📁 app/
+│   │   ├── 📁 core/              # Configurações core
+│   │   ├── 📁 models/            # Modelos de dados
+│   │   ├── 📁 repositories/      # Camada de acesso a dados
+│   │   ├── 📁 services/          # Lógica de negócio
+│   │   └── 📁 schemas/           # Schemas Pydantic
+│   ├── 📁 routes/                # Endpoints da API
+│   ├── 📁 middleware/            # Middlewares (auth, rate limit)
+│   ├── 📁 utils/                 # Utilitários
+│   ├── 📁 tests/                 # Testes automatizados
+│   ├── 📄 app.py                 # Entry point
+│   └── 📄 config.py              # Configurações
+│
+├── 📁 database/                   # Banco de dados
+│   ├── 📁 migrations/            # Migrações
+│   ├── 📄 db_helper.py           # Helper de conexão
+│   ├── 📄 schema_sqlite.sql      # Schema SQLite
+│   └── 📄 gerenciador.db         # Banco SQLite
+│
+├── 📁 web/                        # Frontend
+│   ├── 📁 projects/              # Páginas do sistema
+│   │   ├── 📄 index.html         # Lista de projetos
+│   │   ├── 📄 dashboard.html     # Dashboard do projeto
+│   │   ├── 📄 kanban.html        # Quadro de tarefas
+│   │   ├── 📄 docs.html          # Documentos
+│   │   ├── 📄 equipes.html       # Equipes
+│   │   └── 📄 chat.html          # Chat do projeto
+│   ├── 📄 login.html             # Login
+│   ├── 📄 chat.html              # Chat geral com IA
+│   ├── 📄 entrar-projeto.html    # Entrar com código
+│   └── 📄 api-client.js          # Cliente da API
+│
+├── 📁 uploads/                    # Arquivos enviados
+├── 📁 nginx/                      # Configuração Nginx
+├── 📄 docker-compose.yml          # Docker desenvolvimento
+├── 📄 docker-compose.prod.yml     # Docker produção
+└── 📄 README.md                   # Documentação
 ```
 
-2. **Inicie os containers**
+### Padrões Utilizados
+
+- **Repository Pattern**: Abstração do acesso a dados
+- **Service Layer**: Lógica de negócio isolada
+- **Dependency Injection**: Injeção de dependências
+- **JWT Authentication**: Tokens seguros
+- **RESTful API**: Endpoints padronizados
+
+---
+
+## 🚀 Instalação
+
+### Pré-requisitos
+
+- Python 3.11+
+- pip (gerenciador de pacotes)
+- Git
+
+### Instalação Rápida
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/Gandalf12042007/Gerenciador-de-Projetos-de-Engenharia.git
+cd Gerenciador-de-Projetos-de-Engenharia
+
+# 2. Crie ambiente virtual
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
+
+# 3. Instale dependências
+cd backend
+pip install -r requirements.txt
+
+# 4. Inicie o backend
+python app.py
+```
+
+### Iniciar o Frontend
+
+```bash
+# Em outro terminal
+cd web
+python -m http.server 3000
+```
+
+### Acessar o Sistema
+
+| Serviço | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| API | http://localhost:8000 |
+| Swagger Docs | http://localhost:8000/docs |
+| ReDoc | http://localhost:8000/redoc |
+
+### Instalação com Docker
+
 ```bash
 docker-compose up -d
 ```
 
-Pronto! O sistema está rodando:
-- **Backend API:** http://localhost:8000
-- **Documentação Swagger:** http://localhost:8000/docs
-- **PhpMyAdmin:** http://localhost:8080 (user: root, pass: root_password_123)
-- **Frontend:** Abra `web/login.html` no navegador
+---
 
-3. **Ver logs (opcional)**
-```bash
-docker-compose logs -f backend
-```
+## ⚙️ Configuração
 
-4. **Parar containers**
-```bash
-docker-compose down
+### Variáveis de Ambiente
+
+Crie um arquivo `.env` na pasta `backend/`:
+
+```env
+# Banco de Dados
+DB_TYPE=sqlite
+SQLITE_PATH=../database/gerenciador.db
+
+# Segurança
+SECRET_KEY=sua-chave-secreta-muito-segura-aqui
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# Servidor
+API_PORT=8000
+ENVIRONMENT=development
+DEBUG=True
+CORS_ORIGINS=http://localhost:3000
+
+# Google OAuth (opcional)
+GOOGLE_CLIENT_ID=seu-client-id
+GOOGLE_CLIENT_SECRET=seu-client-secret
+
+# IA (opcional)
+GEMINI_API_KEY=sua-api-key-gemini
+OPENAI_API_KEY=sua-api-key-openai
 ```
 
 ---
 
-### 💻 **Opção 2: Instalação Manual (Windows/Linux)**
+## 👥 Usuários e Permissões
 
-#### Pré-requisitos
-- Python 3.11+
-- MySQL 8.0+
-- Git
+### Contas Padrão do Sistema
 
-#### 1. Clone o repositório
+| Tipo | Email | Senha | Cargo |
+|------|-------|-------|-------|
+| 👑 Admin | vicentedesouza762@gmail.com | Admin@2026 | admin |
+| 👑 Admin | francisco@projeto.com | Admin@2026 | admin |
+| 👑 Admin | professor@projeto.com | Admin@2026 | admin |
+| 👔 Gerente | gerenteteste@projeto.com | Gerente@123 | gerente |
+| 👷 Engenheiro | engenheiroteste@projeto.com | Engenheiro@123 | engenheiro |
+| 🔧 Técnico | tecnicoteste@projeto.com | Tecnico@123 | tecnico |
+| 🏠 Cliente | clienteteste@projeto.com | Cliente@123 | cliente |
+
+### Níveis de Permissão
+
+| Cargo | Dashboard | Tarefas | Documentos | Equipes | Chat | Configurações |
+|-------|-----------|---------|------------|---------|------|---------------|
+| Admin | ✅ | ✅ Tudo | ✅ Tudo | ✅ Gerenciar | ✅ Todos | ✅ |
+| Gerente | ✅ | ✅ Tudo | ✅ Tudo | ✅ Gerenciar | ✅ Equipe | ✅ |
+| Engenheiro | ✅ | ✅ Criar/Editar | ✅ Upload | ❌ | ✅ Equipe | ❌ |
+| Técnico | ✅ | ✅ Próprias | ✅ Ver | ❌ | ✅ Equipe | ❌ |
+| Cliente | ✅ Limitado | 👁️ Ver | 👁️ Ver | ❌ | ✅ Gerente | ❌ |
+
+---
+
+## 🎟️ Sistema de Convites
+
+### Como Funciona
+
+O sistema permite que administradores e gerentes gerem **códigos de 6 caracteres** para convidar novos membros para projetos.
+
+### Gerar Código (Admin/Gerente)
+
+1. Acesse a página **Equipes** do projeto
+2. Clique em **🔑 Gerar Código**
+3. Selecione o papel (Cliente, Colaborador, Técnico, Engenheiro)
+4. Defina a validade (1 dia, 7 dias, 30 dias)
+5. Compartilhe o código com o convidado
+
+### Entrar com Código (Novo Membro)
+
+1. Acesse: `http://localhost:3000/entrar-projeto.html`
+2. Digite o código de 6 caracteres
+3. O sistema valida e mostra o nome do projeto
+4. Clique em **Entrar no Projeto**
+5. Você será adicionado automaticamente à equipe
+
+### API de Convites
+
 ```bash
-git clone https://github.com/Gandalf12042007/Gerenciador-de-Projetos-de-Engenharia.git
-cd Gerenciador-de-Projetos-de-Engenharia
+# Gerar código
+POST /equipes/convites/gerar-codigo
+{
+  "projeto_id": 1,
+  "papel": "cliente",
+  "expiracao_horas": 168
+}
+
+# Validar código (público)
+GET /equipes/convites/validar/{CODIGO}
+
+# Entrar com código
+POST /equipes/convites/entrar
+{
+  "codigo": "ABC123"
+}
 ```
 
-#### 2. Configure o Banco de Dados
-```bash
-# Crie o database no MySQL
-mysql -u root -p
-CREATE DATABASE gerenciador_projetos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-EXIT;
+---
 
-# Execute as migrations
-cd database
-pip install mysql-connector-python
-python migrate.py
+## 📖 Documentação da API
 
-# (Opcional) Popule com dados de teste
-python seed.py
-```
+### Endpoints Principais
 
-#### 3. Configure o Backend
+#### 🔐 Autenticação
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| POST | `/auth/login` | Login (retorna JWT) |
+| POST | `/auth/register` | Registrar usuário |
+| POST | `/auth/google` | Login com Google OAuth |
+| GET | `/auth/me` | Dados do usuário logado |
+
+#### 🏗️ Projetos
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/projetos` | Listar projetos |
+| POST | `/projetos` | Criar projeto |
+| GET | `/projetos/{id}` | Detalhes do projeto |
+| PUT | `/projetos/{id}` | Atualizar projeto |
+| DELETE | `/projetos/{id}` | Deletar projeto |
+
+#### 📋 Tarefas
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/tarefas/projeto/{id}` | Listar tarefas do projeto |
+| POST | `/tarefas/projeto/{id}` | Criar tarefa |
+| PUT | `/tarefas/{id}` | Atualizar tarefa |
+| DELETE | `/tarefas/{id}` | Deletar tarefa |
+
+#### 👥 Equipes
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/equipes/projeto/{id}` | Listar membros |
+| POST | `/equipes` | Adicionar membro |
+| POST | `/equipes/convites/gerar-codigo` | Gerar código de convite |
+| POST | `/equipes/convites/entrar` | Entrar com código |
+
+#### 📄 Documentos
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/documentos/projeto/{id}/documentos` | Listar documentos |
+| POST | `/documentos/projeto/{id}/upload` | Upload documento |
+| GET | `/documentos/{id}/download` | Download documento |
+| GET | `/documentos/{id}/visualizar` | Visualizar (iframe) |
+| DELETE | `/documentos/{id}` | Deletar documento |
+
+#### 💬 Chat
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/chat/usuarios-disponiveis` | Listar usuários |
+| GET | `/chat/direto/{user_id}` | Mensagens diretas |
+| POST | `/chat/direto/enviar` | Enviar mensagem direta |
+| GET | `/chat/projeto/{id}` | Chat do projeto |
+
+### Documentação Interativa
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+---
+
+## 🧪 Testes
+
 ```bash
 cd backend
 
-# Instale as dependências
-pip install -r requirements.txt
+# Executar todos os testes
+pytest
 
-# Crie o arquivo .env (ajuste as credenciais)
-# Copie do docker-compose.yml as variáveis de ambiente
+# Com cobertura
+pytest --cov=. --cov-report=html
+
+# Testes específicos
+pytest tests/test_auth.py
+pytest tests/test_services.py
 ```
 
-#### 4. Execute a API
+---
+
+## 🚢 Deploy
+
+### Railway (Recomendado)
+
+1. Conecte o repositório ao Railway
+2. Configure as variáveis de ambiente
+3. Deploy automático via push
+
+### Docker (Produção)
+
 ```bash
-python app.py
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-A API estará disponível em:
-- **API:** http://localhost:8000
-- **Docs:** http://localhost:8000/docs
-- **ReDoc:** http://localhost:8000/redoc
-
-#### 5. Abra o Frontend
-Abra `web/login.html` diretamente no navegador ou use:
-```bash
-cd web
-python -m http.server 8080
-```
-
-Acesse: http://localhost:8080/login.html
-
----
-
-## 🎮 Uso
-
-### Login
-Use um dos usuários de teste (se executou `seed.py`):
-```
-Email: admin@empresa.com
-Senha: admin123
-```
-
-### API - Exemplos
-
-#### Registrar novo usuário
-```bash
-curl -X POST http://localhost:8000/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "João Silva",
-    "email": "joao@email.com",
-    "senha": "senha123",
-    "cargo": "Engenheiro"
-  }'
-```
-
-#### Fazer login
-```bash
-curl -X POST http://localhost:8000/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@empresa.com",
-    "senha": "admin123"
-  }'
-```
-
-#### Listar projetos (autenticado)
-```bash
-curl -X GET http://localhost:8000/projetos/ \
-  -H "Authorization: Bearer SEU_TOKEN_JWT"
-```
-
-Veja mais exemplos em [`backend/README.md`](./backend/README.md)
-
----
-
-## 📁 Estrutura do Projeto
+### Estrutura de Produção
 
 ```
-Gerenciador-de-Projetos-de-Engenharia/
-├── backend/                    # API REST (FastAPI)
-│   ├── app.py                 # Aplicação principal
-│   ├── config.py              # Configurações
-│   ├── requirements.txt       # Dependências Python
-│   ├── .env.example          # Template de variáveis
-│   ├── routes/               # Endpoints da API
-│   │   ├── auth.py           # Autenticação (3 endpoints)
-│   │   ├── projetos.py       # Projetos (5 endpoints)
-│   │   └── tarefas.py        # Tarefas (4 endpoints)
-│   ├── middleware/           # Middlewares
-│   │   └── auth_middleware.py # Validação JWT
-│   └── utils/                # Utilitários
-│       └── auth.py           # Criptografia
-│
-├── database/                  # Banco de dados
-│   ├── migrations/           # Migrations SQL
-│   │   └── 001_initial_schema.sql  # Schema completo (18 tabelas)
-│   ├── migrate.py            # Sistema de migrations
-│   ├── seed.py               # Dados de teste
-│   ├── db_helper.py          # Connection pool
-│   ├── test_database.py      # Testes automatizados
-│   └── schema.dbml           # Diagrama do banco
-│
-├── web/                       # Frontend Web
-│   ├── login.html            # Tela de login
-│   ├── api-client.js         # Cliente HTTP
-│   └── projects/             # Dashboard
-│       ├── index.html        # Interface
-│       ├── app.js            # Lógica
-│       └── styles.css        # Estilos
-│
-├── escopo.md                  # Escopo completo do projeto
-├── ANALISE_IMPLEMENTACAO.md   # Análise detalhada (O QUE LER!)
-└── README.md                  # Este arquivo
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Nginx     │───▶│   FastAPI   │───▶│   SQLite    │
+│   (Proxy)   │    │   (Backend) │    │   (Database)│
+└─────────────┘    └─────────────┘    └─────────────┘
+       │
+       ▼
+┌─────────────┐
+│   Frontend  │
+│   (Static)  │
+└─────────────┘
 ```
 
 ---
 
-## 📚 Documentação
+## 📅 Roadmap
 
-### Essencial
-- **[ANALISE_IMPLEMENTACAO.md](./ANALISE_IMPLEMENTACAO.md)** - 📊 **Análise completa: O que está feito vs. planejado**
-- **[escopo.md](./escopo.md)** - 📋 Escopo original do projeto (visão completa)
-- **[backend/README.md](./backend/README.md)** - 🔧 Documentação da API
-- **[backend/SETUP.md](./backend/SETUP.md)** - 🚀 Guia de instalação do backend
+### ✅ Versão 1.0 (Atual)
+- [x] CRUD completo de projetos
+- [x] Sistema de tarefas com Kanban (drag & drop)
+- [x] Gestão de equipes
+- [x] Upload e visualização de documentos
+- [x] Autenticação JWT + Google OAuth
+- [x] Dashboard com estatísticas
+- [x] Chat entre usuários
+- [x] Assistente IA (Gemini)
+- [x] Sistema de códigos de convite
+- [x] Arquitetura em camadas (Repository + Service)
+- [x] Testes automatizados
 
-### API
-- **Swagger UI:** http://localhost:8000/docs (quando rodando)
-- **ReDoc:** http://localhost:8000/redoc
+### 📝 Auditoria 2026
+- [x] Teste completo de rotas, páginas e flows
+- [x] Correção do retorno de ID em tarefas
+- [x] Compatibilidade de status Kanban
+- [x] Documentação revisada e expandida
+- [x] Relatório final salvo
 
-### Database
-- **[database/README.md](./database/README.md)** - Documentação do banco
-- **[database/DIAGRAMA.md](./database/DIAGRAMA.md)** - Diagrama ER
-- **[database/queries_uteis.sql](./database/queries_uteis.sql)** - Queries úteis
+### 🔜 Versão 1.1
+- [ ] Relatórios exportáveis (PDF)
+- [ ] Notificações por email
+- [ ] App mobile (PWA)
+- [ ] Integração com calendário
+- [ ] Comentários em tarefas
 
----
-
-## 🗺️ Roadmap
-
-### Fase 1: MVP Core ✅ (Atual - 45%)
-- [x] Database completo (18 tabelas)
-- [x] Sistema de migrations
-- [x] Autenticação JWT
-- [x] CRUD de projetos
-- [x] CRUD de tarefas
-- [x] Frontend básico
-- [ ] CRUD de equipes (próximo)
-- [ ] Upload de documentos (próximo)
-
-### Fase 2: Features Essenciais 🔲 (30%)
-- [ ] Gestão de equipes completa
-- [ ] Sistema de documentos com versionamento
-- [ ] Materiais e orçamentos
-- [ ] Perfil de usuário
-- [ ] Tela de registro
-- [ ] Página de detalhes do projeto
-
-### Fase 3: Features Avançadas 🔲 (15%)
-- [ ] Chat interno (WebSocket)
-- [ ] Notificações push
-- [ ] Relatórios e gráficos
-- [ ] Curva S de progresso
-- [ ] Exportação PDF
-- [ ] OAuth (Google)
-
-### Fase 4: Mobile 🔲 (0%)
-- [ ] App Flutter
-- [ ] Modo offline
-- [ ] Sincronização
-
-### Fase 5: Produção 🔲 (0%)
-- [ ] Deploy AWS/Railway
-- [ ] CI/CD
-- [ ] Monitoramento
-- [ ] Backup automático
-
-**Estimativa para 100%:** ~4 meses de desenvolvimento
+### 🔮 Versão 2.0
+- [ ] BI e Analytics avançado
+- [ ] Integração com AutoCAD
+- [ ] Sistema de aprovações
+- [ ] Multi-tenancy
+- [ ] Versionamento de documentos
 
 ---
 
-## 🎓 Para Apresentações Acadêmicas
+## 🤝 Contribuindo
 
-### Pontos Fortes a Destacar:
-✅ **Database profissional** com 18 tabelas normalizadas  
-✅ **Sistema de migrations** com controle de versões  
-✅ **Testes automatizados** (6/6 passando)  
-✅ **Arquitetura REST** moderna (FastAPI)  
-✅ **Autenticação segura** (JWT + Bcrypt)  
-✅ **Documentação automática** (Swagger)  
-✅ **Boas práticas** (3FN, índices, FKs, connection pooling)  
-
-### Contexto Importante:
-- Este é um **protótipo MVP funcional** (45% do escopo completo)
-- O arquivo `escopo.md` representa a **visão completa do produto**
-- A **arquitetura está preparada** para todas as features planejadas
-- Foco em **qualidade técnica** sobre quantidade de features
-
----
-
-## 🤝 Contribuição
-
-Este é um **projeto acadêmico**. Contribuições são bem-vindas!
-
-### Como Contribuir:
 1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/MinhaFeature`)
-3. Commit suas mudanças (`git commit -m 'Adiciona MinhaFeature'`)
-4. Push para a branch (`git push origin feature/MinhaFeature`)
+2. Crie uma branch (`git checkout -b feature/NovaFeature`)
+3. Commit suas mudanças (`git commit -m 'Add: NovaFeature'`)
+4. Push para a branch (`git push origin feature/NovaFeature`)
 5. Abra um Pull Request
 
-### Prioridades de Desenvolvimento:
-1. 🔴 **Alta:** CRUD de Equipes, Upload de Documentos
-2. 🟡 **Média:** Materiais, Orçamentos, Perfil
-3. 🟢 **Baixa:** Chat, Relatórios, Mobile
+---
+
+## 👨‍💻 Equipe
+
+<div align="center">
+
+### Vicente de Souza
+**Desenvolvedor Principal**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Souza371-181717?style=for-the-badge&logo=github)](https://github.com/Souza371)
+[![Email](https://img.shields.io/badge/Email-vicentedesouza762@gmail.com-EA4335?style=for-the-badge&logo=gmail)](mailto:vicentedesouza762@gmail.com)
+[![Portfolio](https://img.shields.io/badge/Portfolio-souza371.github.io-00C7B7?style=for-the-badge&logo=netlify)](https://souza371.github.io/)
 
 ---
 
-## 📝 Licença
+### Francisco
+**Colaborador**
 
-Este projeto é desenvolvido para fins **acadêmicos e educacionais**.
+[![GitHub](https://img.shields.io/badge/GitHub-Gandalf12042007-181717?style=for-the-badge&logo=github)](https://github.com/Gandalf12042007)
 
----
-
-## 👨‍💻 Desenvolvedores
-
-**Vicente de Souza**  
-GitHub:https://github.com/Souza371
-**Francisco**....
-GitHub:https://github.com/Gandalf12042007
+</div>
 
 ---
 
-## 📊 Estatísticas do Projeto
+## 📄 Licença
 
-- **Linhas de código:** ~2,600
-- **Commits:** 4
-- **Tabelas no banco:** 18
-- **Endpoints da API:** 12
-- **Testes passando:** 6/6 (100%)
-- **Tempo de desenvolvimento:** ~27 dias
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
 
-**⭐ Se este projeto foi útil, considere dar uma estrela no repositório!** 
+<div align="center">
+
+**⭐ Se este projeto te ajudou, considere dar uma estrela!**
+
+🏗️ Made with ❤️ for Engineers
+
+</div>

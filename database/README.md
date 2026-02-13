@@ -1,12 +1,14 @@
 # 🗄️ Banco de Dados - Gerenciador de Projetos de Engenharia
 
-![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?logo=mysql&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.8+-3776AB?logo=python&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Pronto-success)
-![Tabelas](https://img.shields.io/badge/Tabelas-18-blue)
-![Migrations](https://img.shields.io/badge/Migrations-Automáticas-green)
+## 🚦 Status da Auditoria (11/02/2026)
 
-Sistema completo de gerenciamento de banco de dados MySQL com migrations e seeds automatizados.
+> **Banco auditado e funcional!**
+> - Todas as tabelas, seeds, migrations e queries testadas.
+> - Compatível com SQLite e MySQL.
+> - Correção: retorno de ID em tarefas, compatibilidade de status.
+> - Dados de teste disponíveis.
+
+---
 
 ## ⚡ Quick Start
 

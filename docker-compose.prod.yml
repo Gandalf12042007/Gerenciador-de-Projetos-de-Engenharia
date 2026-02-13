@@ -1,0 +1,145 @@
+# Gerenciador de Projetos de Engenharia Civil
+# Docker Compose - PRODUÇÃO
+# Desenvolvido por: Vicente de Souza
+# Atualizado em: 10/02/2026
+
+services:
+  # ===== BANCO DE DADOS =====
+  db:
+    image: mysql:8.0
+    container_name: projetos_db_prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-StrongRootPass123!}
+      MYSQL_DATABASE: ${DB_NAME:-gerenciador_projetos}
+      MYSQL_USER: ${DB_USER:-projeto_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-StrongUserPass123!}
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+      - ./database/schema_completo.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - projetos_network_prod
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ===== BACKEND API =====
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: projetos_backend_prod
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database
+      DB_TYPE: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-projeto_user}
+      DB_PASSWORD: ${DB_PASSWORD:-StrongUserPass123!}
+      DB_NAME: ${DB_NAME:-gerenciador_projetos}
+      
+      # JWT - USAR VARIÁVEL DE AMBIENTE SEGURA
+      SECRET_KEY: ${SECRET_KEY:?Secret key must be set}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      
+      # App
+      DEBUG: "False"
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      
+      # CORS - Configurar domínio de produção
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://yourdomain.com}
+      
+      # Upload
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE: 52428800
+      
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads_data_prod:/app/uploads
+      - logs_data_prod:/app/logs
+    networks:
+      - projetos_network_prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ===== NGINX REVERSE PROXY =====
+  nginx:
+    image: nginx:alpine
+    container_name: projetos_nginx_prod
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./web:/usr/share/nginx/html:ro
+    networks:
+      - projetos_network_prod
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # ===== REDIS (CACHE E SESSÕES) =====
+  redis:
+    image: redis:7-alpine
+    container_name: projetos_redis_prod
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-RedisPass123!}
+    volumes:
+      - redis_data_prod:/data
+    networks:
+      - projetos_network_prod
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+
+networks:
+  projetos_network_prod:
+    driver: bridge
+
+volumes:
+  mysql_data_prod:
+  uploads_data_prod:
+  logs_data_prod:
+  redis_data_prod:

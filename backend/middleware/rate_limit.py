@@ -25,7 +25,7 @@ async def rate_limit_exception_handler(request: Request, exc: RateLimitExceeded)
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         content={
             "detail": "Muitas requisições. Tente novamente em alguns minutos.",
-            "retry_after": exc.retry_after
+            "retry_after": getattr(exc, "retry_after", 60)  # Default 60 segundos
         }
     )
 

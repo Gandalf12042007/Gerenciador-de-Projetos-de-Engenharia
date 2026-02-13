@@ -30,24 +30,47 @@ class PermissionManager:
         "colaborador": 1
     }
     
+    # IDs de administradores do sistema (sincronizado com auth.py)
+    ADMIN_USER_IDS = {1, 2, 3}  # Vicente, Francisco, Professor
+    
     def __init__(self):
         pass  # Usando db_helper, não precisa de config
+    
+    def is_system_admin(self, user_id: int) -> bool:
+        """
+        Verifica se usuário é administrador do sistema.
+        Administradores têm acesso total a todos os projetos.
+        
+        Args:
+            user_id: ID do usuário
+            
+        Returns:
+            True se é admin, False caso contrário
+        """
+        # Verificar pela lista de IDs de admin (hardcoded, sincronizado com auth.py)
+        return user_id in self.ADMIN_USER_IDS
     
     def _get_connection(self):
         """Cria conexão com banco de dados (compatível MySQL/SQLite)"""
         return get_db_connection()
     
-    def is_project_member(self, user_id: int, project_id: int) -> bool:
+    def is_project_member(self, user_id: int, project_id: int, is_admin: bool = None) -> bool:
         """
-        Verifica se usuário é membro do projeto
+        Verifica se usuário é membro do projeto.
+        ADMINISTRADORES TÊM ACESSO A TODOS OS PROJETOS.
         
         Args:
             user_id: ID do usuário
             project_id: ID do projeto
+            is_admin: Se já verificou que é admin (evita query extra)
             
         Returns:
-            True se é membro ativo, False caso contrário
+            True se é membro ativo ou admin, False caso contrário
         """
+        # ADMIN tem acesso total a todos os projetos
+        if is_admin is True or (is_admin is None and self.is_system_admin(user_id)):
+            return True
+        
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -166,35 +189,45 @@ class PermissionManager:
         role = self.get_user_role_in_project(user_id, project_id)
         return role == self.ROLE_MANAGER
     
-    def can_modify_project(self, user_id: int, project_id: int) -> bool:
+    def can_modify_project(self, user_id: int, project_id: int, is_admin: bool = None) -> bool:
         """
-        Verifica se usuário pode modificar projeto
-        Apenas gerente ou criador podem
+        Verifica se usuário pode modificar projeto.
+        ADMINISTRADORES podem modificar qualquer projeto.
         
         Args:
             user_id: ID do usuário
             project_id: ID do projeto
+            is_admin: Se já verificou que é admin (evita query extra)
             
         Returns:
             True se pode modificar, False caso contrário
         """
+        # ADMIN pode modificar qualquer projeto
+        if is_admin is True or (is_admin is None and self.is_system_admin(user_id)):
+            return True
+        
         return (
             self.is_project_owner(user_id, project_id) or
             self.is_project_manager(user_id, project_id)
         )
     
-    def can_delete_project(self, user_id: int, project_id: int) -> bool:
+    def can_delete_project(self, user_id: int, project_id: int, is_admin: bool = None) -> bool:
         """
-        Verifica se usuário pode deletar projeto
-        Apenas criador pode
+        Verifica se usuário pode deletar projeto.
+        ADMINISTRADORES podem deletar qualquer projeto.
         
         Args:
             user_id: ID do usuário
             project_id: ID do projeto
+            is_admin: Se já verificou que é admin (evita query extra)
             
         Returns:
             True se pode deletar, False caso contrário
         """
+        # ADMIN pode deletar qualquer projeto
+        if is_admin is True or (is_admin is None and self.is_system_admin(user_id)):
+            return True
+        
         return self.is_project_owner(user_id, project_id)
     
     def get_user_projects(self, user_id: int) -> List[Dict]:

@@ -12,9 +12,19 @@ if (!api.isAuthenticated()) {
 let projects = [];
 let tasks = [];
 let chartInstances = {};
+let dashboardData = {};
+let projectId = null;
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
+    projectId = getProjectIdFromUrlOrStorage();
+    if (!projectId) {
+        localStorage.removeItem('current_project_id');
+        alert('Selecione um projeto na tela inicial para acessar o sistema.');
+        window.location.href = '../index.html';
+        return;
+    }
+    localStorage.setItem('current_project_id', projectId);
     // Exibir nome do usuário
     const user = api.user;
     if (user && user.nome) {
@@ -32,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Carregar dados
-    await loadDashboardData();
+    loadDashboardData();
 });
 
 /**
@@ -454,4 +464,14 @@ function formatStatus(status) {
         'concluida': 'Concluída'
     };
     return statusMap[status] || status;
+}
+
+/**
+ * Buscar projectId do URL ou do localStorage
+ */
+function getProjectIdFromUrlOrStorage() {
+    const params = new URLSearchParams(window.location.search);
+    let pid = params.get('project');
+    if (!pid) pid = localStorage.getItem('current_project_id');
+    return pid || null;
 }

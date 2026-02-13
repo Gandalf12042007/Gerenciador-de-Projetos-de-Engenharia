@@ -4,18 +4,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Métricas do Projeto — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
   <link rel="stylesheet" href="metrics.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="layout.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>Métricas do Projeto</h1>
-    <button id="kanbanBtn" class="btn">Kanban</button>
-    <button id="docsBtn" class="btn">Documentos</button>
-    <button id="chatBtn" class="btn">Chat</button>
-    <button id="exportLogsBtn" class="btn">Exportar Logs</button>
-    <button id="backBtn" class="btn">Voltar</button>
-  </header>
+  <!-- Header será injetado pelo layout.js -->
+  
   <main class="metrics-container">
     <div class="charts">
       <canvas id="progressChart" width="350" height="200"></canvas>

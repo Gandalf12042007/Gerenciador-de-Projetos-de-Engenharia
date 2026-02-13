@@ -2,6 +2,13 @@
 let tasks = [];
 let projectId = null;
 
+function getProjectIdFromUrlOrStorage() {
+  const params = new URLSearchParams(window.location.search);
+  let pid = params.get('project');
+  if (!pid) pid = localStorage.getItem('current_project_id');
+  return pid || null;
+}
+
 // Backend usa: a_fazer, em_andamento, em_revisao, concluida
 const columns = [
   { key: 'a_fazer', label: 'A Fazer' },
@@ -9,11 +16,6 @@ const columns = [
   { key: 'em_revisao', label: 'Em Revisão' },
   { key: 'concluida', label: 'Concluída' }
 ];
-
-function getProjectIdFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('project') || null;
-}
 
 async function loadTasks() {
   if (!projectId) return;
@@ -43,12 +45,33 @@ async function loadTasks() {
 function renderKanban() {
   const board = document.getElementById('kanbanBoard');
   board.innerHTML = '';
+  
   columns.forEach(col => {
     const colDiv = document.createElement('div');
     colDiv.className = 'kanban-column';
-    colDiv.innerHTML = `<h3>${col.label}</h3><div class="kanban-tasks" id="col-${col.key}"></div>`;
+    colDiv.dataset.status = col.key;
+    colDiv.innerHTML = `<h3>${col.label}</h3><div class="kanban-tasks" id="col-${col.key}" data-status="${col.key}"></div>`;
     board.appendChild(colDiv);
+    
+    // Configurar drag and drop na área de tarefas
+    const tasksArea = colDiv.querySelector('.kanban-tasks');
+    tasksArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      tasksArea.classList.add('drag-over');
+    });
+    tasksArea.addEventListener('dragleave', (e) => {
+      tasksArea.classList.remove('drag-over');
+    });
+    tasksArea.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      tasksArea.classList.remove('drag-over');
+      const taskId = e.dataTransfer.getData('text/plain');
+      if (taskId) {
+        await moveTask(taskId, col.key);
+      }
+    });
   });
+  
   columns.forEach(col => {
     const colTasks = tasks.filter(t => t.status === col.key);
     const colDiv = document.getElementById('col-' + col.key);
@@ -121,21 +144,7 @@ function formatDate(dateStr) {
 
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
-// Drag and drop
-columns.forEach(col => {
-  document.addEventListener('dragover', function(e) {
-    if (e.target.id === 'col-' + col.key) {
-      e.preventDefault();
-    }
-  });
-  document.addEventListener('drop', async function(e) {
-    if (e.target.id === 'col-' + col.key) {
-      e.preventDefault();
-      const taskId = e.dataTransfer.getData('text/plain');
-      await moveTask(taskId, col.key);
-    }
-  });
-});
+// Drag and drop - configurado no renderKanban()
 
 async function moveTask(id, newStatus) {
   const task = tasks.find(t => t.id == id);
@@ -170,12 +179,14 @@ function closeTaskModal() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  projectId = getProjectIdFromUrl();
+  projectId = getProjectIdFromUrlOrStorage();
   if (!projectId) {
-    alert('Projeto não especificado!');
-    window.location.href = 'index.html';
+    localStorage.removeItem('current_project_id');
+    alert('Selecione um projeto na tela inicial para acessar o sistema.');
+    window.location.href = '../index.html';
     return;
   }
+  localStorage.setItem('current_project_id', projectId);
   document.getElementById('addTaskBtn').onclick = () => openTaskModal('Nova Tarefa');
   document.getElementById('closeTaskModal').onclick = closeTaskModal;
   document.getElementById('taskModal').onclick = (e) => { if (e.target === e.currentTarget) closeTaskModal(); };

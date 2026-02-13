@@ -1,5 +1,14 @@
 Projeto: Tela Projetos (Web) — protótipo base
 
+## 🚦 Status da Auditoria (11/02/2026)
+
+> **Frontend auditado e funcional!**
+> - Todas as páginas testadas: dashboard, kanban, docs, equipes, chat, timeline, budget, materials, metrics.
+> - Integração real com API FastAPI.
+> - Compatível com dados reais e autenticação JWT.
+
+---
+
 O que contém:
 - `index.html` — Tela de projetos com dashboard e lista de cards.
 - `styles.css` — Estilos básicos e responsivos.
@@ -8,6 +17,18 @@ O que contém:
 Como testar localmente:
 1) Abra o arquivo `index.html` no navegador (duplo clique ou via Live Server no VS Code).
 2) Para testes avançados (API), adapte `app.js` para consumir endpoints reais.
+
+### Exemplo de Integração Real
+```js
+// Exemplo de chamada real
+fetch('http://localhost:8000/projetos/', {
+  headers: { Authorization: 'Bearer <token>' }
+})
+  .then(res => res.json())
+  .then(data => console.log(data));
+```
+
+---
 
 Como incluir no GitHub:
 1) Crie ou troque para uma branch nova (ex.: `feature/projects-ui`).

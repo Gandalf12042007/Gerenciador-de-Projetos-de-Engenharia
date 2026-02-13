@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Diagnóstico de Login - Gerenciador de Projetos</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0F172A;
+            color: #F1F5F9;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #1E293B;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 { color: #F59E0B; }
+        pre {
+            background: #0F172A;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid #F59E0B;
+        }
+        .success { color: #22C55E; }
+        .error { color: #EF4444; }
+        .warning { color: #F59E0B; }
+        button {
+            background: #3B82F6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2563EB;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #334155;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Diagnóstico de Login</h1>
+        <p>Clique nos botões abaixo para testar a conexão e fazer login</p>
+
+        <div class="section">
+            <h2>1️⃣ Teste de Conexão com o Backend</h2>
+            <button onclick="testarConexao()">Testar Conexão</button>
+            <pre id="resultadoConexao">Aguardando...</pre>
+        </div>
+
+        <div class="section">
+            <h2>2️⃣ Teste de CORS</h2>
+            <button onclick="testarCORS()">Testar CORS</button>
+            <pre id="resultadoCORS">Aguardando...</pre>
+        </div>
+
+        <div class="section">
+            <h2>3️⃣ Teste de Login - Admin</h2>
+            <button onclick="testarLogin()">Fazer Login (Admin)</button>
+            <pre id="resultadoLogin">Aguardando...</pre>
+        </div>
+
+        <div class="section">
+            <h2>4️⃣ Verificar LocalStorage</h2>
+            <button onclick="verificarStorage()">Verificar Storage</button>
+            <pre id="resultadoStorage">Aguardando...</pre>
+        </div>
+
+        <div class="section">
+            <h2>5️⃣ Limpar Cache e Tentar Novamente</h2>
+            <button onclick="limparCache()">Limpar Cache</button>
+            <pre id="resultadoLimpeza">Aguardando...</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+
+        function log(elementId, content, type = 'normal') {
+            const elem = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            let prefix = type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : '';
+            elem.innerHTML = `[${timestamp}] ${prefix}${content}`;
+            if (type === 'success') elem.className = 'success';
+            if (type === 'error') elem.className = 'error';
+            if (type === 'warning') elem.className = 'warning';
+        }
+
+        async function testarConexao() {
+            log('resultadoConexao', 'Testando conexão com backend...');
+            try {
+                const response = await fetch(`${API_URL}/docs`);
+                if (response.ok) {
+                    log('resultadoConexao', `✅ Conexão OK!\n${API_URL} está respondendo\nStatus: ${response.status}`, 'success');
+                } else {
+                    log('resultadoConexao', `⚠️  Status HTTP: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                log('resultadoConexao', `❌ Erro:\n${error.message}\n\nBackend pode estar offline!`, 'error');
+            }
+        }
+
+        async function testarCORS() {
+            log('resultadoCORS', 'Testando CORS...');
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'vicentedesouza762@gmail.com',
+                        senha: 'Admin@2026'
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    log('resultadoCORS', `✅ CORS OK!\n\nResposta recebida:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    log('resultadoCORS', `⚠️ Status: ${response.status}\n\nResposta: ${JSON.stringify(data, null, 2)}`, 'warning');
+                }
+            } catch (error) {
+                console.error('Erro completo:', error);
+                log('resultadoCORS', `❌ Erro CORS ou Conexão:\n${error.message}\n\nVerifique o console (F12) para mais detalhes`, 'error');
+            }
+        }
+
+        async function testarLogin() {
+            log('resultadoLogin', 'Tentando fazer login...');
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: 'vicentedesouza762@gmail.com',
+                        senha: 'Admin@2026'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    log('resultadoLogin', `✅ LOGIN REALIZADO COM SUCESSO!\n\n${JSON.stringify(data, null, 2)}`, 'success');
+                    // Salvar no localStorage para testes
+                    localStorage.setItem('access_token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify({
+                        id: data.user_id,
+                        nome: data.nome,
+                        email: data.email,
+                        role: data.role
+                    }));
+                } else {
+                    log('resultadoLogin', `❌ Erro: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                log('resultadoLogin', `❌ Erro na requisição:\n${error.message}`, 'error');
+            }
+        }
+
+        function verificarStorage() {
+            const token = localStorage.getItem('access_token');
+            const user = localStorage.getItem('user');
+            log('resultadoStorage', 
+                `Token: ${token ? '✅ Existe (primeiros 50 chars): ' + token.substring(0, 50) + '...' : '❌ Não existe'}\n\n` +
+                `User: ${user ? '✅ Existe: ' + user : '❌ Não existe'}`
+            );
+        }
+
+        function limparCache() {
+            localStorage.clear();
+            sessionStorage.clear();
+            const cachesToDelete = [];
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+            location.reload();
+        }
+
+        // Executar testes ao carregar
+        window.addEventListener('load', () => {
+            log('resultadoConexao', 'Clique no botão para testar');
+            log('resultadoCORS', 'Clique no botão para testar');
+            log('resultadoLogin', 'Clique no botão para testar');
+            verificarStorage();
+            log('resultadoLimpeza', 'Clique no botão para limpar');
+        });
+    </script>
+</body>
+</html>

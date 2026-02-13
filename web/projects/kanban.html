@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kanban de Tarefas — Gerenciador de Projetos</title>
+  <title>Quadro de Tarefas — Gerenciador de Projetos</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="sidebar.css">
   <link rel="stylesheet" href="kanban.css">
+  <script src="layout.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <h1>Kanban de Tarefas</h1>
-    <button id="addTaskBtn" class="btn primary">Nova Tarefa</button>
-    <button id="docsBtn" class="btn">Documentos</button>
-    <button id="chatBtn" class="btn">Chat</button>
-    <button id="backBtn" class="btn">Voltar</button>
-  </header>
+  <!-- Header será injetado pelo layout.js -->
+  
+  <!-- Botões de ação flutuantes -->
+  <div style="position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; gap: 10px;">
+    <button id="addTaskBtn" class="btn primary" style="padding: 16px 24px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">➕ Nova Tarefa</button>
+  </div>
+  
   <main class="kanban-container">
     <div class="kanban-board" id="kanbanBoard">
       <!-- Colunas e tarefas serão renderizadas aqui -->

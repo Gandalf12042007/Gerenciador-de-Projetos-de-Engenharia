@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 Debug Login - Resposta Exata</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        .box {
+            border: 2px solid #0f0;
+            padding: 15px;
+            margin: 15px 0;
+            background: #111;
+            border-radius: 5px;
+        }
+        h1 { color: #ffff00; }
+        pre { background: #222; padding: 10px; overflow-x: auto; }
+        button {
+            background: #0f0;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Completo de Login</h1>
+    
+    <div class="box">
+        <h2>Teste 1: Requisição Simples (Sem Token)</h2>
+        <button onclick="testeSimples()">Executar</button>
+        <pre id="resultado1"></pre>
+    </div>
+
+    <div class="box">
+        <h2>Teste 2: Requisição do Francisco</h2>
+        <button onclick="testeFrancisco()">Executar</button>
+        <pre id="resultado2"></pre>
+    </div>
+
+    <div class="box">
+        <h2>Teste 3: Ver Headers da Resposta</h2>
+        <button onclick="testeHeaders()">Executar</button>
+        <pre id="resultado3"></pre>
+    </div>
+
+    <script>
+        function log(id, text) {
+            document.getElementById(id).textContent += text + '\n';
+        }
+
+        async function testeSimples() {
+            document.getElementById('resultado1').textContent = '';
+            log('resultado1', '⏳ Enviando requisição...\n');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        senha: 'test'
+                    })
+                });
+
+                log('resultado1', `✅ Resposta recebida!`);
+                log('resultado1', `Status: ${response.status} ${response.statusText}`);
+                log('resultado1', `Content-Type: ${response.headers.get('content-type')}`);
+                
+                const text = await response.text();
+                log('resultado1', `\nCorpo (${text.length} bytes):`);
+                log('resultado1', text);
+                
+            } catch (e) {
+                log('resultado1', `❌ ERRO: ${e.message}`);
+            }
+        }
+
+        async function testeFrancisco() {
+            document.getElementById('resultado2').textContent = '';
+            log('resultado2', '⏳ Enviando login do Francisco...\n');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'francisco@projeto.com',
+                        senha: 'Admin@2026'
+                    })
+                });
+
+                log('resultado2', `✅ Resposta recebida!`);
+                log('resultado2', `Status: ${response.status} ${response.statusText}`);
+                
+                const data = await response.json();
+                log('resultado2', `\nJSON:`);
+                log('resultado2', JSON.stringify(data, null, 2));
+                
+            } catch (e) {
+                log('resultado2', `❌ ERRO: ${e.message}`);
+            }
+        }
+
+        async function testeHeaders() {
+            document.getElementById('resultado3').textContent = '';
+            log('resultado3', '⏳ Verificando headers...\n');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'OPTIONS'
+                });
+
+                log('resultado3', 'Headers da resposta OPTIONS:');
+                for (const [k, v] of response.headers.entries()) {
+                    log('resultado3', `${k}: ${v}`);
+                }
+                
+            } catch (e) {
+                log('resultado3', `ERRO em OPTIONS: ${e.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

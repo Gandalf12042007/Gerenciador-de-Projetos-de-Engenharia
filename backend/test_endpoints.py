@@ -123,6 +123,11 @@ class TestAuth:
         response = client.post("/auth/register", json=usuario_teste)
         assert response.status_code == 200
         assert response.json()["success"] == True
+        def test_register_sucesso(self, usuario_teste):
+            """POST /auth/register com dados válidos deve retornar 201"""
+            response = client.post("/auth/register", json=usuario_teste)
+            assert response.status_code == 201
+            assert "sucesso" in response.json()["message"].lower()
     
     def test_register_email_duplicado(self, usuario_teste):
         """POST /auth/register com email duplicado deve retornar 400"""
@@ -133,6 +138,12 @@ class TestAuth:
         response = client.post("/auth/register", json=usuario_teste)
         assert response.status_code == 400
         assert "já existe" in response.json()["detail"].lower()
+        def test_register_email_duplicado(self, usuario_teste):
+            """POST /auth/register com email duplicado deve retornar 409"""
+            client.post("/auth/register", json=usuario_teste)
+            response = client.post("/auth/register", json=usuario_teste)
+            assert response.status_code == 409
+            assert "cadastrado" in response.json()["detail"].lower()
     
     def test_register_senha_fraca(self):
         """POST /auth/register com senha fraca deve retornar 400"""
@@ -145,6 +156,17 @@ class TestAuth:
         response = client.post("/auth/register", json=usuario_fraco)
         assert response.status_code == 400
         assert "senha" in response.json()["detail"].lower()
+        def test_register_senha_fraca(self):
+            """POST /auth/register com senha fraca deve retornar 422"""
+            usuario_fraco = {
+                "nome": "Teste",
+                "email": "fraco@test.com",
+                "senha": "123",  # Senha fraca
+                "cargo": "Tech"
+            }
+            response = client.post("/auth/register", json=usuario_fraco)
+            assert response.status_code == 422
+            assert "senha" in response.json()["detail"].lower()
     
     def test_register_email_invalido(self):
         """POST /auth/register com email inválido deve retornar 422"""

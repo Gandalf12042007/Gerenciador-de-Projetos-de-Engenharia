@@ -19,7 +19,7 @@ from db_helper import DatabaseHelper
 from utils.auth import hash_password, verify_password, create_access_token
 from utils.two_factor_auth import gerar_otp, enviar_otp_email, validar_otp, resend_otp
 from middleware.rate_limit import RateLimitDecorators
-from middleware.auth_middleware import get_current_active_user
+from middleware.auth_middleware import get_current_active_user, security
 from config import settings
 
 # Logger para auditoria de segurança
@@ -131,7 +131,8 @@ async def login(credentials: LoginRequest, request: Request):
                     "user_id": user["id"], 
                     "email": user["email"], 
                     "nome": user["nome"],
-                    "role": user["role"]
+                    "role": user["role"],
+                    "is_admin": True
                 },
                 expires_delta=access_token_expires
             )
@@ -278,12 +279,14 @@ async def verify_2fa(otp_data: VerifyOTPRequest):
     
     # Criar token JWT após 2FA validado
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    is_admin = usuario.get('role') == 'admin' or usuario.get('cargo') == 'Administrador'
     access_token = create_access_token(
         data={
             "user_id": usuario['id'],
             "email": usuario['email'],
             "nome": usuario['nome'],
             "cargo": usuario['cargo'],
+            "is_admin": is_admin,
             "2fa_verified": True
         },
         expires_delta=access_token_expires
@@ -587,21 +590,16 @@ async def change_password(
         )
 
 
-async def validate_token(token: str):
-    """
-    Valida se token JWT é válido
-    
-    Returns:
-        Status da validação
-    """
+
+# Endpoint para validação de token JWT
+@router.post("/validate-token")
+async def validate_token_endpoint(credentials: Depends(security)):
     from utils.auth import decode_access_token
-    
+    token = credentials.credentials
     payload = decode_access_token(token)
-    
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado"
         )
-    
     return {"valid": True, "user_id": payload.get("user_id")}

@@ -134,6 +134,11 @@ async def upload_documento(
             f.write(content)
         
         # Registrar no banco
+        # tipo deve ser um dos valores permitidos: 'contrato', 'projeto', 'laudo', 'orcamento', 
+        # 'nota_fiscal', 'outro', 'plantas', 'rrt', 'diario', 'medicoes', 'fotos', 'relatorios', 'outros'
+        tipo_documento = categoria if categoria in ('contrato', 'projeto', 'laudo', 'orcamento', 
+            'nota_fiscal', 'outro', 'plantas', 'rrt', 'diario', 'medicoes', 'fotos', 'relatorios', 'outros') else 'outros'
+        
         doc_id = db.execute_query(
             """
             INSERT INTO documentos 
@@ -142,7 +147,7 @@ async def upload_documento(
             """,
             (
                 projeto_id, file.filename, descricao,
-                categoria, len(content), file.content_type, caminho, user_id
+                categoria, len(content), tipo_documento, caminho, user_id
             )
         )
         

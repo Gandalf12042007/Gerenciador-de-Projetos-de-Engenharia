@@ -7,7 +7,13 @@
 // Em produção: usa a mesma origem (mesmo domínio)
 // Em desenvolvimento local: usa localhost:8000
 const getApiUrl = () => {
+    const protocol = window.location.protocol;
     const hostname = window.location.hostname;
+    
+    // Se estiver abrindo arquivo local (file://), assume localhost:8000
+    if (protocol === 'file:') {
+        return 'http://localhost:8000';
+    }
     
     // Se estiver em localhost com porta 3000 (dev frontend), aponta para 8000 (dev backend)
     if (hostname === 'localhost' || hostname === '127.0.0.1') {

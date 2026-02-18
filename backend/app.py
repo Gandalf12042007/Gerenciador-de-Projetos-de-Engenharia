@@ -4,9 +4,14 @@ Desenvolvido por: Vicente de Souza
 """
 
 import os
+import sys
 from pathlib import Path
+
+# Configurar encoding UTF-8 para Windows
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.exceptions import RequestValidationError
@@ -32,48 +37,48 @@ app.openapi = lambda: custom_openapi(app)
 
 # ╔════════════════════════════════════════════════════════════════════════════╗
 # ║ CONFIGURAÇÃO DE MIDDLEWARES - ORDEM CRÍTICA!                              ║
-# ║ 1. CORS - DEVE SER O PRIMEIRO para responder requisições OPTIONS           ║
+# ║ 1. Middleware de CORS com OPTIONS - PRIMEIRO                              ║
 # ║ 2. Rate Limit - Aplicado depois                                           ║
 # ╚════════════════════════════════════════════════════════════════════════════╝
 
-# 1. CORS Middleware (PRIMEIRO - MAIS IMPORTANTE)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
-    expose_headers=["*", "Content-Length", "X-Total-Count"],
-    max_age=7200,  # Cache preflight por 2 horas
-)
-
-# 2. Rate Limiting (DEPOIS de CORS)
-app.state.limiter = limiter
-
-# Registrar handler de rate limiting
-app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
-
-# Middleware para lidar com CORS OPTIONS sem rate limit
+# Middleware customizado para CORS - DEVE SER O PRIMEIRO
 @app.middleware("http")
-async def cors_optionals_handler(request: Request, call_next):
+async def cors_middleware(request: Request, call_next):
     """
-    Middleware para permitir requisições OPTIONS (CORS preflight) sem rate limit
+    Middleware customizado para CORS - responde também requisições OPTIONS
     """
+    # Definir headers CORS para responder requisições OPTIONS
     if request.method == "OPTIONS":
-        # Retornar resposta CORS OK com headers corretos, sem passar pelo rate limit
+        origin = request.headers.get("origin", "*")
         return PlainTextResponse(
             "",
             status_code=200,
             headers={
-                "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
+                "Access-Control-Allow-Origin": origin,
                 "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
                 "Access-Control-Allow-Headers": "Content-Type, Authorization",
                 "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "7200",
+                "Access-Control-Max-Age": "86400",
             }
         )
+    
+    # Para requisições normais, processar normalmente
     response = await call_next(request)
+    
+    # Adicionar headers CORS à resposta
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
     return response
+
+# Rate Limiting
+app.state.limiter = limiter
+
+# Registrar handler de rate limiting
+app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
 # Registrar rotas com prefixo /api
 app.include_router(auth.router, prefix="/api")

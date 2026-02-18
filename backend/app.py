@@ -5,7 +5,7 @@ Desenvolvido por: Vicente de Souza
 
 import os
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -30,22 +30,40 @@ app = FastAPI(
 # Customizar OpenAPI/Swagger com documentação detalhada
 app.openapi = lambda: custom_openapi(app)
 
-# Adicionar middleware de rate limiting
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ CONFIGURAÇÃO DE MIDDLEWARES - ORDEM CRÍTICA!                              ║
+# ║ 1. CORS - DEVE SER O PRIMEIRO para responder requisições OPTIONS           ║
+# ║ 2. Rate Limit - Aplicado depois                                           ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+
+# 1. CORS Middleware (PRIMEIRO - MAIS IMPORTANTE)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS else ["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["*"],
+    expose_headers=["*", "Content-Length", "X-Total-Count"],
+    max_age=7200,  # Cache preflight por 2 horas
+)
+
+# 2. Rate Limiting (DEPOIS de CORS)
 app.state.limiter = limiter
 
 # Registrar handler de rate limiting
 app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
-# Configurar CORS
-# Desenvolvimento: permite tudo (*) 
-# Produção: apenas domínios específicos
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Middleware para lidar com CORS OPTIONS sem rate limit
+@app.middleware("http")
+async def cors_optionals_handler(request: Request, call_next):
+    """
+    Middleware para permitir requisições OPTIONS (CORS preflight) sem rate limit
+    """
+    if request.method == "OPTIONS":
+        # Retornar resposta CORS OK sem passar pelo rate limit
+        return FileResponse(status_code=200)
+    response = await call_next(request)
+    return response
 
 # Registrar rotas com prefixo /api
 app.include_router(auth.router, prefix="/api")

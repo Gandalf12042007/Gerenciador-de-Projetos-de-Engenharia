@@ -35,8 +35,8 @@ class RateLimitDecorators:
     """Decoradores de rate limit pré-configurados"""
     
     # Auth - proteção contra brute force
-    login = limiter.limit("5/minute")  # Máx 5 tentativas/min
-    register = limiter.limit("10/hour")  # Máx 10 registros/hora
+    login = limiter.limit("20/minute")  # Máx 20 tentativas/min (aumentado para dev/teste)
+    register = limiter.limit("20/hour")  # Máx 20 registros/hora (aumentado para dev/teste)
     
     # APIs gerais - proteção contra DoS
     standard = limiter.limit("100/minute")  # Máx 100 req/min

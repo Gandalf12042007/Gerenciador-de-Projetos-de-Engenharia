@@ -4,7 +4,7 @@ PHASE 4: Implementação do módulo financeiro com endpoints para custos, orçam
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+# from sqlalchemy.orm import Session  # Comentado temporariamente
 from datetime import datetime, date
 from typing import List, Optional
 from decimal import Decimal
@@ -359,9 +359,9 @@ async def registrar_pagamento_fatura(
 @router.post("/fluxo-caixa")
 async def criar_movimento_fluxo(
     projeto_id: int,
-    tipo: str = Query(..., regex="^(entrada|saida)$"),
     valor: Decimal,
     descricao: str,
+    tipo: str = Query(..., regex="^(entrada|saida)$"),
     categoria: Optional[str] = None,
     data_movimento: date = Query(default_factory=date.today)
 ):

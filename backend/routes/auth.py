@@ -4,6 +4,7 @@ Desenvolvido por: Vicente de Souza
 """
 
 from fastapi import APIRouter, HTTPException, status, Request, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr, Field
 from datetime import timedelta, datetime
 import sys
@@ -640,7 +641,7 @@ async def change_password(
 
 # Endpoint para validação de token JWT
 @router.post("/validate-token")
-async def validate_token_endpoint(credentials: Depends(security)):
+async def validate_token_endpoint(credentials: HTTPAuthorizationCredentials = Depends(security)):
     from utils.auth import decode_access_token
     token = credentials.credentials
     payload = decode_access_token(token)

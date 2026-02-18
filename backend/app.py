@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.exceptions import RequestValidationError
 from config import settings
 from middleware.rate_limit import limiter, rate_limit_exception_handler
@@ -60,8 +60,18 @@ async def cors_optionals_handler(request: Request, call_next):
     Middleware para permitir requisições OPTIONS (CORS preflight) sem rate limit
     """
     if request.method == "OPTIONS":
-        # Retornar resposta CORS OK sem passar pelo rate limit
-        return FileResponse(status_code=200)
+        # Retornar resposta CORS OK com headers corretos, sem passar pelo rate limit
+        return PlainTextResponse(
+            "",
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "7200",
+            }
+        )
     response = await call_next(request)
     return response
 

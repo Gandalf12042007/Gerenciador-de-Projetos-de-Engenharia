@@ -26,7 +26,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Instalar dependências Python
-RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Runtime (imagem final leve)
 FROM python:3.11-slim

@@ -8,7 +8,7 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
-import jwt
+from jose import jwt
 
 from config import settings
 from app.repositories import UserRepository
@@ -96,15 +96,12 @@ class AuthService:
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             
-            # Verificar expiração
-            exp = payload.get('exp')
-            if exp and datetime.utcnow() > datetime.fromtimestamp(exp):
-                logger.warning("Token expired")
-                return None
+            # python-jose já valida expiração automaticamente
+            # Se o token está expirado, jwt.decode() lança uma exceção
             
             return payload
             
-        except jwt.InvalidTokenError as e:
+        except Exception as e:
             logger.warning(f"Invalid token: {str(e)}")
             return None
     

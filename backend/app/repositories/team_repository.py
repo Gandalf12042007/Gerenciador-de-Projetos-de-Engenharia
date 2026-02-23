@@ -20,12 +20,12 @@ class TeamRepository(BaseRepository):
     def find_members(self, project_id: int) -> List[Dict[str, Any]]:
         """Lista membros de um projeto"""
         query = """
-            SELECT e.id, e.cargo, e.ativo, e.criado_em,
-                   u.id as usuario_id, u.nome, u.email, u.username
+            SELECT e.id, e.papel, e.ativo, e.criado_em,
+                   u.id as usuario_id, u.nome, u.email
             FROM equipes e
             INNER JOIN usuarios u ON e.usuario_id = u.id
             WHERE e.projeto_id = %s AND e.ativo = 1
-            ORDER BY e.cargo, u.nome
+            ORDER BY e.papel, u.nome
         """
         
         try:
@@ -35,9 +35,9 @@ class TeamRepository(BaseRepository):
             raise
     
     def find_user_role(self, project_id: int, user_id: int) -> Optional[Dict[str, Any]]:
-        """Busca cargo do usuário em um projeto"""
+        """Busca papel do usuário em um projeto"""
         query = """
-            SELECT e.id, e.cargo, e.ativo
+            SELECT e.id, e.papel, e.ativo
             FROM equipes e
             WHERE e.projeto_id = %s AND e.usuario_id = %s AND e.ativo = 1
         """
@@ -49,7 +49,7 @@ class TeamRepository(BaseRepository):
             logger.error(f"Error finding user role: {str(e)}")
             raise
     
-    def add_member(self, project_id: int, user_id: int, cargo: str = "membro") -> int:
+    def add_member(self, project_id: int, user_id: int, cargo: str = "colaborador") -> int:
         """Adiciona membro ao projeto"""
         # Verificar se já existe (ativo ou inativo)
         existing = self.execute_raw(
@@ -61,14 +61,15 @@ class TeamRepository(BaseRepository):
         if existing:
             # Reativar se estava inativo
             if not existing[0]['ativo']:
-                self.update(existing[0]['id'], {'ativo': 1, 'cargo': cargo})
+                self.update(existing[0]['id'], {'ativo': 1, 'papel': cargo})
             return existing[0]['id']
         
         # Criar novo membro
         return self.create({
             'projeto_id': project_id,
             'usuario_id': user_id,
-            'cargo': cargo,
+            'papel': cargo,
+            'data_entrada': 'date("now")',
             'ativo': 1
         })
     
@@ -88,10 +89,10 @@ class TeamRepository(BaseRepository):
             raise
     
     def update_role(self, project_id: int, user_id: int, new_role: str) -> bool:
-        """Atualiza cargo do membro"""
+        """Atualiza papel do membro"""
         query = """
-            UPDATE equipes SET cargo = %s 
-            WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1
+            UPDATE equipes SET papel = ?
+            WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1
         """
         
         try:
@@ -110,7 +111,7 @@ class TeamRepository(BaseRepository):
     def is_manager(self, project_id: int, user_id: int) -> bool:
         """Verifica se usuário é gerente do projeto"""
         role = self.find_user_role(project_id, user_id)
-        return role and role.get('cargo') in ['gerente', 'coordenador', 'admin']
+        return bool(role and role.get('papel') in ['gerente', 'coordenador', 'admin'])
     
     def get_user_projects_count(self, user_id: int) -> int:
         """Conta projetos do usuário"""
@@ -127,7 +128,7 @@ class TeamRepository(BaseRepository):
         """Transfere propriedade do projeto"""
         try:
             # Rebaixar o antigo dono
-            self.update_role(project_id, from_user, 'membro')
+            self.update_role(project_id, from_user, 'colaborador')
             # Promover o novo dono
             self.update_role(project_id, to_user, 'gerente')
             logger.info(f"Transferred ownership of project {project_id} from {from_user} to {to_user}")

@@ -18,7 +18,8 @@ sys.path.insert(0, str(DATABASE_DIR))
 # Configurar ambiente de testes
 os.environ["ENVIRONMENT"] = "test"
 os.environ["DB_TYPE"] = "sqlite"
-os.environ["SQLITE_PATH"] = ":memory:"
+# Use o banco de dados real em DATABASE_DIR para testes
+os.environ["SQLITE_PATH"] = str(DATABASE_DIR / "gerenciador.db")
 os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
 os.environ["DEBUG"] = "True"
 

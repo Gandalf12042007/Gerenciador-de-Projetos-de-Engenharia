@@ -94,7 +94,6 @@ async def upload_documento(
     file: UploadFile = File(...),
     categoria: str = "outros",
     descricao: Optional[str] = None,
-    nome: Optional[str] = None,
     current_user: dict = Depends(get_current_active_user)
 ):
     """
@@ -123,7 +122,7 @@ async def upload_documento(
                 detail=f"Arquivo muito grande. Máximo: {MAX_FILE_SIZE // (1024*1024)}MB"
             )
         
-        # Gerar nome único para o arquivo físico
+        # Gerar nome único
         nome_unico = f"{uuid.uuid4()}{ext}"
         projeto_dir = os.path.join(UPLOAD_DIR, str(projeto_id))
         os.makedirs(projeto_dir, exist_ok=True)
@@ -134,10 +133,9 @@ async def upload_documento(
         with open(caminho, 'wb') as f:
             f.write(content)
         
-        # Usar nome personalizado ou nome original do arquivo
-        nome_documento = nome if nome and nome.strip() else file.filename
-        
         # Registrar no banco
+        # tipo deve ser um dos valores permitidos: 'contrato', 'projeto', 'laudo', 'orcamento', 
+        # 'nota_fiscal', 'outro', 'plantas', 'rrt', 'diario', 'medicoes', 'fotos', 'relatorios', 'outros'
         tipo_documento = categoria if categoria in ('contrato', 'projeto', 'laudo', 'orcamento', 
             'nota_fiscal', 'outro', 'plantas', 'rrt', 'diario', 'medicoes', 'fotos', 'relatorios', 'outros') else 'outros'
         
@@ -148,18 +146,18 @@ async def upload_documento(
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                projeto_id, nome_documento, descricao,
+                projeto_id, file.filename, descricao,
                 categoria, len(content), tipo_documento, caminho, user_id
             )
         )
         
-        logger.info(f"Documento '{nome_documento}' uploaded por {user_id} no projeto {projeto_id}")
+        logger.info(f"Documento {file.filename} uploaded por {user_id} no projeto {projeto_id}")
         
         return {
             "success": True,
             "message": "Documento uploaded com sucesso",
             "documento_id": doc_id,
-            "nome": nome_documento
+            "nome": file.filename
         }
         
     except HTTPException:
@@ -197,64 +195,6 @@ async def download_documento(
             path=caminho,
             filename=doc['nome'],
             media_type=doc.get('tipo', 'application/octet-stream')
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/{documento_id}/visualizar")
-async def visualizar_documento(
-    documento_id: int
-):
-    """
-    Visualiza um documento inline no navegador (para PDFs, imagens, etc)
-    Nota: Endpoint público para permitir uso em iframe
-    """
-    db = DatabaseHelper()
-    
-    try:
-        doc = db.execute_query(
-            "SELECT * FROM documentos WHERE id = %s",
-            (documento_id,),
-            fetch=True
-        )
-        
-        if not doc:
-            raise HTTPException(status_code=404, detail="Documento não encontrado")
-        
-        doc = doc[0]
-        caminho = doc['caminho_arquivo']
-        
-        if not caminho or not os.path.exists(caminho):
-            raise HTTPException(status_code=404, detail="Arquivo não encontrado no servidor")
-        
-        # Determinar tipo MIME baseado na extensão
-        ext = os.path.splitext(caminho)[1].lower()
-        mime_types = {
-            '.pdf': 'application/pdf',
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.gif': 'image/gif',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            '.xls': 'application/vnd.ms-excel',
-            '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            '.txt': 'text/plain',
-        }
-        
-        media_type = mime_types.get(ext, 'application/octet-stream')
-        
-        # Retornar arquivo para visualização inline
-        return FileResponse(
-            path=caminho,
-            media_type=media_type,
-            headers={
-                "Content-Disposition": f"inline; filename=\"{doc['nome']}\""
-            }
         )
         
     except HTTPException:

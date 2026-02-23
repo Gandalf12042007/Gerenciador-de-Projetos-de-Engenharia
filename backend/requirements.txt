@@ -7,6 +7,7 @@ uvicorn>=0.32.0
 python-multipart>=0.0.17
 
 # Banco de Dados
+sqlalchemy>=1.4.0,<2.0.0
 # SQLite já vem embutido no Python (não precisa instalar)
 # MySQL é opcional - instale apenas se usar DB_TYPE=mysql
 # mysql-connector-python>=8.2.0
@@ -17,7 +18,7 @@ passlib[bcrypt]>=1.7.4
 python-dotenv>=1.0.1
 
 # Validação
-pydantic>=2.10.0
+pydantic<2
 email-validator>=2.2.0
 
 # Rate Limiting

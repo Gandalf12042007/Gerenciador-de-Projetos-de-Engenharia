@@ -32,7 +32,7 @@ class TaskRepository(BaseRepository):
             query += " AND t.status = %s"
             params.append(status)
         
-        query += " ORDER BY t.data_limite ASC, t.prioridade DESC"
+        query += " ORDER BY t.data_fim_prevista ASC, t.prioridade DESC"
         
         try:
             return self.execute_raw(query, tuple(params), fetch=True) or []
@@ -54,7 +54,7 @@ class TaskRepository(BaseRepository):
             query += " AND t.status = %s"
             params.append(status)
         
-        query += " ORDER BY t.data_limite ASC, t.prioridade DESC"
+        query += " ORDER BY t.data_fim_prevista ASC, t.prioridade DESC"
         
         try:
             return self.execute_raw(query, tuple(params), fetch=True) or []
@@ -69,7 +69,7 @@ class TaskRepository(BaseRepository):
             FROM tarefas t
             INNER JOIN projetos p ON t.projeto_id = p.id
             LEFT JOIN usuarios u ON t.responsavel_id = u.id
-            WHERE t.data_limite < CURDATE() AND t.status != 'concluida'
+            WHERE t.data_fim_prevista < CURDATE() AND t.status != 'concluida'
         """
         params = []
         
@@ -77,7 +77,7 @@ class TaskRepository(BaseRepository):
             query += " AND t.responsavel_id = %s"
             params.append(user_id)
         
-        query += " ORDER BY t.data_limite ASC"
+        query += " ORDER BY t.data_fim_prevista ASC"
         
         try:
             return self.execute_raw(query, tuple(params) if params else None, fetch=True) or []
@@ -93,8 +93,8 @@ class TaskRepository(BaseRepository):
             INNER JOIN projetos p ON t.projeto_id = p.id
             WHERE t.responsavel_id = %s 
             AND t.status != 'concluida'
-            AND t.data_limite BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL %s DAY)
-            ORDER BY t.data_limite ASC
+            AND t.data_fim_prevista BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL %s DAY)
+            ORDER BY t.data_fim_prevista ASC
         """
         
         try:
@@ -161,7 +161,7 @@ class TaskRepository(BaseRepository):
                 SUM(CASE WHEN status = 'em_andamento' THEN 1 ELSE 0 END) as em_andamento,
                 SUM(CASE WHEN status = 'em_revisao' THEN 1 ELSE 0 END) as em_revisao,
                 SUM(CASE WHEN status = 'concluida' THEN 1 ELSE 0 END) as concluidas,
-                SUM(CASE WHEN data_limite < CURDATE() AND status != 'concluida' THEN 1 ELSE 0 END) as atrasadas
+                SUM(CASE WHEN data_fim_prevista < CURDATE() AND status != 'concluida' THEN 1 ELSE 0 END) as atrasadas
             FROM tarefas
             {where}
         """

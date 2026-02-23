@@ -4,11 +4,16 @@ Desenvolvido por: Vicente de Souza
 """
 
 import os
+import sys
 from pathlib import Path
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+# Configurar encoding UTF-8 para Windows
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.exceptions import RequestValidationError
 from config import settings
 from middleware.rate_limit import limiter, rate_limit_exception_handler
@@ -16,7 +21,7 @@ from slowapi.errors import RateLimitExceeded
 from openapi_config import custom_openapi
 
 # Importar rotas
-from routes import auth, projetos, tarefas, equipes, documentos, materiais, orcamentos, chat, metricas, notificacoes
+from routes import auth, projetos, tarefas, equipes, documentos, materiais, orcamentos, chat, metricas, notificacoes  # , financeiro
 
 # Criar aplicação FastAPI
 app = FastAPI(
@@ -30,34 +35,63 @@ app = FastAPI(
 # Customizar OpenAPI/Swagger com documentação detalhada
 app.openapi = lambda: custom_openapi(app)
 
-# Adicionar middleware de rate limiting
+# ╔════════════════════════════════════════════════════════════════════════════╗
+# ║ CONFIGURAÇÃO DE MIDDLEWARES - ORDEM CRÍTICA!                              ║
+# ║ 1. Middleware de CORS com OPTIONS - PRIMEIRO                              ║
+# ║ 2. Rate Limit - Aplicado depois                                           ║
+# ╚════════════════════════════════════════════════════════════════════════════╝
+
+# Middleware customizado para CORS - DEVE SER O PRIMEIRO
+@app.middleware("http")
+async def cors_middleware(request: Request, call_next):
+    """
+    Middleware customizado para CORS - responde também requisições OPTIONS
+    """
+    # Definir headers CORS para responder requisições OPTIONS
+    if request.method == "OPTIONS":
+        origin = request.headers.get("origin", "*")
+        return PlainTextResponse(
+            "",
+            status_code=200,
+            headers={
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Max-Age": "86400",
+            }
+        )
+    
+    # Para requisições normais, processar normalmente
+    response = await call_next(request)
+    
+    # Adicionar headers CORS à resposta
+    origin = request.headers.get("origin", "*")
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    return response
+
+# Rate Limiting
 app.state.limiter = limiter
 
 # Registrar handler de rate limiting
 app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
-# Configurar CORS
-# Desenvolvimento: permite tudo (*) 
-# Produção: apenas domínios específicos
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Registrar rotas
-app.include_router(auth.router)
-app.include_router(projetos.router)
-app.include_router(tarefas.router)
-app.include_router(equipes.router)
-app.include_router(documentos.router)
-app.include_router(materiais.router)
-app.include_router(orcamentos.router)
-app.include_router(chat.router)
-app.include_router(metricas.router)
-app.include_router(notificacoes.router)
+# Registrar rotas com prefixo /api
+app.include_router(auth.router, prefix="/api")
+app.include_router(projetos.router, prefix="/api")
+app.include_router(tarefas.router, prefix="/api")
+app.include_router(equipes.router, prefix="/api")
+app.include_router(documentos.router, prefix="/api")
+app.include_router(materiais.router, prefix="/api")
+app.include_router(orcamentos.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(metricas.router, prefix="/api")
+app.include_router(notificacoes.router, prefix="/api")
+# app.include_router(financeiro.router, prefix="/api")  # Comentado temporariamente
 
 
 @app.get("/")

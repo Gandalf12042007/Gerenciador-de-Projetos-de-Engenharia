@@ -21,12 +21,12 @@ def init_sqlite_database():
     print("INICIALIZANDO BANCO DE DADOS SQLite")
     print(f"{'='*60}\n")
     
-    print(f"📁 Banco de dados: {db_path}")
-    print(f"📄 Schema: {schema_path}")
+    print(f"[DB] Banco de dados: {db_path}")
+    print(f"[SCHEMA] Schema: {schema_path}")
     
     # Verificar se schema existe
     if not os.path.exists(schema_path):
-        print(f"\n❌ Erro: Schema não encontrado: {schema_path}")
+        print(f"\n[ERRO] Schema nao encontrado: {schema_path}")
         return False
     
     # Ler schema
@@ -45,27 +45,27 @@ def init_sqlite_database():
         cursor.executescript(schema_sql)
         conn.commit()
         
-        print("\n✅ Schema executado com sucesso!")
+        print("\n[OK] Schema executado com sucesso!")
         
         # Verificar tabelas criadas
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
         tables = cursor.fetchall()
         
-        print(f"\n📊 Tabelas criadas ({len(tables)}):")
+        print(f"\n[TABELAS] Tabelas criadas ({len(tables)}):")
         for table in tables:
             cursor.execute(f"SELECT COUNT(*) FROM {table[0]}")
             count = cursor.fetchone()[0]
-            print(f"   • {table[0]}: {count} registros")
+            print(f"   - {table[0]}: {count} registros")
         
         conn.close()
         
-        print(f"\n✅ Banco de dados inicializado com sucesso!")
+        print(f"\n[OK] Banco de dados inicializado com sucesso!")
         print(f"   Caminho: {os.path.abspath(db_path)}")
         
         return True
         
     except Exception as e:
-        print(f"\n❌ Erro ao inicializar banco: {e}")
+        print(f"\n[ERRO] Erro ao inicializar banco: {e}")
         return False
 
 
@@ -81,20 +81,20 @@ def test_connection():
         db = DatabaseHelper()
         
         if db.test_connection():
-            print("✅ Conexão OK!")
+            print("[OK] Conexao OK!")
             
             # Testar query
             result = db.execute_query("SELECT COUNT(*) as total FROM usuarios", fetch=True)
             if result:
-                print(f"✅ Total de usuários: {result[0]['total']}")
+                print(f"[OK] Total de usuarios: {result[0]['total']}")
             
             return True
         else:
-            print("❌ Falha na conexão")
+            print("[ERRO] Falha na conexao")
             return False
             
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f"[ERRO] Erro: {e}")
         return False
 
 

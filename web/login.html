@@ -7,6 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Design System Tokens -->
+    <link rel="stylesheet" href="./styles/tokens.css">
+    <link rel="stylesheet" href="./styles/responsive.css">
+    
     <style>
         :root {
             --bg-dark: #0F172A;
@@ -512,6 +517,12 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
+            console.log('=== TESTE DE LOGIN ===');
+            console.log('Email:', email);
+            console.log('Senha:', password.substring(0, 3) + '***');
+            console.log('API disponível?', typeof api !== 'undefined');
+            console.log('API_URL:', typeof API_URL !== 'undefined' ? API_URL : 'não definida');
+
             if (!email || !password) {
                 showAlert('Por favor, preencha todos os campos');
                 return;
@@ -521,7 +532,10 @@
             alertDiv.style.display = 'none';
 
             try {
+                console.log('Chamando api.login()...');
                 const response = await api.login(email, password);
+                
+                console.log('Resposta recebida:', response);
                 
                 // Salvar token e dados do usuário
                 const userData = {
@@ -530,13 +544,18 @@
                     email: response.email,
                     role: response.role || 'usuario'
                 };
+                
+                console.log('Dados do usuário:', userData);
                 api.setAuth(response.access_token, userData);
+                
+                console.log('Token salvo no localStorage');
                 
                 showAlert('Login realizado com sucesso! Redirecionando...', 'success');
                 
                 // Administradores vão direto para o dashboard (acesso total)
                 // Outros usuários precisam informar o código do projeto
                 setTimeout(() => {
+                    console.log('Redirecionando para:', response.role === 'admin' ? 'projects/dashboard.html' : 'entrar-projeto.html');
                     if (response.role === 'admin') {
                         window.location.href = 'projects/dashboard.html';
                     } else {
@@ -545,7 +564,15 @@
                 }, 1000);
 
             } catch (error) {
-                showAlert(error.message || 'Credenciais inválidas. Tente novamente.');
+                console.error('❌ ERRO NO LOGIN:', error);
+                console.error('Tipo de erro:', error.constructor.name);
+                console.error('Mensagem:', error.message);
+                console.error('Stack:', error.stack);
+                
+                showAlert(
+                    `Erro: ${error.message}\n\nAbra o Console (F12) para detalhes completos.`, 
+                    'error'
+                );
                 setLoading(false);
             }
         });
@@ -556,5 +583,8 @@
             showAlert('Você saiu do sistema com sucesso', 'success');
         }
     </script>
+
+    <!-- Theme Manager - Dark Mode Support -->
+    <script src="./js/theme-manager.js"></script>
 </body>
 </html>

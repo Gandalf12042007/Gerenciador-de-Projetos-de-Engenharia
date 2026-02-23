@@ -18,6 +18,16 @@ class ProjectService:
         self.project_repo = ProjectRepository()
         self.team_repo = TeamRepository()
         self.task_repo = TaskRepository()
+
+    def _generate_unique_code(self, length: int = 4) -> str:
+        """Gera código alfanumérico único para projeto"""
+        import random, string
+        charset = string.ascii_uppercase + string.digits
+        while True:
+            code = ''.join(random.choices(charset, k=length))
+            if not self.project_repo.exists_code(code):
+                return code
+
     
     def list_user_projects(
         self, 
@@ -73,6 +83,24 @@ class ProjectService:
         project_data['documentos_recentes'] = []  # Pode ser populado depois
         
         return project_data
+
+    def join_project_by_code(self, user_id: int, project_code: str) -> Optional[Dict[str, Any]]:
+        """Adiciona usuário ao projeto usando o código de acesso.
+
+        Retorna dados do projeto se bem-sucedido, ou None se código inválido.
+        """
+        project = self.project_repo.find_by_code(project_code)
+        if not project:
+            logger.warning(f"Código de projeto inválido: {project_code}")
+            return None
+        project_id = project['id']
+        # já membro? apenas retorna projeto
+        if self.team_repo.is_member(project_id, user_id):
+            return project
+        # adicionar com papel padrão
+        self.team_repo.add_member(project_id, user_id, 'colaborador')
+        logger.info(f"User {user_id} joined project {project_id} via code")
+        return project
     
     def create_project(self, data: Dict[str, Any], creator_id: int) -> Dict[str, Any]:
         """
@@ -81,6 +109,7 @@ class ProjectService:
         logger.info(f"Creating project '{data.get('nome')}' for user {creator_id}")
         
         # Preparar dados
+        # gerar código único e incluir nos dados
         project_data = {
             'nome': data['nome'],
             'descricao': data.get('descricao'),
@@ -91,7 +120,8 @@ class ProjectService:
             'data_fim_prevista': data.get('data_fim_prevista'),
             'status': data.get('status', 'planejamento'),
             'progresso_percentual': 0,
-            'criador_id': creator_id
+            'criador_id': creator_id,
+            'project_code': self._generate_unique_code()
         }
         
         # Criar projeto

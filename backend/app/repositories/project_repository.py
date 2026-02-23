@@ -16,6 +16,20 @@ class ProjectRepository(BaseRepository):
         super().__init__()
         self.table_name = "projetos"
         self.primary_key = "id"
+
+    # ------------------------------------------------------------------
+    # Métodos específicos de projeto
+    # ------------------------------------------------------------------
+    def exists_code(self, code: str) -> bool:
+        """Retorna True se já existe projeto com o código especificado"""
+        results = self.find_by("project_code", code)
+        return bool(results)
+
+    def find_by_code(self, code: str) -> Optional[Dict[str, Any]]:
+        """Busca projeto utilizando o código único"""
+        results = self.find_by("project_code", code)
+        return results[0] if results else None
+
     
     def find_by_user(self, user_id: int, status: str = None) -> List[Dict[str, Any]]:
         """

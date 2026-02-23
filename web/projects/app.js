@@ -21,11 +21,11 @@ async function loadProjects() {
     projects = projetosData.map(p => ({
       id: p.id,
       name: p.nome,
-      city: p.localizacao || '',
+      city: p.endereco || '',
       progress: p.progresso || p.progresso_percentual || 0,
       manager: p.cliente || '',
       start: p.data_inicio ? new Date(p.data_inicio).toLocaleDateString('pt-BR') : '',
-      end: p.data_conclusao_prevista ? new Date(p.data_conclusao_prevista).toLocaleDateString('pt-BR') : '',
+      end: p.data_fim_prevista ? new Date(p.data_fim_prevista).toLocaleDateString('pt-BR') : '',
       status: p.status || 'planejamento',
       code: p.codigo_acesso || '',
       pendingTasks: 0,
@@ -269,7 +269,11 @@ function formatDateForInput(dateStr) {
   return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// Este listener será executado após o defer carregar layout.js
+document.addEventListener('DOMContentLoaded', initializeProjectPage);
+
+function initializeProjectPage() {
+  // Inicializar modal controls
   const closeModalBtn = document.getElementById('closeModal');
   const cancelBtn = document.getElementById('cancelBtn');
   const projectModal = document.getElementById('projectModal');
@@ -301,7 +305,49 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   }
-});
+
+  // Inicializar filtros e controles
+  const filterStatus = document.getElementById('filterStatus');
+  const searchInput = document.getElementById('searchInput');
+  const clearFilters = document.getElementById('clearFilters');
+  const newProjectBtn = document.getElementById('newProjectBtn');
+  
+  if (filterStatus) filterStatus.addEventListener('change', applyFilters);
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  if (clearFilters) {
+    clearFilters.addEventListener('click', ()=>{ 
+      if (searchInput) searchInput.value = ''; 
+      if (filterStatus) filterStatus.value = 'all'; 
+      applyFilters(); 
+    });
+  }
+  if (newProjectBtn) {
+    newProjectBtn.addEventListener('click', () => {
+      // Forçar exibição do modal
+      const modal = document.getElementById('projectModal');
+      if (modal) modal.classList.add('active');
+      openProjectModal('Novo Projeto');
+    });
+  }
+  
+  // Botão de logout se existir
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+  
+  // Carregar projetos da API
+  loadProjects();
+  
+  // Corrigir navegação: se houver apenas um projeto, selecionar automaticamente
+  setTimeout(() => {
+    const list = projects;
+    if (list.length === 1) {
+      localStorage.setItem('current_project_id', list[0].id);
+      window.location.href = `kanban.html?project=${list[0].id}`;
+    }
+  }, 1500);
+}
 
 // Validar data (só permitir anos entre 2000 e 2100)
 function isValidDate(dateStr) {
@@ -358,12 +404,11 @@ async function saveProjectHandler(e) {
   
   const data = {
     nome: document.getElementById('projectName').value.trim(),
-    localizacao: document.getElementById('projectCity').value.trim(),
+    endereco: document.getElementById('projectCity').value.trim(),
     cliente: document.getElementById('projectManager').value.trim(),
     data_inicio: document.getElementById('projectStart').value || null,
-    data_conclusao_prevista: document.getElementById('projectEnd').value || null,
-    status: document.getElementById('projectStatus').value,
-    progresso_percentual: parseInt(document.getElementById('projectProgress').value) || 0
+    data_fim_prevista: document.getElementById('projectEnd').value || null,
+    status: document.getElementById('projectStatus').value
   };
   
   try {
@@ -406,50 +451,9 @@ async function createNewProject() {
   openProjectModal('Novo Projeto');
 }
 
+
+
 function logout() {
   API.Auth.logout();
   window.location.href = '../login.html';
 }
-
-// wire events
-window.addEventListener('DOMContentLoaded', ()=>{
-  const filterStatus = document.getElementById('filterStatus');
-  const searchInput = document.getElementById('searchInput');
-  const clearFilters = document.getElementById('clearFilters');
-  const newProjectBtn = document.getElementById('newProjectBtn');
-  
-  if (filterStatus) filterStatus.addEventListener('change', applyFilters);
-  if (searchInput) searchInput.addEventListener('input', applyFilters);
-  if (clearFilters) {
-    clearFilters.addEventListener('click', ()=>{ 
-      if (searchInput) searchInput.value = ''; 
-      if (filterStatus) filterStatus.value = 'all'; 
-      applyFilters(); 
-    });
-  }
-  if (newProjectBtn) {
-    newProjectBtn.addEventListener('click', () => {
-      // Forçar exibição do modal
-      const modal = document.getElementById('projectModal');
-      if (modal) modal.classList.add('active');
-      openProjectModal('Novo Projeto');
-    });
-  }
-  
-  // Botão de logout se existir
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', logout);
-  }
-  
-  // Carregar projetos da API
-  loadProjects();
-    // Corrigir navegação: se houver apenas um projeto, selecionar automaticamente
-    setTimeout(() => {
-      const list = projects;
-      if (list.length === 1) {
-        localStorage.setItem('current_project_id', list[0].id);
-        window.location.href = `kanban.html?project=${list[0].id}`;
-      }
-    }, 1500);
-});

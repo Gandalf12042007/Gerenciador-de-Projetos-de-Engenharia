@@ -63,100 +63,59 @@ class ProjetoResponse(BaseModel):
     criador_id: int
     criado_em: str
     atualizado_em: str
+    project_code: Optional[str] = None
+
+
+class JoinProjectRequest(BaseModel):
+    code: str = Field(..., min_length=4, max_length=10, description="Código de acesso ao projeto")
+
+
+@router.post("/join", response_model=ProjetoResponse)
+async def join_project(
+    join_data: JoinProjectRequest,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Permite que um usuário entre em um projeto usando código"""
+    from services.project_service import ProjectService
+    svc = ProjectService()
+    user_id = current_user.get("user_id") or current_user.get("id")
+    project = svc.join_project_by_code(user_id, join_data.code)
+    if not project:
+        raise HTTPException(status_code=404, detail="Código de projeto inválido")
+    # transformação semelhante à de listar_projetos
+    return ProjetoResponse(
+        id=project['id'],
+        nome=project['nome'],
+        descricao=project.get('descricao'),
+        endereco=project.get('endereco'),
+        cliente=project.get('cliente'),
+        valor_total=float(project['valor_total']) if project.get('valor_total') else None,
+        data_inicio=project.get('data_inicio'),
+        data_fim_prevista=project.get('data_fim_prevista'),
+        data_fim_real=project.get('data_fim_real'),
+        status=project['status'],
+        progresso_percentual=float(project.get('progresso_percentual', 0)),
+        criador_id=project['criador_id'],
+        criado_em=str(project['criado_em']),
+        atualizado_em=str(project['atualizado_em']),
+        project_code=project.get('project_code')
+    )
 
 
 @router.get("/", response_model=List[ProjetoResponse])
 async def listar_projetos(
     status_filter: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 20,
     current_user: dict = Depends(get_current_active_user)
 ):
-    """
-    Lista projetos do usuário (onde é membro da equipe).
-    ADMINISTRADORES veem TODOS os projetos do sistema.
-    
-    Query params:
-        status_filter: Filtrar por status (opcional)
-    """
-    db = DatabaseHelper()
+    """Lista projetos visíveis ao usuário (ou todos para admin)"""
+    from services.project_service import ProjectService
+    svc = ProjectService()
     user_id = current_user.get("user_id") or current_user.get("id")
-    is_admin = current_user.get("is_admin", False)
-    
-    # ADMIN vê TODOS os projetos
-    if is_admin:
-        if status_filter:
-            projetos = db.execute_query(
-                """
-                SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
-                       p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
-                       p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
-                FROM projetos p
-                WHERE p.status = %s
-                ORDER BY p.criado_em DESC
-                """,
-                (status_filter,),
-                fetch=True
-            )
-        else:
-            projetos = db.execute_query(
-                """
-                SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
-                       p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
-                       p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
-                FROM projetos p
-                ORDER BY p.criado_em DESC
-                """,
-                fetch=True
-            )
-    # Usuário normal: apenas projetos onde é membro
-    elif status_filter:
-        projetos = db.execute_query(
-            """
-            SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
-                   p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
-                   p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
-            FROM projetos p
-            INNER JOIN equipes e ON p.id = e.projeto_id
-            WHERE e.usuario_id = %s AND e.ativo = 1 AND p.status = %s
-            ORDER BY p.criado_em DESC
-            """,
-            (user_id, status_filter),
-            fetch=True
-        )
-    else:
-        projetos = db.execute_query(
-            """
-            SELECT DISTINCT p.id, p.nome, p.descricao, p.endereco, p.cliente, p.valor_total,
-                   p.data_inicio, p.data_fim_prevista, p.data_fim_real, p.status,
-                   p.progresso_percentual, p.criador_id, p.criado_em, p.atualizado_em
-            FROM projetos p
-            INNER JOIN equipes e ON p.id = e.projeto_id
-            WHERE e.usuario_id = %s AND e.ativo = 1
-            ORDER BY p.criado_em DESC
-            """,
-            (user_id,),
-            fetch=True
-        )
-    
-    # Os resultados já vêm como dicionários do db_helper
-    result = []
-    for p in projetos or []:
-        result.append({
-            "id": p['id'],
-            "nome": p['nome'],
-            "descricao": p.get('descricao'),
-            "endereco": p.get('endereco'),
-            "cliente": p.get('cliente'),
-            "valor_total": float(p['valor_total']) if p.get('valor_total') else None,
-            "data_inicio": p.get('data_inicio'),
-            "data_fim_prevista": p.get('data_fim_prevista'),
-            "data_fim_real": p.get('data_fim_real'),
-            "status": p['status'],
-            "progresso_percentual": float(p.get('progresso_percentual', 0)),
-            "criador_id": p['criador_id'],
-            "criado_em": str(p['criado_em']),
-            "atualizado_em": str(p['atualizado_em'])
-        })
-    return result
+    result = svc.list_user_projects(user_id, status_filter, page, per_page)
+    # Paginação já feita pelo serviço
+    return result["items"]
 
 
 @router.get("/audit/logs")
@@ -276,60 +235,31 @@ async def criar_projeto(
     """
     Cria novo projeto com código de acesso automático
     """
-    db = DatabaseHelper()
-    
-    # Importar gerador de código
-    from utils.project_codes import gerar_codigo_unico
-    
+    from services.project_service import ProjectService
+
+    svc = ProjectService()
     try:
-        # Gerar código único para o projeto
-        codigo_acesso = gerar_codigo_unico()
-        
-        # Inserir projeto com código de acesso
-        projeto_id = db.execute_insert(
-            """
-            INSERT INTO projetos (
-                nome, descricao, endereco, cliente, valor_total,
-                data_inicio, data_fim_prevista, status, criador_id, codigo_acesso
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                projeto.nome,
-                projeto.descricao,
-                projeto.endereco,
-                projeto.cliente,
-                projeto.valor_total,
-                str(projeto.data_inicio) if projeto.data_inicio else None,
-                str(projeto.data_fim_prevista) if projeto.data_fim_prevista else None,
-                projeto.status,
-                current_user.get("user_id") or current_user.get("id"),
-                codigo_acesso
-            )
-        )
-        
         user_id = current_user.get("user_id") or current_user.get("id")
-        
-        # Adicionar criador à equipe como gerente
-        from datetime import date as dt_date
-        db.execute_insert(
-            """
-            INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, funcao)
-            VALUES (%s, %s, 'gerente', %s, 1, 'gerente')
-            """,
-            (projeto_id, user_id, str(dt_date.today()))
+        proj_id = svc.create_project(
+            name=projeto.nome,
+            description=projeto.descricao,
+            created_by=user_id
         )
-        
+        # Buscar projeto para obter código
+        project = svc.repo.get_by_id(proj_id)
         return {
-            "message": "Projeto criado com sucesso", 
-            "id": projeto_id,
-            "codigo_acesso": codigo_acesso
+            "success": True,
+            "message": "Projeto criado com sucesso",
+            "data": {
+                "id": proj_id,
+                "project_code": project.get("project_code")
+            }
         }
-    
     except Exception as e:
+        logger.error(f"Erro ao criar projeto: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao criar projeto: {str(e)}"
+            detail="Erro ao criar projeto"
         )
 
 
@@ -339,62 +269,17 @@ async def atualizar_projeto(
     projeto: ProjetoUpdate,
     current_user: dict = Depends(get_current_active_user)
 ):
-    """
-    Atualiza projeto existente (apenas gerente ou criador)
-    """
+    """Atualiza projeto existente (apenas gerente) usando serviço"""
+    from services.project_service import ProjectService
+    svc = ProjectService()
     user_id = current_user.get("user_id") or current_user.get("id")
-    
-    # Verificar permissão (apenas gerente ou dono)
-    if not permission_manager.can_modify_project(user_id, projeto_id):
+    updated = svc.update_project(projeto_id, projeto.dict(exclude_unset=True), user_id)
+    if not updated:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas gerentes do projeto podem modificá-lo"
+            detail="Permissão negada ou projeto inexistente"
         )
-    
-    db = DatabaseHelper()
-    
-    # Verificar se projeto existe
-    existing = db.execute_query(
-        "SELECT id FROM projetos WHERE id = %s",
-        (projeto_id,),
-        fetch=True
-    )
-    
-    if not existing:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Projeto não encontrado"
-        )
-    
-    # Construir query dinamicamente com campos fornecidos
-    updates = []
-    params = []
-    
-    for field, value in projeto.dict(exclude_unset=True).items():
-        updates.append(f"{field} = %s")
-        # Converter datas para string
-        if isinstance(value, date):
-            value = str(value)
-        params.append(value)
-    
-    if not updates:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nenhum campo para atualizar"
-        )
-    
-    params.append(projeto_id)
-    
-    query = f"UPDATE projetos SET {', '.join(updates)} WHERE id = %s"
-    
-    try:
-        db.execute_query(query, tuple(params))
-        return {"message": "Projeto atualizado com sucesso"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao atualizar projeto: {str(e)}"
-        )
+    return {"message": "Projeto atualizado com sucesso"}
 
 
 @router.delete("/{projeto_id}")
@@ -509,49 +394,25 @@ async def entrar_por_codigo(
     request: EntrarPorCodigoRequest,
     current_user: dict = Depends(get_current_active_user)
 ):
-    """
-    Permite usuário entrar em um projeto usando código de acesso.
-    Formato do código: LETRA + 4 NÚMEROS (ex: A1234)
-    """
-    from utils.project_codes import validar_formato_codigo, buscar_projeto_por_codigo, adicionar_usuario_ao_projeto
-    
+    """Usuário entra em projeto usando código (serviço)."""
+    from services.project_service import ProjectService
+    svc = ProjectService()
+
     codigo = request.codigo.strip().upper()
-    
-    # Validar formato
-    if not validar_formato_codigo(codigo):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Código inválido. O formato deve ser: 1 letra + 4 números (ex: A1234)"
-        )
-    
-    # Buscar projeto
-    db = DatabaseHelper()
-    projeto = db.execute_query(
-        "SELECT id, nome, descricao, cliente, status, codigo_acesso FROM projetos WHERE codigo_acesso = %s",
-        (codigo,),
-        fetch=True
-    )
-    
-    if not projeto or len(projeto) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Projeto não encontrado com este código"
-        )
-    
-    projeto = projeto[0]
     user_id = current_user.get("user_id") or current_user.get("id")
-    
-    # Adicionar usuário ao projeto
-    resultado = adicionar_usuario_ao_projeto(projeto['id'], user_id, "membro")
-    
+
+    project = svc.join_project_by_code(user_id, codigo)
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Projeto não encontrado com este código")
+
     return {
-        "message": resultado["message"],
+        "message": "Usuário adicionado ao projeto com sucesso",
         "projeto": {
-            "id": projeto['id'],
-            "nome": projeto['nome'],
-            "descricao": projeto.get('descricao'),
-            "cliente": projeto.get('cliente'),
-            "status": projeto['status']
+            "id": project['id'],
+            "nome": project['nome'],
+            "descricao": project.get('descricao'),
+            "cliente": project.get('cliente'),
+            "status": project['status']
         }
     }
 
@@ -561,43 +422,14 @@ async def obter_codigo_projeto(
     projeto_id: int,
     current_user: dict = Depends(get_current_active_user)
 ):
-    """
-    Obtém o código de acesso de um projeto (apenas gerentes/admins)
-    """
+    """Retorna o código de acesso do projeto (somente gerente)"""
+    from services.project_service import ProjectService
+    svc = ProjectService()
     user_id = current_user.get("user_id") or current_user.get("id")
-    
-    # Verificar se usuário tem permissão (é gerente do projeto)
-    if not permission_manager.can_modify_project(user_id, projeto_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas gerentes do projeto podem ver o código de acesso"
-        )
-    
-    db = DatabaseHelper()
-    projeto = db.execute_query(
-        "SELECT codigo_acesso FROM projetos WHERE id = %s",
-        (projeto_id,),
-        fetch=True
-    )
-    
-    if not projeto or len(projeto) == 0:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Projeto não encontrado"
-        )
-    
-    codigo = projeto[0].get('codigo_acesso')
-    
-    # Se não tem código, gera um
-    if not codigo:
-        from utils.project_codes import gerar_codigo_unico
-        codigo = gerar_codigo_unico()
-        db.execute_query(
-            "UPDATE projetos SET codigo_acesso = %s WHERE id = %s",
-            (codigo, projeto_id)
-        )
-    
-    return {"codigo_acesso": codigo}
+    code = svc.get_project_code(project_id, user_id)
+    if code is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissão negada ou projeto inexistente")
+    return {"codigo_acesso": code}
 
 
 @router.post("/{projeto_id}/regenerar-codigo")
@@ -605,56 +437,21 @@ async def regenerar_codigo_projeto(
     projeto_id: int,
     current_user: dict = Depends(get_current_active_user)
 ):
-    """
-    Regenera o código de acesso de um projeto (apenas gerentes/admins)
-    """
+    """Regenera o código de acesso do projeto (somente gerente)"""
+    from services.project_service import ProjectService
+    svc = ProjectService()
     user_id = current_user.get("user_id") or current_user.get("id")
-    
-    # Verificar se usuário tem permissão
-    if not permission_manager.can_modify_project(user_id, projeto_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas gerentes do projeto podem regenerar o código"
-        )
-    
-    from utils.project_codes import gerar_codigo_unico
-    
-    db = DatabaseHelper()
-    novo_codigo = gerar_codigo_unico()
-    
-    try:
-        db.execute_query(
-            "UPDATE projetos SET codigo_acesso = %s WHERE id = %s",
-            (novo_codigo, projeto_id)
-        )
-        return {"message": "Código regenerado com sucesso", "codigo_acesso": novo_codigo}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao regenerar código: {str(e)}"
-        )
+    new_code = svc.regenerate_project_code(project_id, user_id)
+    if new_code is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissão negada ou projeto inexistente")
+    return {"message": "Código regenerado com sucesso", "codigo_acesso": new_code}
 
 
 @router.get("/verificar-codigo/{codigo}")
 async def verificar_codigo(codigo: str):
-    """
-    Verifica se um código de projeto existe (público, para validação no frontend)
-    """
-    from utils.project_codes import validar_formato_codigo
-    
-    codigo = codigo.strip().upper()
-    
-    if not validar_formato_codigo(codigo):
-        return {"valido": False, "message": "Formato de código inválido"}
-    
-    db = DatabaseHelper()
-    projeto = db.execute_query(
-        "SELECT id, nome FROM projetos WHERE codigo_acesso = %s",
-        (codigo,),
-        fetch=True
-    )
-    
-    if projeto and len(projeto) > 0:
-        return {"valido": True, "projeto_nome": projeto[0]['nome']}
-    
-    return {"valido": False, "message": "Código não encontrado"}
+    """Verifica se um código de projeto existe (público, para frontend)"""
+    from services.project_service import ProjectService
+    svc = ProjectService()
+    code = codigo.strip().upper()
+    exists = svc.check_code_exists(code)
+    return {"valido": exists, "projeto_nome": None if not exists else ""}

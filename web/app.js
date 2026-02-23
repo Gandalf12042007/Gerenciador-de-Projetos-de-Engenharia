@@ -342,7 +342,7 @@ async function handleCreateProject(event) {
     const nome = document.getElementById('project-name').value;
     const descricao = document.getElementById('project-description').value;
     const cliente = document.getElementById('project-cliente').value;
-    const orcamento = parseFloat(document.getElementById('project-orcamento').value) || 0;
+    const valor_total = parseFloat(document.getElementById('project-orcamento').value) || 0;
 
     try {
         showLoading(true);
@@ -350,9 +350,8 @@ async function handleCreateProject(event) {
             nome,
             descricao,
             cliente,
-            orcamento,
-            status: 'Planejamento',
-            progresso: 0,
+            valor_total,
+            status: 'planejamento',
         });
 
         document.getElementById('project-form').reset();

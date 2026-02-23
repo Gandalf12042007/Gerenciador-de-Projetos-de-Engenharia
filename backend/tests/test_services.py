@@ -10,7 +10,7 @@ class TestProjectService:
     
     def test_format_project(self):
         """Testa formatação de projeto"""
-        from app.services.project_service import ProjectService
+        from services.project_service import ProjectService
         
         service = ProjectService()
         
@@ -35,7 +35,7 @@ class TestProjectService:
     
     def test_format_project_with_none_values(self):
         """Testa formatação com valores None"""
-        from app.services.project_service import ProjectService
+        from services.project_service import ProjectService
         
         service = ProjectService()
         
@@ -60,7 +60,7 @@ class TestUserService:
     
     def test_safe_user_removes_password(self):
         """Testa que _safe_user remove senha"""
-        from app.services.user_service import UserService
+        from services.user_service import UserService
         
         service = UserService()
         
@@ -79,7 +79,7 @@ class TestUserService:
     
     def test_hash_password(self):
         """Testa hash de senha no UserService"""
-        from app.services.user_service import UserService
+        from services.user_service import UserService
         
         service = UserService()
         
@@ -103,7 +103,7 @@ class TestTaskService:
     
     def test_invalid_status_raises_error(self):
         """Testa que status inválido gera erro"""
-        from app.services.task_service import TaskService
+        from services.task_service import TaskService
         
         service = TaskService()
         
@@ -121,7 +121,7 @@ class TestTeamService:
     
     def test_role_hierarchy(self):
         """Testa hierarquia de cargos"""
-        from app.services.team_service import TeamService
+        from services.team_service import TeamService
         
         service = TeamService()
         
@@ -155,7 +155,7 @@ class TestDocumentService:
     
     def test_allowed_extensions(self):
         """Testa extensões permitidas"""
-        from app.services.document_service import DocumentService
+        from services.document_service import DocumentService
         
         service = DocumentService()
         
@@ -178,7 +178,7 @@ class TestDocumentService:
     
     def test_max_file_size(self):
         """Testa tamanho máximo de arquivo"""
-        from app.services.document_service import DocumentService
+        from services.document_service import DocumentService
         
         service = DocumentService()
         
@@ -188,7 +188,7 @@ class TestDocumentService:
     
     def test_get_content_type(self):
         """Testa detecção de content type"""
-        from app.services.document_service import DocumentService
+        from services.document_service import DocumentService
         
         service = DocumentService()
         

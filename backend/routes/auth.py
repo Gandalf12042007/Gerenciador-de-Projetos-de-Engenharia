@@ -20,6 +20,8 @@ from utils.auth import hash_password, verify_password, create_access_token
 from utils.two_factor_auth import gerar_otp, enviar_otp_email, validar_otp, resend_otp
 from middleware.rate_limit import RateLimitDecorators
 from middleware.auth_middleware import get_current_active_user
+from services.auth_service import AuthService
+from services.user_service import UserService
 from config import settings
 
 # Logger para auditoria de segurança
@@ -85,117 +87,23 @@ async def login(credentials: LoginRequest, request: Request):
     Returns:
         Token JWT e dados do usuário
     """
-    # ═══════════════════════════════════════════════════════════════════════
-    # USUÁRIOS DO SISTEMA - Credenciais Atualizadas
-    # ═══════════════════════════════════════════════════════════════════════
-    USUARIOS_ADMIN = {
-        # ADMINISTRADORES (Acesso Total)
-        "vicentedesouza762@gmail.com": {
-            "id": 1,
-            "nome": "Vicente de Souza", 
-            "email": "vicentedesouza762@gmail.com",
-            "senha": "Admin@2026",
-            "telefone": "11 99999-0001",
-            "cargo": "Administrador",
-            "role": "admin",
-            "ativo": True
-        },
-        "francisco@projeto.com": {
-            "id": 2,
-            "nome": "Francisco",
-            "email": "francisco@projeto.com", 
-            "senha": "Admin@2026",
-            "telefone": "11 99999-0002",
-            "cargo": "Desenvolvedor",
-            "role": "admin",
-            "ativo": True
-        },
-        "professor@projeto.com": {
-            "id": 3,
-            "nome": "Professor",
-            "email": "professor@projeto.com", 
-            "senha": "Admin@2026",
-            "telefone": "11 99999-0003",
-            "cargo": "Professor",
-            "role": "admin",
-            "ativo": True
-        },
-        # GERENTE
-        "gerenteteste@projeto.com": {
-            "id": 4,
-            "nome": "Gerente Teste",
-            "email": "gerenteteste@projeto.com", 
-            "senha": "Gerente@123",
-            "telefone": "11 99999-0004",
-            "cargo": "Gerente de Projetos",
-            "role": "gerente",
-            "ativo": True
-        },
-        # ENGENHEIRO
-        "engenheiroteste@projeto.com": {
-            "id": 5,
-            "nome": "Engenheiro Teste",
-            "email": "engenheiroteste@projeto.com", 
-            "senha": "Engenheiro@123",
-            "telefone": "11 99999-0005",
-            "cargo": "Engenheiro Civil",
-            "role": "engenheiro",
-            "ativo": True
-        },
-        # TÉCNICO
-        "tecnicoteste@projeto.com": {
-            "id": 6,
-            "nome": "Técnico Teste",
-            "email": "tecnicoteste@projeto.com", 
-            "senha": "Tecnico@123",
-            "telefone": "11 99999-0006",
-            "cargo": "Técnico em Edificações",
-            "role": "tecnico",
-            "ativo": True
-        },
-        # CLIENTE
-        "clienteteste@projeto.com": {
-            "id": 7,
-            "nome": "Cliente Teste",
-            "email": "clienteteste@projeto.com", 
-            "senha": "Cliente@123",
-            "telefone": "11 99999-0007",
-            "cargo": "Cliente",
-            "role": "cliente",
-            "ativo": True
-        }
-    }
-    
-    # Verificar se é administrador
-    if credentials.email in USUARIOS_ADMIN:
-        user = USUARIOS_ADMIN[credentials.email]
-        if credentials.senha == user["senha"] and user["ativo"]:
-            # Criar token com role de admin
-            access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={
-                    "user_id": user["id"], 
-                    "email": user["email"], 
-                    "nome": user["nome"],
-                    "role": user["role"]
-                },
-                expires_delta=access_token_expires
-            )
-            
-            logger.info(f"Login ADMIN bem-sucedido: {credentials.email}")
-            
-            return TokenResponse(
-                access_token=access_token,
-                user_id=user["id"],
-                nome=user["nome"],
-                email=user["email"],
-                role=user["role"]
-            )
-    
-    # Se não encontrou usuário de teste
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Email ou senha incorretos"
+    auth_service = AuthService()
+    user = auth_service.authenticate_user(credentials.email, credentials.senha)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou senha incorretos"
+        )
+
+    access_token = auth_service.create_access_token_for_user(user)
+    logger.info(f"Login bem-sucedido: {credentials.email}")
+
+    return TokenResponse(
+        access_token=access_token,
+        user_id=user.get("id"),
+        nome=user.get("nome") or user.get("name"),
+        email=user.get("email"),
+        role=user.get("role", "usuario")
     )
 
 
@@ -207,81 +115,24 @@ async def register(user_data: RegisterRequest, request: Request):
     
     Returns:
         Mensagem de sucesso
-        
-    Raises:
-        HTTPException: Email já existe, senha fraca, erro ao inserir
     """
-    db = DatabaseHelper()
-    
-    # Validar força da senha
-    if not RegisterRequest.validate_password(user_data.senha):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Senha fraca. Requisitos: mín. 8 caracteres, 1 maiúscula, 1 número"
-        )
-    
-    # Validar nome (mínimo 3 caracteres)
-    if len(user_data.nome.strip()) < 3:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Nome deve ter no mínimo 3 caracteres"
-        )
-    
-    # Verificar se email já existe (sem expor detalhes)
+    service = UserService()
     try:
-        existing = db.execute_query(
-            "SELECT id FROM usuarios WHERE email = %s",
-            (user_data.email,),
-            fetch=True
+        service.create_user(
+            nome=user_data.nome,
+            email=user_data.email,
+            senha=user_data.senha,
+            telefone=user_data.telefone,
+            cargo=user_data.cargo
         )
-        
-        if existing and len(existing) > 0:
-            # Log para auditoria
-            logger.warning(f"Tentativa de registro com email já existente: {user_data.email}")
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email já cadastrado no sistema"
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Erro ao verificar email único: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro ao validar email"
-        )
-    
-    # Hash da senha (bcrypt com salt rounds automático)
-    try:
-        senha_hash = hash_password(user_data.senha)
-    except Exception as e:
-        logger.error(f"Erro ao gerar hash de senha: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro ao processar senha"
-        )
-    
-    # Inserir usuário com tratamento específico de erros
-    try:
-        db.execute_query(
-            """
-            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
-            VALUES (%s, %s, %s, %s, %s, 1)
-            """,
-            (user_data.nome.strip(), user_data.email.lower(), senha_hash, user_data.telefone, user_data.cargo)
-        )
-        
         logger.info(f"Novo usuário registrado: {user_data.email}")
-        
-        # ✅ Sprint 1: Integração de 2FA (Autenticação de Dois Fatores)
-        # Enviar OTP por email para validação de cadastro
-        logger.info(f"Enviando OTP para confirmação de registro: {user_data.email}")
+        # Enviar OTP (2FA ou confirmação de cadastro)
         enviar_otp_email(user_data.email)
-        
         return {"message": "Usuário cadastrado com sucesso. Verifique seu email para confirmar o cadastro."}
-    
+    except ValueError as ve:
+        # Erros esperados pelo serviço viram 400
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
-        # Não expor detalhes de erro ao cliente (segurança)
         logger.error(f"Erro ao cadastrar usuário {user_data.email}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

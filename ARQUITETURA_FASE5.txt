@@ -1,0 +1,298 @@
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                       ARQUITETURA FASE 5                                    ║
+║              Progressive Web App + Responsividade + Segurança               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📱 FRONTEND (PWA + Responsivo + Seguro)                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────┐└CPU  ┌────────────────────────┐      │
+│  │ 🌐 Web Frontend (HTML/CSS/JS)   │      │ 📦 PWA Components      │      │
+│  ├─────────────────────────────────┤      ├────────────────────────┤      │
+│  │ ✨ index.html                   │      │ ✨ manifest.json       │      │
+│  │ ✨ login.html                   │      │ ✨ service-worker.js   │      │
+│  │ ✨ projects/index.html          │      │ ✨ pwa-installer.js    │      │
+│  │ ✨ register.html                │      │                        │      │
+│  │ ✨ profile.html                 │      │ 🔒 Segurança:          │      │
+│  │ ✨ chat.html                    │      │ • Manifest icons       │      │
+│  │ ✨ notifications.html           │      │ • Cache strategy       │      │
+│  └─────────────────────────────────┘      │ • Offline support      │      │
+│                      │                     │ • Push notifications   │      │
+│                      ▼                     └────────────────────────┘      │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │ 🎨 CSS Framework (Mobile-First Responsive)                 │          │
+│  ├──────────────────────────────────────────────────────────────┤          │
+│  │ ✨ styles/styles.css (Cores & design system)               │          │
+│  │ ✨ styles/responsive.css (Breakpoints básicos)             │          │
+│  │ ✨ styles/responsive-advanced.css (Avançado - NOVO)        │          │
+│  │                                                              │          │
+│  │ Breakpoints suportados:                                    │          │
+│  │ • 320px (XS) → 640px (SM) → 768px (MD) → 1024px (LG)      │          │
+│  │ • 1280px (XL) → 1536px (2XL)                              │          │
+│  │                                                              │          │
+│  │ Features:                                                   │          │
+│  │ • Touch-friendly buttons (48x48px min)                     │          │
+│  │ • Safe areas para notch (iPhone X+)                        │          │
+│  │ • Dark mode automático                                     │          │
+│  │ • Acessibilidade (reduzir animações, alto contraste)      │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                      │                                                      │
+│                      ▼                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │ 🔐 JavaScript Security & Features (NOVO)                   │          │
+│  ├──────────────────────────────────────────────────────────────┤          │
+│  │ ✨ js/security-manager.js                                  │          │
+│  │    ├─ Validação de sessão JWT                             │          │
+│  │    ├─ Timeout automático (30 min)                         │          │
+│  │    ├─ Controle de permissões baseado em roles             │          │
+│  │    ├─ Rate limiting (proteção força bruta)                │          │
+│  │    ├─ Interceptação de requisições fetch                  │          │
+│  │    ├─ Auditoria de ações                                  │          │
+│  │    └─ Headers de segurança automáticos                    │          │
+│  │                                                              │          │
+│  │ ✨ js/compatibility-tester.js (NOVO)                      │          │
+│  │    ├─ Detectar recursos disponíveis                       │          │
+│  │    ├─ Teste de Service Worker                             │          │
+│  │    ├─ Teste de IndexedDB                                  │          │
+│  │    ├─ Teste de câmera/microfone                           │          │
+│  │    ├─ Teste de geolocalização                             │          │
+│  │    ├─ Performance metrics                                 │          │
+│  │    └─ Relatório de compatibilidade                        │          │
+│  │                                                              │          │
+│  │ ✨ js/theme-manager.js (Existente)                        │          │
+│  │ ✨ js/app.js (Lógica da aplicação)                        │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                      │                                                      │
+└──────────────────────┼──────────────────────────────────────────────────────┘
+                       │
+                       │ HTTPS
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🔌 API Gateway (FastAPI)                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  POST /api/auth/login        → Autenticação JWT                            │
+│  POST /api/auth/logout       → Logout seguro                               │
+│  POST /api/auth/verify       → Verificar token                             │
+│  POST /api/auth/refresh      → Renovar token                               │
+│                                                                              │
+│  GET  /api/projects          → Listar projetos (com filtros)               │
+│  POST /api/projects          → Criar projeto                               │
+│  PUT  /api/projects/{id}     → Editar projeto                              │
+│  DELETE /api/projects/{id}   → Deletar projeto                             │
+│                                                                              │
+│  GET  /health                → Health check                                │
+│  POST /api/audit/log         → Registrar auditoria                         │
+│  POST /api/compatibility/report → Salvar testes compatibilidade           │
+│                                                                              │
+│  CORS habilitado para: ✨ localhost:3000, seu-dominio.com, ssl certificado  │
+│  Rate limiting: 100 req/min (com burst)                                     │
+│  HTTPS obrigatório em produção                                              │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                       │
+                       │ SQL Queries
+                       │ Encrypted connections
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 💾 Database Layer (PostgreSQL / SQLite)                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  users               → ID, email, password_hash, roles, permissions        │
+│  projects           → ID, name, description, status, owner_id             │
+│  tasks              → ID, title, status, assigned_to, project_id          │
+│  audit_logs         → timestamp, user_id, action, details                 │
+│  compatibility_reports → device_info, features, timestamp                 │
+│                                                                              │
+│  Backup Strategy: Automatizado diariamente (encriptado)                    │
+│  Encryption: Dados em repouso (PostgreSQL encryption)                      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🌍 DEPLOYMENT ARCHITECTURE (Hospedagem Online)                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Opção 1: Railway (RECOMENDADO)                                             │
+│  ├─ Docker container automático                                            │
+│  ├─ PostgreSQL gerenciado                                                  │
+│  ├─ HTTPS/SSL automático                                                   │
+│  ├─ CI/CD automático (git push → deploy)                                  │
+│  ├─ Variáveis de ambiente seguras                                          │
+│  ├─ Monitoring & logs centralizados                                        │
+│  └─ https://seu-projeto.up.railway.app                                     │
+│                                                                              │
+│  Opção 2: Render.com                                                        │
+│  ├─ Suporta Python/Node                                                    │
+│  ├─ PostgreSQL incluso                                                     │
+│  ├─ Deploys automáticos                                                    │
+│  └─ https://seu-app.onrender.com                                           │
+│                                                                              │
+│  Opção 3: Heroku (Classic)                                                  │
+│  ├─ Buildpack Python                                                       │
+│  ├─ PostgreSQL add-on                                                      │
+│  └─ https://seu-app.herokuapp.com                                          │
+│                                                                              │
+│  Opção 4: Docker (Auto Deploy)                                              │
+│  ├─ Docker Hub registry                                                    │
+│  ├─ AWS ECS / Kubernetes                                                   │
+│  └─ IP/DNS customizado                                                     │
+│                                                                              │
+│  CDN (Cloudflare recomendado):                                              │
+│  ├─ Caching de assets estáticos                                            │
+│  ├─ DDoS protection                                                        │
+│  ├─ WAF (Web Application Firewall)                                         │
+│  └─ Performance otimizada globalmente                                      │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📱 MULTIPLICRAFT PLATFORM SUPPORT                                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Windows                    macOS                  Linux                    │
+│  ├─ Chrome 120+             ├─ Safari 15.4+        ├─ Chrome 120+         │
+│  ├─ Edge 120+               ├─ Chrome 120+         ├─ Firefox 121+        │
+│  └─ Firefox 121+            └─ Edge 120+           └─ Edge 120+           │
+│       ↓                          ↓                       ↓                  │
+│  PWA Installável          PWA Installável         PWA Installável        │
+│  Full offline              Full offline            Full offline           │
+│  Notificações push         Limitadas               Full offline           │
+│                                                                              │
+│  Android                                           iOS                     │
+│  ├─ Chrome                                         ├─ Safari 15.4+        │
+│  ├─ Firefox                                        └─ Possível em home   │
+│  └─ Edge                                               screen (limitado)   │
+│       ↓                                                 ↓                  │
+│  PWA Full                                          PWA Limitado           │
+│  Offline completo                                  Offline relativo       │
+│  Notificações push                                 Sem push nativo        │
+│  Instalável                                        Pseudo-instalado       │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🔒 SEGURANÇA EM CAMADAS                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Camada 1: Network                                                         │
+│  ├─ HTTPS/TLS 1.3                                                         │
+│  ├─ CSP (Content Security Policy)                                         │
+│  ├─ HSTS headers                                                          │
+│  └─ DDoS protection (Cloudflare)                                          │
+│                                                                              │
+│  Camada 2: Application                                                     │
+│  ├─ JWT authentication                                                    │
+│  ├─ Rate limiting                                                         │
+│  ├─ CORS configuration                                                    │
+│  └─ Input validation                                                      │
+│                                                                              │
+│  Camada 3: User Session                                                    │
+│  ├─ Token refresh automático                                              │
+│  ├─ Timeout de sessão (30 min)                                           │
+│  ├─ Sincronização between tabs                                           │
+│  └─ Device fingerprinting                                                 │
+│                                                                              │
+│  Camada 4: Authorization                                                   │
+│  ├─ Role-based access control (RBAC)                                     │
+│  ├─ Permission granulation                                               │
+│  ├─ Attribute-based validation                                           │
+│  └─ Dynamic element visibility                                           │
+│                                                                              │
+│  Camada 5: Audit & Monitoring                                              │
+│  ├─ Action logging                                                       │
+│  ├─ Failed login attempts tracking                                       │
+│  ├─ Anomaly detection                                                    │
+│  └─ Real-time alerts                                                     │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+FLUXO DE EXECUÇÃO:
+
+1. INICIALIZAÇÃO
+   └─ Browser carrega → Verifica localStorage (token)
+      ├─ Se token existe → Valida com /api/auth/verify
+      │  ├─ OK → Carrega aplicação
+      │  └─ Inválido → Redireciona para login
+      └─ Se não existe → Redireciona para login
+
+2. AUTENTICAÇÃO
+   └─ Login → POST /api/auth/login
+      ├─ Sucesso → Retorna {access_token, refresh_token}
+      ├─ Armazena em localStorage (criptografado)
+      ├─ Inicia monitoramento de inatividade
+      └─ Redireciona para projetos ou dashboard
+
+3. OPERAÇÃO
+   └─ User interage com app
+      ├─ Requisições intercepadas por security-manager.js
+      ├─ Headers automáticos (Authorization, X-Client-ID)
+      ├─ Rate limiting verificado
+      ├─ Resposta processada
+      │  ├─ 401 → Logout automático
+      │  ├─ 403 → Mostrar "Acesso Negado"
+      │  └─ 200 → Processar dados
+      └─ Ações registradas em auditoria
+
+4. OFFLINE MODE
+   └─ Sem internet (detectado)
+      ├─ Service Worker intercepta requisições
+      ├─ Serve de cache local (IndexedDB)
+      ├─ Mostra indicador "OFFLINE"
+      ├─ User pode ler dados cacheados
+      └─ Quando volta online → Sincroniza
+
+5. LOGOUT
+   └─ User clica logout
+      ├─ POST /api/auth/logout (seguro)
+      ├─ Limpa localStorage
+      ├─ Encerra Service Worker
+      └─ Redireciona para login
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PERFORMANCE ESPERADA:
+
+Métrica                          Target        Importância
+────────────────────────────────────────────────────────────
+Time to Interactive (TTI)        < 1.5s        💎 CRÍTICO
+First Contentful Paint (FCP)     < 1.0s        💎 CRÍTICO
+Largest Contentful Paint (LCP)   < 2.5s        💎 CRÍTICO
+Cumulative Layout Shift (CLS)    < 0.1         💎 CRÍTICO
+Total page size                  < 2MB         💎 CRÍTICO
+Requests count                   < 30          ⭐ IMPORTANTE
+Cache hit rate                   > 80%         ⭐ IMPORTANTE
+API response time (p95)          < 200ms       ⭐ IMPORTANTE
+Database query time (p95)        < 100ms       ⭐ IMPORTANTE
+
+═══════════════════════════════════════════════════════════════════════════════
+
+MONITORAMENTO RECOMENDADO:
+
+Tool            Propósito                    Custo
+──────────────────────────────────────────────────────
+Sentry          Error tracking               $29/mês
+DataDog         APM & monitoring             $31/mês
+Logg.io         Log aggregation             $9/mês
+Uptime Robot    Availability monitoring     Grátis
+Google Analytics Traffic & behavior          Grátis
+Lighthouse      Performance audits          Grátis (DevTools)
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+**Diagrama criado:** 03/03/2026  
+**Versão:** 1.0.0-Phase5  
+**Desenvolvedor:** Vicente de Souza

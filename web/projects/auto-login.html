@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Teste - Auto Login</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 20px; }
+        p { color: #666; margin: 10px 0; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover { background: #764ba2; }
+        .status { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Auto-Login Dashboard</h1>
+        <p>Configurando autenticação...</p>
+        <button onclick="setupAndRedirect()">Entrar no Dashboard</button>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script src="../api-client.js"></script>
+    <script>
+        function setupAndRedirect() {
+            // Dados do admin
+            const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJlbWFpbCI6InZpY2VudGVkZXNvdXphNzYyQGdtYWlsLmNvbSIsIm5vbWUiOiJWaWNlbnRlIGRlIFNvdXphIiwicm9sZSI6ImFkbWluIiwiZXhwIjoyMDAwMDAwMDAwfQ.DLe0wGhxN5Tn7p6qZ8R9W-q7xPz9K8mN3vL5jT2pQ0A";
+            const user = {
+                id: 1,
+                nome: "Vicente de Souza",
+                email: "vicentedesouza762@gmail.com",
+                role: "admin",
+                user_id: 1
+            };
+
+            // Salvar no localStorage
+            localStorage.setItem('access_token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+
+            // Log
+            const status = document.getElementById('status');
+            status.innerHTML = `
+                ✅ Token configurado<br>
+                ✅ Usuário: ${user.nome}<br>
+                ✅ Papel: ${user.role}<br>
+                <br>
+                Redirecionando para dashboard em 2 segundos...
+            `;
+
+            // Redirecionar
+            setTimeout(() => {
+                window.location.href = './dashboard.html';
+            }, 2000);
+        }
+
+        // Auto-iniciar quando página carrega
+        window.addEventListener('load', setupAndRedirect);
+    </script>
+</body>
+</html>

@@ -18,6 +18,13 @@ from db_helper import DatabaseHelper
 
 from utils.auth import hash_password, verify_password, create_access_token
 from utils.two_factor_auth import gerar_otp, enviar_otp_email, validar_otp, resend_otp
+from utils.user_manager import obter_usuario_por_email, atualizar_ultimo_login
+from utils.security_audit import (
+    registro_log_auth, 
+    registrar_tentativa_falhada, 
+    esta_bloqueado,
+    tempo_ate_desbloquear
+)
 from middleware.rate_limit import RateLimitDecorators
 from middleware.auth_middleware import get_current_active_user
 from config import settings
@@ -80,123 +87,149 @@ class VerifyOTPRequest(BaseModel):
 @RateLimitDecorators.login
 async def login(credentials: LoginRequest, request: Request):
     """
-    Login de usuário
+    Login de usuário com autenticação baseada em banco de dados
+    
+    Segurança implementada:
+    - Bcrypt para hash de senhas
+    - Rate limiting (3 tentativas = 15 min bloqueio)
+    - Auditoria completa de login/falhas
+    - IP address logging
     
     Returns:
         Token JWT e dados do usuário
     """
-    # ═══════════════════════════════════════════════════════════════════════
-    # USUÁRIOS DO SISTEMA - Credenciais Atualizadas
-    # ═══════════════════════════════════════════════════════════════════════
-    USUARIOS_ADMIN = {
-        # ADMINISTRADORES (Acesso Total)
-        "vicentedesouza762@gmail.com": {
-            "id": 1,
-            "nome": "Vicente de Souza", 
-            "email": "vicentedesouza762@gmail.com",
-            "senha": "Admin@2026",
-            "telefone": "11 99999-0001",
-            "cargo": "Administrador",
-            "role": "admin",
-            "ativo": True
-        },
-        "francisco@projeto.com": {
-            "id": 2,
-            "nome": "Francisco",
-            "email": "francisco@projeto.com", 
-            "senha": "Admin@2026",
-            "telefone": "11 99999-0002",
-            "cargo": "Desenvolvedor",
-            "role": "admin",
-            "ativo": True
-        },
-        "professor@projeto.com": {
-            "id": 3,
-            "nome": "Professor",
-            "email": "professor@projeto.com", 
-            "senha": "Admin@2026",
-            "telefone": "11 99999-0003",
-            "cargo": "Professor",
-            "role": "admin",
-            "ativo": True
-        },
-        # GERENTE
-        "gerenteteste@projeto.com": {
-            "id": 4,
-            "nome": "Gerente Teste",
-            "email": "gerenteteste@projeto.com", 
-            "senha": "Gerente@123",
-            "telefone": "11 99999-0004",
-            "cargo": "Gerente de Projetos",
-            "role": "gerente",
-            "ativo": True
-        },
-        # ENGENHEIRO
-        "engenheiroteste@projeto.com": {
-            "id": 5,
-            "nome": "Engenheiro Teste",
-            "email": "engenheiroteste@projeto.com", 
-            "senha": "Engenheiro@123",
-            "telefone": "11 99999-0005",
-            "cargo": "Engenheiro Civil",
-            "role": "engenheiro",
-            "ativo": True
-        },
-        # TÉCNICO
-        "tecnicoteste@projeto.com": {
-            "id": 6,
-            "nome": "Técnico Teste",
-            "email": "tecnicoteste@projeto.com", 
-            "senha": "Tecnico@123",
-            "telefone": "11 99999-0006",
-            "cargo": "Técnico em Edificações",
-            "role": "tecnico",
-            "ativo": True
-        },
-        # CLIENTE
-        "clienteteste@projeto.com": {
-            "id": 7,
-            "nome": "Cliente Teste",
-            "email": "clienteteste@projeto.com", 
-            "senha": "Cliente@123",
-            "telefone": "11 99999-0007",
-            "cargo": "Cliente",
-            "role": "cliente",
-            "ativo": True
-        }
-    }
-    
-    # Verificar se é administrador
-    if credentials.email in USUARIOS_ADMIN:
-        user = USUARIOS_ADMIN[credentials.email]
-        if credentials.senha == user["senha"] and user["ativo"]:
-            # Criar token com role de admin
-            access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={
-                    "user_id": user["id"], 
-                    "email": user["email"], 
-                    "nome": user["nome"],
-                    "role": user["role"]
-                },
-                expires_delta=access_token_expires
+    try:
+        # Extrair IP da request
+        client_ip = request.client.host if request.client else "desconhecido"
+        email_normalized = credentials.email.lower()
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 1: Verificar se conta está bloqueada por rate limiting
+        # ═════════════════════════════════════════════════════════════════════
+        if esta_bloqueado(email_normalized):
+            minutos = tempo_ate_desbloquear(email_normalized)
+            
+            # Log da tentativa bloqueada
+            registro_log_auth(
+                email=email_normalized,
+                acao="login_bloqueado",
+                sucesso=False,
+                ip_address=client_ip,
+                motivo=f"Conta bloqueada por rate limit - {minutos} minutos restantes"
             )
             
-            logger.info(f"Login ADMIN bem-sucedido: {credentials.email}")
+            logger.warning(f"❌ Tentativa de login bloqueada (rate limit): {email_normalized} de {client_ip}")
             
-            return TokenResponse(
-                access_token=access_token,
-                user_id=user["id"],
-                nome=user["nome"],
-                email=user["email"],
-                role=user["role"]
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Conta temporariamente bloqueada. Tente novamente em {minutos} minutos."
             )
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 2: Buscar usuário no banco de dados
+        # ═════════════════════════════════════════════════════════════════════
+        user = obter_usuario_por_email(email_normalized)
+        
+        if not user:
+            # Usuário não encontrado - registrar tentativa
+            registrar_tentativa_falhada(email_normalized, client_ip)
+            
+            registro_log_auth(
+                email=email_normalized,
+                acao="login_falha",
+                sucesso=False,
+                ip_address=client_ip,
+                motivo="Usuário não encontrado"
+            )
+            
+            logger.warning(f"❌ Tentativa de login para usuário não encontrado: {email_normalized} de {client_ip}")
+            
+            # Resposta genérica (não revela informações)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email ou senha incorretos"
+            )
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 3: Verificar senha usando bcrypt
+        # ═════════════════════════════════════════════════════════════════════
+        senha_hash = user.get('senha_hash') or user.get('senha_hash')
+        
+        if not verify_password(credentials.senha, senha_hash):
+            # Senha incorreta - registrar tentativa falhada
+            registrar_tentativa_falhada(email_normalized, client_ip)
+            
+            registro_log_auth(
+                email=email_normalized,
+                acao="login_falha",
+                sucesso=False,
+                ip_address=client_ip,
+                motivo="Senha incorreta"
+            )
+            
+            logger.warning(f"❌ Senha incorreta para: {email_normalized} de {client_ip}")
+            
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email ou senha incorretos"
+            )
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 4: Gerar token JWT e registrar login bem-sucedido
+        # ═════════════════════════════════════════════════════════════════════
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={
+                "user_id": user.get("id"),
+                "email": user.get("email"),
+                "nome": user.get("nome"),
+                "role": user.get("role", "usuario")
+            },
+            expires_delta=access_token_expires
+        )
+        
+        # Atualizar último login
+        atualizar_ultimo_login(email_normalized)
+        
+        # Log de sucesso
+        registro_log_auth(
+            email=email_normalized,
+            acao="login_sucesso",
+            sucesso=True,
+            ip_address=client_ip,
+            motivo="Credenciais válidas"
+        )
+        
+        logger.info(f"✅ Login bem-sucedido: {email_normalized} de {client_ip}")
+        
+        return TokenResponse(
+            access_token=access_token,
+            user_id=user.get("id"),
+            nome=user.get("nome"),
+            email=user.get("email"),
+            role=user.get("role", "usuario")
+        )
     
-    # Se não encontrou usuário de teste
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Email ou senha incorretos"
-    )
+    except HTTPException:
+        # Re-lançar exceções HTTP (para não serem capturadas novamente)
+        raise
+    
+    except Exception as e:
+        # Log de erro não esperado
+        logger.error(f"❌ Erro inesperado no login: {str(e)}")
+        
+        registro_log_auth(
+            email=credentials.email.lower(),
+            acao="login_erro",
+            sucesso=False,
+            ip_address=request.client.host if request.client else "desconhecido",
+            motivo=f"Erro interno: {str(e)[:50]}"
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao processar login"
+        )
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)

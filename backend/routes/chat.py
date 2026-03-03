@@ -153,7 +153,7 @@ async def listar_mensagens_projeto(
     try:
         # Buscar ou criar chat do projeto
         chat = db.execute_query(
-            "SELECT id FROM chats WHERE projeto_id = ?",
+            "SELECT id FROM chats WHERE projeto_id = %s",
             (projeto_id,),
             fetch=True
         )
@@ -161,7 +161,7 @@ async def listar_mensagens_projeto(
         if not chat:
             # Criar chat
             chat_id = db.execute_query(
-                "INSERT INTO chats (projeto_id, nome, criado_em) VALUES (?, ?, datetime('now'))",
+                "INSERT INTO chats (projeto_id, nome, criado_em) VALUES (%s, %s, datetime('now'))",
                 (projeto_id, 'Chat do Projeto')
             )
         else:
@@ -174,9 +174,9 @@ async def listar_mensagens_projeto(
                    u.nome as autor_nome, u.email as autor_email
             FROM mensagens m
             LEFT JOIN usuarios u ON m.autor_id = u.id
-            WHERE m.chat_id = ?
+            WHERE m.chat_id = %s
             ORDER BY COALESCE(m.enviada_em, m.criado_em) DESC
-            LIMIT ? OFFSET ?
+            LIMIT %s OFFSET %s
             """,
             (chat_id, limit, offset),
             fetch=True
@@ -197,7 +197,7 @@ async def listar_mensagens_projeto(
         
         # Contar total
         total = db.execute_query(
-            "SELECT COUNT(*) as total FROM mensagens WHERE chat_id = ?",
+            "SELECT COUNT(*) as total FROM mensagens WHERE chat_id = %s",
             (chat_id,),
             fetch=True
         )
@@ -226,14 +226,14 @@ async def enviar_mensagem_projeto(
     try:
         # Buscar ou criar chat
         chat = db.execute_query(
-            "SELECT id FROM chats WHERE projeto_id = ?",
+            "SELECT id FROM chats WHERE projeto_id = %s",
             (projeto_id,),
             fetch=True
         )
         
         if not chat:
             chat_id = db.execute_query(
-                "INSERT INTO chats (projeto_id, nome, criado_em) VALUES (?, ?, datetime('now'))",
+                "INSERT INTO chats (projeto_id, nome, criado_em) VALUES (%s, %s, datetime('now'))",
                 (projeto_id, 'Chat do Projeto')
             )
         else:
@@ -243,7 +243,7 @@ async def enviar_mensagem_projeto(
         mensagem_id = db.execute_query(
             """
             INSERT INTO mensagens (chat_id, autor_id, conteudo, mensagem, enviada_em, criado_em)
-            VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+            VALUES (%s, %s, %s, %s, datetime('now'), datetime('now'))
             """,
             (chat_id, user_id, mensagem.conteudo, mensagem.conteudo)
         )
@@ -254,7 +254,7 @@ async def enviar_mensagem_projeto(
                 db.execute_query(
                     """
                     INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem, criado_em)
-                    VALUES (?, 'mencao', 'Você foi mencionado', ?, datetime('now'))
+                    VALUES (%s, 'mencao', 'Você foi mencionado', %s, datetime('now'))
                     """,
                     (usuario_id, f"Você foi mencionado em uma mensagem no projeto {projeto_id}")
                 )
@@ -292,7 +292,7 @@ async def listar_participantes(
             SELECT DISTINCT u.id, u.nome, u.email, u.cargo
             FROM equipes e
             JOIN usuarios u ON e.usuario_id = u.id
-            WHERE e.projeto_id = ? AND e.ativo = 1
+            WHERE e.projeto_id = %s AND e.ativo = 1
             """,
             (projeto_id,),
             fetch=True
@@ -326,7 +326,7 @@ async def listar_conversas(
                    'projeto' as tipo
             FROM projetos p
             LEFT JOIN equipes e ON p.id = e.projeto_id AND e.ativo = 1
-            WHERE p.criador_id = ? OR e.usuario_id = ?
+            WHERE p.criador_id = %s OR e.usuario_id = %s
             """,
             (user_id, user_id),
             fetch=True
@@ -355,7 +355,7 @@ async def listar_usuarios_disponiveis(
             """
             SELECT id, nome, email, cargo
             FROM usuarios
-            WHERE id != ? AND ativo = 1
+            WHERE id != %s AND ativo = 1
             ORDER BY nome
             """,
             (user_id,),
@@ -390,14 +390,14 @@ async def enviar_mensagem_direta(
         chat_nome = f"direto_{usuarios_ids[0]}_{usuarios_ids[1]}"
         
         chat = db.execute_query(
-            "SELECT id FROM chats WHERE nome = ? AND projeto_id IS NULL",
+            "SELECT id FROM chats WHERE nome = %s AND projeto_id IS NULL",
             (chat_nome,),
             fetch=True
         )
         
         if not chat:
             chat_id = db.execute_query(
-                "INSERT INTO chats (projeto_id, nome, tipo, criado_em) VALUES (NULL, ?, 'direto', datetime('now'))",
+                "INSERT INTO chats (projeto_id, nome, tipo, criado_em) VALUES (NULL, %s, 'direto', datetime('now'))",
                 (chat_nome,)
             )
         else:
@@ -407,7 +407,7 @@ async def enviar_mensagem_direta(
         mensagem_id = db.execute_query(
             """
             INSERT INTO mensagens (chat_id, autor_id, usuario_id, conteudo, mensagem, enviada_em, criado_em)
-            VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+            VALUES (%s, %s, %s, %s, %s, datetime('now'), datetime('now'))
             """,
             (chat_id, user_id, mensagem.destinatario_id, mensagem.conteudo, mensagem.conteudo)
         )
@@ -416,7 +416,7 @@ async def enviar_mensagem_direta(
         db.execute_query(
             """
             INSERT INTO notificacoes (usuario_id, tipo, titulo, mensagem, criado_em)
-            VALUES (?, 'mensagem', 'Nova mensagem', ?, datetime('now'))
+            VALUES (%s, 'mensagem', 'Nova mensagem', %s, datetime('now'))
             """,
             (mensagem.destinatario_id, "Você recebeu uma nova mensagem")
         )
@@ -448,7 +448,7 @@ async def listar_mensagens_diretas(
         chat_nome = f"direto_{usuarios_ids[0]}_{usuarios_ids[1]}"
         
         chat = db.execute_query(
-            "SELECT id FROM chats WHERE nome = ? AND projeto_id IS NULL",
+            "SELECT id FROM chats WHERE nome = %s AND projeto_id IS NULL",
             (chat_nome,),
             fetch=True
         )
@@ -469,9 +469,9 @@ async def listar_mensagens_diretas(
                    u.nome as remetente_nome
             FROM mensagens m
             JOIN usuarios u ON m.autor_id = u.id
-            WHERE m.chat_id = ?
+            WHERE m.chat_id = %s
             ORDER BY COALESCE(m.enviada_em, m.criado_em) DESC
-            LIMIT ?
+            LIMIT %s
             """,
             (chat_id, limit),
             fetch=True
@@ -482,7 +482,7 @@ async def listar_mensagens_diretas(
             """
             UPDATE mensagens 
             SET lida = 1 
-            WHERE chat_id = ? AND usuario_id = ? AND lida = 0
+            WHERE chat_id = %s AND usuario_id = %s AND lida = 0
             """,
             (chat_id, user_id)
         )

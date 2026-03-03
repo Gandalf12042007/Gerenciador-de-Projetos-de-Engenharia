@@ -88,7 +88,7 @@ async def listar_membros_projeto(
     try:
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id, nome FROM projetos WHERE id = ?",
+            "SELECT id, nome FROM projetos WHERE id = %s",
             (projeto_id,),
             fetch=True
         )
@@ -116,12 +116,12 @@ async def listar_membros_projeto(
             FROM equipes e
             INNER JOIN usuarios u ON e.usuario_id = u.id
             INNER JOIN projetos p ON e.projeto_id = p.id
-            WHERE e.projeto_id = ?
+            WHERE e.projeto_id = %s
         """
         params = [projeto_id]
         
         if ativo is not None:
-            query += " AND e.ativo = ?"
+            query += " AND e.ativo = %s"
             params.append(1 if ativo else 0)
         
         query += " ORDER BY e.data_entrada DESC"
@@ -168,7 +168,7 @@ async def adicionar_membro(
     try:
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id FROM projetos WHERE id = ?", 
+            "SELECT id FROM projetos WHERE id = %s", 
             (membro.projeto_id,), 
             fetch=True
         )
@@ -180,7 +180,7 @@ async def adicionar_membro(
         
         # Verificar se usuário existe
         usuario = db.execute_query(
-            "SELECT id FROM usuarios WHERE id = ?", 
+            "SELECT id FROM usuarios WHERE id = %s", 
             (membro.usuario_id,), 
             fetch=True
         )
@@ -194,7 +194,7 @@ async def adicionar_membro(
         existente = db.execute_query(
             """
             SELECT id FROM equipes 
-            WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1
+            WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1
             """,
             (membro.projeto_id, membro.usuario_id),
             fetch=True
@@ -218,7 +218,7 @@ async def adicionar_membro(
         membro_id = db.execute_query(
             """
             INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
-            VALUES (?, ?, ?, ?, 1, datetime('now'))
+            VALUES (%s, %s, %s, %s, 1, datetime('now'))
             """,
             (membro.projeto_id, membro.usuario_id, membro.papel, data_entrada)
         )
@@ -251,7 +251,7 @@ async def atualizar_membro(
     try:
         # Verificar se membro existe
         membro = db.execute_query(
-            "SELECT id FROM equipes WHERE id = ?",
+            "SELECT id FROM equipes WHERE id = %s",
             (membro_id,),
             fetch=True
         )
@@ -272,22 +272,22 @@ async def atualizar_membro(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Papel inválido. Use: {', '.join(papeis_validos)}"
                 )
-            updates.append("papel = ?")
+            updates.append("papel = %s")
             params.append(dados.papel)
         
         if dados.data_saida is not None:
-            updates.append("data_saida = ?")
+            updates.append("data_saida = %s")
             params.append(dados.data_saida)
         
         if dados.ativo is not None:
-            updates.append("ativo = ?")
+            updates.append("ativo = %s")
             params.append(1 if dados.ativo else 0)
         
         if not updates:
             return {"message": "Nenhuma alteração solicitada"}
         
         params.append(membro_id)
-        query = f"UPDATE equipes SET {', '.join(updates)} WHERE id = ?"
+        query = f"UPDATE equipes SET {', '.join(updates)} WHERE id = %s"
         
         db.execute_query(query, tuple(params))
         
@@ -315,7 +315,7 @@ async def remover_membro(
     try:
         # Verificar se membro existe
         membro = db.execute_query(
-            "SELECT id, ativo FROM equipes WHERE id = ?",
+            "SELECT id, ativo FROM equipes WHERE id = %s",
             (membro_id,),
             fetch=True
         )
@@ -327,7 +327,7 @@ async def remover_membro(
         
         # Soft delete
         db.execute_query(
-            "UPDATE equipes SET ativo = 0, data_saida = date('now') WHERE id = ?",
+            "UPDATE equipes SET ativo = 0, data_saida = date('now') WHERE id = %s",
             (membro_id,)
         )
         
@@ -365,7 +365,7 @@ async def listar_projetos_usuario(
                 e.ativo
             FROM equipes e
             INNER JOIN projetos p ON e.projeto_id = p.id
-            WHERE e.usuario_id = ?
+            WHERE e.usuario_id = %s
             ORDER BY e.ativo DESC, e.data_entrada DESC
             """,
             (usuario_id,),
@@ -409,7 +409,7 @@ async def listar_meus_projetos(
                 e.ativo
             FROM equipes e
             INNER JOIN projetos p ON e.projeto_id = p.id
-            WHERE e.usuario_id = ? AND e.ativo = 1
+            WHERE e.usuario_id = %s AND e.ativo = 1
             ORDER BY e.data_entrada DESC
             """,
             (user_id,),
@@ -443,7 +443,7 @@ async def criar_convite(
     try:
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id, nome FROM projetos WHERE id = ?",
+            "SELECT id, nome FROM projetos WHERE id = %s",
             (convite.projeto_id,),
             fetch=True
         )
@@ -463,7 +463,7 @@ async def criar_convite(
             INSERT INTO convites_equipes (
                 projeto_id, email_convidado, papel, token, 
                 data_expiracao, criado_por, criado_em
-            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            ) VALUES (%s, %s, %s, %s, %s, %s, datetime('now'))
             """,
             (
                 convite.projeto_id,
@@ -507,7 +507,7 @@ async def aceitar_convite(
             """
             SELECT id, projeto_id, papel, email_convidado, data_expiracao, usado
             FROM convites_equipes
-            WHERE token = ?
+            WHERE token = %s
             """,
             (dados.token,),
             fetch=True
@@ -538,7 +538,7 @@ async def aceitar_convite(
         
         # Verificar se usuário já está no projeto
         existente = db.execute_query(
-            "SELECT id FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+            "SELECT id FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
             (convite['projeto_id'], dados.usuario_id),
             fetch=True
         )
@@ -552,14 +552,14 @@ async def aceitar_convite(
         membro_id = db.execute_query(
             """
             INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
-            VALUES (?, ?, ?, date('now'), 1, datetime('now'))
+            VALUES (%s, %s, %s, date('now'), 1, datetime('now'))
             """,
             (convite['projeto_id'], dados.usuario_id, convite['papel'])
         )
         
         # Marcar convite como usado
         db.execute_query(
-            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = ?",
+            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = %s",
             (convite['id'],)
         )
         
@@ -597,7 +597,7 @@ async def listar_convites_projeto(
                 u.nome as criado_por_nome
             FROM convites_equipes c
             LEFT JOIN usuarios u ON c.criado_por = u.id
-            WHERE c.projeto_id = ? AND (c.usado = 0 OR c.usado IS NULL)
+            WHERE c.projeto_id = %s AND (c.usado = 0 OR c.usado IS NULL)
             ORDER BY c.criado_em DESC
             """,
             (projeto_id,),
@@ -645,7 +645,7 @@ async def gerar_codigo_convite(
     try:
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id, nome, criador_id FROM projetos WHERE id = ?",
+            "SELECT id, nome, criador_id FROM projetos WHERE id = %s",
             (dados.projeto_id,),
             fetch=True
         )
@@ -658,7 +658,7 @@ async def gerar_codigo_convite(
         if user_cargo not in ['admin', 'gerente'] and projeto.get('criador_id') != user_id:
             # Verificar se é gerente do projeto
             membro = db.execute_query(
-                "SELECT papel FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+                "SELECT papel FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
                 (dados.projeto_id, user_id),
                 fetch=True
             )
@@ -672,7 +672,7 @@ async def gerar_codigo_convite(
         tentativas = 0
         while tentativas < 10:
             existente = db.execute_query(
-                "SELECT id FROM convites_equipes WHERE token = ? AND (usado = 0 OR usado IS NULL)",
+                "SELECT id FROM convites_equipes WHERE token = %s AND (usado = 0 OR usado IS NULL)",
                 (codigo,),
                 fetch=True
             )
@@ -690,7 +690,7 @@ async def gerar_codigo_convite(
             INSERT INTO convites_equipes (
                 projeto_id, email_convidado, papel, token, 
                 data_expiracao, criado_por, criado_em
-            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            ) VALUES (%s, %s, %s, %s, %s, %s, datetime('now'))
             """,
             (
                 dados.projeto_id,
@@ -744,7 +744,7 @@ async def enviar_convite_por_email(
         
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id, nome, criador_id FROM projetos WHERE id = ?",
+            "SELECT id, nome, criador_id FROM projetos WHERE id = %s",
             (dados.projeto_id,),
             fetch=True
         )
@@ -756,7 +756,7 @@ async def enviar_convite_por_email(
         # Verificar permissão (admin, gerente ou criador do projeto)
         if user_cargo not in ['admin', 'gerente'] and projeto.get('criador_id') != user_id:
             membro = db.execute_query(
-                "SELECT papel FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+                "SELECT papel FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
                 (dados.projeto_id, user_id),
                 fetch=True
             )
@@ -769,7 +769,7 @@ async def enviar_convite_por_email(
         tentativas = 0
         while tentativas < 10:
             existente = db.execute_query(
-                "SELECT id FROM convites_equipes WHERE token = ? AND (usado = 0 OR usado IS NULL)",
+                "SELECT id FROM convites_equipes WHERE token = %s AND (usado = 0 OR usado IS NULL)",
                 (codigo,),
                 fetch=True
             )
@@ -787,7 +787,7 @@ async def enviar_convite_por_email(
             INSERT INTO convites_equipes (
                 projeto_id, email_convidado, papel, token, 
                 data_expiracao, criado_por, criado_em
-            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            ) VALUES (%s, %s, %s, %s, %s, %s, datetime('now'))
             """,
             (
                 dados.projeto_id,
@@ -865,7 +865,7 @@ async def entrar_com_codigo(
                    p.nome as projeto_nome
             FROM convites_equipes c
             JOIN projetos p ON c.projeto_id = p.id
-            WHERE c.token = ?
+            WHERE c.token = %s
             """,
             (codigo,),
             fetch=True
@@ -890,7 +890,7 @@ async def entrar_com_codigo(
         
         # Verificar se usuário já está no projeto
         existente = db.execute_query(
-            "SELECT id FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+            "SELECT id FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
             (convite['projeto_id'], user_id),
             fetch=True
         )
@@ -901,14 +901,14 @@ async def entrar_com_codigo(
         membro_id = db.execute_query(
             """
             INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
-            VALUES (?, ?, ?, date('now'), 1, datetime('now'))
+            VALUES (%s, %s, %s, date('now'), 1, datetime('now'))
             """,
             (convite['projeto_id'], user_id, convite['papel'])
         )
         
         # Marcar convite como usado
         db.execute_query(
-            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = ?",
+            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = %s",
             (convite['id'],)
         )
         
@@ -944,7 +944,7 @@ async def validar_codigo(codigo: str):
                    p.nome as projeto_nome, p.descricao as projeto_descricao
             FROM convites_equipes c
             JOIN projetos p ON c.projeto_id = p.id
-            WHERE c.token = ?
+            WHERE c.token = %s
             """,
             (codigo,),
             fetch=True
@@ -1001,7 +1001,7 @@ async def listar_permissoes_usuario(
             FROM usuario_permissoes up
             INNER JOIN permissoes p ON up.permissao_id = p.id
             LEFT JOIN projetos pr ON up.projeto_id = pr.id
-            WHERE up.usuario_id = ?
+            WHERE up.usuario_id = %s
             """,
             (usuario_id,),
             fetch=True
@@ -1033,7 +1033,7 @@ async def atribuir_permissao(
     try:
         # Verificar se usuário existe
         usuario = db.execute_query(
-            "SELECT id FROM usuarios WHERE id = ?",
+            "SELECT id FROM usuarios WHERE id = %s",
             (permissao.usuario_id,),
             fetch=True
         )
@@ -1045,7 +1045,7 @@ async def atribuir_permissao(
         
         # Verificar se permissão existe
         perm = db.execute_query(
-            "SELECT id FROM permissoes WHERE id = ?",
+            "SELECT id FROM permissoes WHERE id = %s",
             (permissao.permissao_id,),
             fetch=True
         )
@@ -1059,7 +1059,7 @@ async def atribuir_permissao(
         perm_id = db.execute_query(
             """
             INSERT INTO usuario_permissoes (usuario_id, permissao_id, projeto_id, criado_em)
-            VALUES (?, ?, ?, datetime('now'))
+            VALUES (%s, %s, %s, datetime('now'))
             """,
             (permissao.usuario_id, permissao.permissao_id, permissao.projeto_id)
         )
@@ -1091,7 +1091,7 @@ async def remover_permissao(
     try:
         # Verificar se existe
         perm = db.execute_query(
-            "SELECT id FROM usuario_permissoes WHERE id = ?",
+            "SELECT id FROM usuario_permissoes WHERE id = %s",
             (permissao_id,),
             fetch=True
         )
@@ -1102,7 +1102,7 @@ async def remover_permissao(
             )
         
         db.execute_query(
-            "DELETE FROM usuario_permissoes WHERE id = ?",
+            "DELETE FROM usuario_permissoes WHERE id = %s",
             (permissao_id,)
         )
         

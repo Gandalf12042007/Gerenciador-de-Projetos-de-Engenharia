@@ -1,0 +1,134 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║     GUIA PARA INICIAR O GERENCIADOR DE PROJETOS                 ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+
+══════════════════════════════════════════════════════════════════
+  PASSO A PASSO (SIGA EXATAMENTE ASSIM)
+══════════════════════════════════════════════════════════════════
+
+PASSO 1: Abrir o Prompt de Comando
+───────────────────────────────────────────────────────────────────
+  1. Pressione as teclas: Windows + R
+  2. Digite: cmd
+  3. Pressione: Enter
+
+
+PASSO 2: Navegar ate a pasta do projeto
+───────────────────────────────────────────────────────────────────
+  Digite ou copie e cole este comando:
+  
+  cd C:\Users\vicen\Gerenciador-de-Projetos-de-Engenharia-3\backend
+  
+  Depois pressione Enter
+
+
+PASSO 3: Iniciar o servidor
+───────────────────────────────────────────────────────────────────
+  Digite:
+  
+  python app.py
+  
+  Pressione Enter e aguarde...
+  
+  
+  Voce vera algo assim:
+  
+  ============================================================
+  API - Gerenciador de Projetos de Engenharia
+  Versao: 1.0.0
+  Desenvolvedor: Vicente de Souza
+  ============================================================
+  
+  API rodando em: http://0.0.0.0:8000
+  Documentacao: http://localhost:8000/docs
+  
+  INFO:     Started server process
+  INFO:     Uvicorn running on http://0.0.0.0:8000
+
+
+PASSO 4: Abrir o navegador
+───────────────────────────────────────────────────────────────────
+  IMPORTANTE: Deixe o terminal aberto e rodando!
+  
+  Abra seu navegador (Chrome, Edge, Firefox) e acesse:
+  
+  http://localhost:8000/login.html
+  
+  OU
+  
+  http://localhost:8000/docs  (para ver a documentacao da API)
+
+
+══════════════════════════════════════════════════════════════════
+  CONTAS PARA FAZER LOGIN
+══════════════════════════════════════════════════════════════════
+
+Usuario Admin:
+  Email: vicentedesouza762@gmail.com
+  Senha: Admin@2026
+
+Usuario Gerente:
+  Email: gerenteteste@projeto.com
+  Senha: Gerente@123
+
+Usuario Engenheiro:
+  Email: engenheiroteste@projeto.com
+  Senha: Engenheiro@123
+
+
+══════════════════════════════════════════════════════════════════
+  SOLUCAO DE PROBLEMAS
+══════════════════════════════════════════════════════════════════
+
+PROBLEMA: Erro "Address already in use"
+SOLUCAO: A porta 8000 ja esta em uso. Feche outros programas ou
+         mude a porta no arquivo backend/.env
+
+PROBLEMA: Pagina nao carrega no navegador
+SOLUCAO: Verifique se o terminal ainda esta rodando e mostra
+         "Uvicorn running on..."
+
+PROBLEMA: Erro ao iniciar o servidor
+SOLUCAO: Execute: python teste_iniciar.py
+         Isso mostrara qual e o problema especifico
+
+
+══════════════════════════════════════════════════════════════════
+  ALTERNATIVA: Usar o arquivo .bat
+══════════════════════════════════════════════════════════════════
+
+Se preferir, voce pode simplesmente dar DUPLO CLIQUE no arquivo:
+
+  INICIAR.bat
+
+Ele esta na pasta principal do projeto e faz tudo automaticamente.
+
+
+══════════════════════════════════════════════════════════════════
+  PARA PARAR O SERVIDOR
+══════════════════════════════════════════════════════════════════
+
+No terminal onde o servidor esta rodando, pressione:
+
+  Ctrl + C
+
+Ou simplesmente feche a janela do terminal.
+
+
+══════════════════════════════════════════════════════════════════
+  IMPORTANTE
+══════════════════════════════════════════════════════════════════
+
+O servidor PRECISA estar rodando (terminal aberto) para o sistema
+funcionar. Se fechar o terminal, o sistema para.
+
+
+══════════════════════════════════════════════════════════════════
+
+Desenvolvido por: Vicente de Souza
+Email: vicentedesouza762@gmail.com
+
+══════════════════════════════════════════════════════════════════

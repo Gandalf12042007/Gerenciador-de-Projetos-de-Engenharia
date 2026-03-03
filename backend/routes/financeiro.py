@@ -4,7 +4,8 @@ PHASE 4: Implementação do módulo financeiro com endpoints para custos, orçam
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from pydantic import BaseModel
+# from sqlalchemy.orm import Session  # Not used in this implementation
 from datetime import datetime, date
 from typing import List, Optional
 from decimal import Decimal
@@ -16,21 +17,21 @@ router = APIRouter(prefix="/api/financeiro", tags=["Financeiro"])
 # MODELOS DE RESPOSTA
 # ============================================
 
-class CustoResponse:
+class CustoResponse(BaseModel):
     """Modelo de resposta para custos"""
     id: int
     projeto_id: int
-    tarefa_id: Optional[int]
+    tarefa_id: Optional[int] = None
     tipo_custo_id: int
     descricao: str
     valor: Decimal
     moeda: str
     data_custo: date
-    responsavel_id: Optional[int]
+    responsavel_id: Optional[int] = None
     criado_em: datetime
 
 
-class OrcamentoResponse:
+class OrcamentoResponse(BaseModel):
     """Modelo de resposta para orçamentos"""
     id: int
     projeto_id: int
@@ -43,7 +44,7 @@ class OrcamentoResponse:
     criado_em: datetime
 
 
-class FaturaResponse:
+class FaturaResponse(BaseModel):
     """Modelo de resposta para faturas"""
     id: int
     projeto_id: int
@@ -52,12 +53,12 @@ class FaturaResponse:
     status: str
     data_emissao: date
     data_vencimento: date
-    data_pagamento: Optional[date]
+    data_pagamento: Optional[date] = None
     itens: List[dict]
     criado_em: datetime
 
 
-class DashboardFinanceiroResponse:
+class DashboardFinanceiroResponse(BaseModel):
     """Resposta do dashboard financeiro"""
     valor_total_orcado: Decimal
     valor_total_gasto: Decimal
@@ -359,11 +360,11 @@ async def registrar_pagamento_fatura(
 @router.post("/fluxo-caixa")
 async def criar_movimento_fluxo(
     projeto_id: int,
-    tipo: str = Query(..., regex="^(entrada|saida)$"),
     valor: Decimal,
     descricao: str,
+    tipo: str = Query(..., regex="^(entrada|saida)$"),
     categoria: Optional[str] = None,
-    data_movimento: date = Query(default_factory=date.today)
+    data_movimento: Optional[date] = None
 ):
     """
     Registrar movimento no fluxo de caixa

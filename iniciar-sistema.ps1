@@ -27,11 +27,46 @@ $frontendJob = Start-Job -ScriptBlock {
     python -m http.server 3000
 } -ArgumentList $rootPath
 
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 5
 
-# Abrir navegador
-Write-Host "[3/3] Abrindo navegador..." -ForegroundColor Yellow
-Start-Process "http://localhost:3000/login.html"
+Write-Host "[3/3] Aguardando servidores..." -ForegroundColor Yellow
+
+# Função para aguardar URL responder
+function Wait-ForUrl {
+    param(
+        [string]$url,
+        [int]$timeout = 30
+    )
+    $start = Get-Date
+    while ((Get-Date) - $start).TotalSeconds -lt $timeout) {
+        try {
+            $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2
+            if ($response.StatusCode -eq 200) {
+                return $true
+            }
+        } catch {}
+        Start-Sleep -Seconds 1
+    }
+    return $false
+}
+
+# Espera backend
+if (Wait-ForUrl "http://localhost:8000") {
+    Write-Host "Backend pronto!" -ForegroundColor Green
+    Start-Process "http://localhost:8000"
+    Start-Process "http://localhost:8000/docs"
+} else {
+    Write-Host "Backend não respondeu a tempo." -ForegroundColor Red
+}
+
+# Espera frontend
+if (Wait-ForUrl "http://localhost:3000/login.html") {
+    Write-Host "Frontend pronto!" -ForegroundColor Green
+    Start-Process "http://localhost:3000/login.html"
+    Start-Process "http://localhost:3000"
+} else {
+    Write-Host "Frontend não respondeu a tempo." -ForegroundColor Red
+}
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green

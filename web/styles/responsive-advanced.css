@@ -1,0 +1,291 @@
+/**
+ * RESPONSIVIDADE AVANÇADA - Fase 5
+ * Suporte completo para: Mobile (Android/iOS), Tablet, Desktop, Ultra-wide
+ */
+
+/* ==========================================
+   VARIÁVEIS DE BREAKPOINTS
+  ========================================== */
+
+:root {
+  /* Breakpoints Modernos */
+  --bp-xs: 320px;   /* Celulares muito pequenos */
+  --bp-sm: 640px;   /* Celulares */
+  --bp-md: 768px;   /* Tablets */
+  --bp-lg: 1024px;  /* Desktops pequenos */
+  --bp-xl: 1280px;  /* Desktops */
+  --bp-2xl: 1536px; /* Desktops ultra-wide */
+
+  /* Safe areas para notch (iPhone) */
+  --safe-left: max(0px, env(safe-area-inset-left));
+  --safe-right: max(0px, env(safe-area-inset-right));
+  --safe-top: max(0px, env(safe-area-inset-top));
+  --safe-bottom: max(0px, env(safe-area-inset-bottom));
+
+  /* Dimensões fluidas */
+  --spacing-xs: clamp(0.5rem, 2vw, 1rem);
+  --spacing-sm: clamp(1rem, 4vw, 1.5rem);
+  --spacing-md: clamp(1.5rem, 6vw, 2.5rem);
+  --spacing-lg: clamp(2rem, 8vw, 3.5rem);
+  --spacing-xl: clamp(3rem, 10vw, 5rem);
+
+  /* Font sizes fluidas */
+  --fs-xs: clamp(0.75rem, 2vw, 0.875rem);
+  --fs-sm: clamp(0.875rem, 2.5vw, 1rem);
+  --fs-base: clamp(1rem, 3vw, 1.125rem);
+  --fs-lg: clamp(1.125rem, 3.5vw, 1.5rem);
+  --fs-xl: clamp(1.5rem, 5vw, 2rem);
+  --fs-2xl: clamp(1.875rem, 6vw, 2.5rem);
+  --fs-3xl: clamp(2.25rem, 7vw, 3rem);
+}
+
+/* ==========================================
+   MOBILE FIRST - Smartphones (320px - 640px)
+  ========================================== */
+
+@media (max-width: 639px) {
+  body {
+    font-size: var(--fs-sm);
+    padding: var(--safe-left) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+
+  /* Estrutura móvel */
+  .container, .main-content {
+    padding: var(--spacing-sm);
+    max-width: 100%;
+  }
+
+  /* Navigation */
+  nav, .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm) var(--safe-bottom) var(--safe-left);
+    background: var(--primary);
+    border-top: 1px solid var(--gray-700);
+    z-index: 100;
+    overflow-x: auto;
+  }
+
+  nav a, nav button {
+    flex: 1;
+    min-width: 60px;
+    padding: var(--spacing-xs);
+    font-size: var(--fs-xs);
+    text-align: center;
+  }
+
+  /* Ajustar conteúdo principal para navbar fixa no rodapé */
+  main {
+    margin-bottom: calc(60px + var(--safe-bottom));
+  }
+
+  /* Grid mobile */
+  .grid-auto, [class*='grid-'] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards */
+  .card {
+    margin-bottom: var(--spacing-md);
+    border-radius: 12px;
+  }
+
+  /* Botões */
+  button, .btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--fs-sm);
+    width: 100%;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  /* Modal/Dialog */
+  .modal, [role='dialog'] {
+    width: calc(100% - 2 * var(--spacing-sm));
+    max-height: 90vh;
+    margin: auto;
+    padding: var(--spacing-md);
+  }
+
+  /* Tabelas em mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Forms */
+  input, select, textarea {
+    width: 100%;
+    padding: var(--spacing-sm);
+    font-size: 16px;
+    border-radius: 8px;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-weight: 600;
+  }
+
+  /* Imagens responsivas */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Video responsivo */
+  iframe, video {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Typography mobile */
+  h1 { font-size: var(--fs-2xl); }
+  h2 { font-size: var(--fs-xl); }
+  h3 { font-size: var(--fs-lg); }
+  h4 { font-size: var(--fs-base); }
+
+  /* Flex mobile */
+  .flex-col, [class*='flex-'] {
+    flex-direction: column;
+  }
+}
+
+/* ==========================================
+   TABLETS (640px - 1024px)
+  ========================================== */
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  body {
+    font-size: var(--fs-base);
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  /* Grid tablet */
+  .grid-2, [class*='md:grid'] {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-auto {
+    grid-auto-flow: dense;
+  }
+
+  /* Navigation */
+  nav {
+    position: sticky;
+    top: 0;
+    background: var(--primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-md);
+    z-index: 100;
+  }
+
+  /* Botões tablet */
+  button, .btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    min-width: 120px;
+  }
+}
+
+/* ==========================================
+   DESKTOPS (1024px+)
+  ========================================== */
+
+@media (min-width: 1024px) {
+  body {
+    font-size: var(--fs-base);
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  button, .btn {
+    min-width: 140px;
+  }
+}
+
+/* ==========================================
+   SUPORTE A NOTCH - iPhone X, Pixel 3 XL, etc
+  ========================================== */
+
+@supports (padding: env(safe-area-inset-left)) {
+  body {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+
+  nav, header {
+    padding-left: var(--safe-left) !important;
+    padding-right: var(--safe-right) !important;
+  }
+}
+
+/* ==========================================
+   ACESSIBILIDADE - Reduzir animações
+  ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  body {
+    font-weight: 600;
+  }
+  button, input {
+    border: 2px solid;
+  }
+}
+
+/* ==========================================
+   DARK MODE
+  ========================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+  }
+}
+
+/* ==========================================
+   TOUCH DEVICES
+  ========================================== */
+
+@media (hover: none) and (pointer: coarse) {
+  button, .btn {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  a { padding: 8px 4px; }
+}

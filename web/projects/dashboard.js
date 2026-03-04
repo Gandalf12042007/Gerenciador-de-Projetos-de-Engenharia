@@ -77,7 +77,7 @@ async function loadDashboardData() {
         
         // Carregar projetos
         console.log('Carregando projetos...');
-        const projectsResponse = await api.get('/projetos/');
+        const projectsResponse = await api.get('/api/projetos/');
         projects = projectsResponse || [];
         console.log('Projetos carregados:', projects.length);
 
@@ -85,7 +85,7 @@ async function loadDashboardData() {
         tasks = [];
         for (const project of projects) {
             try {
-                const projectTasks = await api.get(`/tarefas/projeto/${project.id}`);
+                const projectTasks = await api.get(`/api/tarefas/projeto/${project.id}`);
                 if (Array.isArray(projectTasks)) {
                     tasks.push(...projectTasks.map(t => ({ ...t, projeto_nome: project.nome })));
                 }

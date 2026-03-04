@@ -98,45 +98,35 @@ function getStatusLabel(status) {
 function projectCardHtml(p){
   const progressWidth = p.progress > 0 ? p.progress : 0;
   return `
-    <article class="project-card" onclick="viewProject(${p.id})">
-      <div class="project-header">
-        <div class="project-icon">🏗️</div>
-        <div class="project-actions">
-          <button class="project-action-btn" onclick="event.stopPropagation(); editProject(${p.id})" title="Editar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-          </button>
-          <button class="project-action-btn delete" onclick="event.stopPropagation(); deleteProject(${p.id})" title="Excluir">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-          </button>
+    <article class="jira-project-card" onclick="viewProject(${p.id})">
+      <div class="project-card-header">
+        <div class="project-card-icon">🏗️</div>
+        <div class="project-card-actions">
+          <button class="btn-jira-icon" onclick="event.stopPropagation(); editProject(${p.id})" title="Editar">✏️</button>
+          <button class="btn-jira-icon" onclick="event.stopPropagation(); deleteProject(${p.id})" title="Excluir">🗑️</button>
         </div>
       </div>
       
-      <h3 class="project-title">${escapeHtml(p.name)}</h3>
+      <h3 class="project-card-title">${escapeHtml(p.name)}</h3>
       
-      ${p.city ? `<div class="project-location"><span>📍</span> ${escapeHtml(p.city)}</div>` : ''}
+      ${p.city ? `<div class="project-card-location"><span>📍</span> ${escapeHtml(p.city)}</div>` : ''}
       
-      <div class="project-meta">
-        <span class="project-status ${p.status}">${getStatusLabel(p.status)}</span>
-        ${p.end ? `<span class="project-date">📅 ${p.end}</span>` : ''}
+      <div class="project-card-meta">
+        <span class="project-status-badge ${p.status}">${getStatusLabel(p.status)}</span>
+        ${p.end ? `<span class="project-card-date">📅 ${p.end}</span>` : ''}
       </div>
       
-      <div class="project-progress">
+      <div class="project-progress-section">
         <div class="progress-header">
           <span class="progress-label">Progresso</span>
           <span class="progress-value">${progressWidth}%</span>
         </div>
-        <div class="progress-bar">
-          <div class="progress-bar-fill" style="width: ${progressWidth}%;"></div>
+        <div class="jira-progress-bar">
+          <div class="jira-progress-fill" style="width: ${progressWidth}%;"></div>
         </div>
       </div>
       
-      <div class="project-footer">
+      <div class="project-card-footer">
         ${p.code ? `
           <div class="project-code">
             <span>Código:</span>
@@ -159,9 +149,20 @@ function renderList(list){
   
   if (!container) return;
   
+  // Add Jira grid class
+  container.className = 'jira-projects-grid';
+  
   if (list.length === 0) {
     container.innerHTML = '';
-    if (empty) empty.style.display = 'block';
+    if (empty) {
+      empty.className = 'jira-empty-state';
+      empty.innerHTML = `
+        <div class="empty-icon-jira">📁</div>
+        <h3 class="empty-title-jira">Nenhum projeto encontrado</h3>
+        <p class="empty-desc-jira">Crie seu primeiro projeto clicando no botão + abaixo</p>
+      `;
+      empty.style.display = 'block';
+    }
   } else {
     container.innerHTML = list.map(projectCardHtml).join('\n');
     if (empty) empty.style.display = 'none';
@@ -227,7 +228,7 @@ function openProjectModal(title, project = null) {
   const saveBtnText = document.getElementById('saveBtnText');
   
   if (modalTitle) modalTitle.innerText = title;
-  if (modal) modal.classList.add('active');
+  if (modal) modal.style.display = 'flex';
   
   document.getElementById('projectId').value = project ? project.id : '';
   document.getElementById('projectName').value = project ? project.name : '';
@@ -260,7 +261,7 @@ function openProjectModal(title, project = null) {
 
 function closeProjectModal() {
   const modal = document.getElementById('projectModal');
-  if (modal) modal.classList.remove('active');
+  if (modal) modal.style.display = 'none';
 }
 
 function formatDateForInput(dateStr) {
@@ -429,9 +430,6 @@ window.addEventListener('DOMContentLoaded', ()=>{
   }
   if (newProjectBtn) {
     newProjectBtn.addEventListener('click', () => {
-      // Forçar exibição do modal
-      const modal = document.getElementById('projectModal');
-      if (modal) modal.classList.add('active');
       openProjectModal('Novo Projeto');
     });
   }

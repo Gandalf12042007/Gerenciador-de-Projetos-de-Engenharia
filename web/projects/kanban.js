@@ -45,16 +45,26 @@ async function loadTasks() {
 function renderKanban() {
   const board = document.getElementById('kanbanBoard');
   board.innerHTML = '';
+  board.className = 'jira-kanban-board';
   
-  columns.forEach(col => {
+  const columnClasses = ['todo', 'progress', 'review', 'done'];
+  
+  columns.forEach((col, idx) => {
+    const colTasks = tasks.filter(t => t.status === col.key);
     const colDiv = document.createElement('div');
-    colDiv.className = 'kanban-column';
+    colDiv.className = 'jira-kanban-column';
     colDiv.dataset.status = col.key;
-    colDiv.innerHTML = `<h3>${col.label}</h3><div class="kanban-tasks" id="col-${col.key}" data-status="${col.key}"></div>`;
+    colDiv.innerHTML = `
+      <div class="column-header ${columnClasses[idx]}">
+        <span class="column-title">${col.label}</span>
+        <span class="column-count">${colTasks.length}</span>
+      </div>
+      <div class="column-tasks" id="col-${col.key}" data-status="${col.key}"></div>
+    `;
     board.appendChild(colDiv);
     
     // Configurar drag and drop na área de tarefas
-    const tasksArea = colDiv.querySelector('.kanban-tasks');
+    const tasksArea = colDiv.querySelector('.column-tasks');
     tasksArea.addEventListener('dragover', (e) => {
       e.preventDefault();
       tasksArea.classList.add('drag-over');
@@ -83,7 +93,7 @@ function renderKanban() {
 
 function taskCard(task) {
   const div = document.createElement('div');
-  div.className = 'kanban-task';
+  div.className = `jira-task-card priority-${task.prioridade || 'media'}`;
   div.draggable = true;
   div.ondragstart = e => {
     div.classList.add('dragging');
@@ -91,21 +101,7 @@ function taskCard(task) {
   };
   div.ondragend = () => div.classList.remove('dragging');
   
-  // Badge de prioridade
-  const prioridadeColors = {
-    'urgente': '#c53030',
-    'alta': '#c05621',
-    'media': '#2b6cb0',
-    'baixa': '#276749'
-  };
-  const prioridadeBg = {
-    'urgente': '#fed7d7',
-    'alta': '#feebc8',
-    'media': '#bee3f8',
-    'baixa': '#c6f6d5'
-  };
-  
-  // Badge de etapa
+  // Ícones de etapa
   const etapaIcons = {
     'fundacao': '🏗️',
     'estrutura': '🔩',
@@ -121,16 +117,33 @@ function taskCard(task) {
     'outro': '📋'
   };
   
+  // Prioridade labels
+  const prioridadeLabels = {
+    'urgente': 'URGENTE',
+    'alta': 'ALTA',
+    'media': 'MÉDIA',
+    'baixa': 'BAIXA'
+  };
+  
   div.innerHTML = `
-    <div class="task-title">${escapeHtml(task.title)}</div>
-    ${task.prioridade ? `<span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.7rem; background:${prioridadeBg[task.prioridade]}; color:${prioridadeColors[task.prioridade]}; font-weight:600; margin:4px 0;">${task.prioridade.toUpperCase()}</span>` : ''}
-    ${task.etapa_tipo ? `<span style="display:inline-block; margin-left:5px; font-size:0.8rem;">${etapaIcons[task.etapa_tipo] || '📋'} ${task.etapa_tipo}</span>` : ''}
-    <div class="task-desc" style="font-size:0.85rem; color:#718096; margin:5px 0;">${escapeHtml(task.desc || '')}</div>
-    ${task.responsavel_nome ? `<div style="font-size:0.75rem; color:#a0aec0;">👤 ${escapeHtml(task.responsavel_nome)}</div>` : ''}
-    ${task.data_fim_prevista ? `<div style="font-size:0.75rem; color:#a0aec0;">📅 ${formatDate(task.data_fim_prevista)}</div>` : ''}
-    <div class="task-actions" style="margin-top:8px;">
-      <button class="btn" onclick="editTask(${task.id})">✏️</button>
-      <button class="btn" onclick="deleteTask(${task.id})">🗑️</button>
+    <div class="task-card-header">
+      <span class="task-card-title">${escapeHtml(task.title)}</span>
+      <div class="task-card-menu">
+        <button class="btn-jira-icon" onclick="event.stopPropagation(); editTask(${task.id})" title="Editar">✏️</button>
+      </div>
+    </div>
+    ${task.desc ? `<div class="task-card-desc">${escapeHtml(task.desc)}</div>` : ''}
+    <div class="task-card-footer">
+      <div class="task-badges">
+        ${task.prioridade ? `<span class="task-badge badge-priority-${task.prioridade}">${prioridadeLabels[task.prioridade] || task.prioridade}</span>` : ''}
+        ${task.etapa_tipo ? `<span class="task-badge badge-etapa">${etapaIcons[task.etapa_tipo] || '📋'} ${task.etapa_tipo}</span>` : ''}
+      </div>
+      ${task.responsavel_nome ? `<div class="task-assignee" title="${escapeHtml(task.responsavel_nome)}">${task.responsavel_nome.charAt(0).toUpperCase()}</div>` : ''}
+    </div>
+    ${task.data_fim_prevista ? `<div style="font-size:0.75rem;color:#6B778C;margin-top:8px;">📅 ${formatDate(task.data_fim_prevista)}</div>` : ''}
+    <div class="task-card-actions">
+      <button class="task-action-btn" onclick="event.stopPropagation(); editTask(${task.id})">✏️ Editar</button>
+      <button class="task-action-btn danger" onclick="event.stopPropagation(); deleteTask(${task.id})">🗑️ Excluir</button>
     </div>
   `;
   return div;

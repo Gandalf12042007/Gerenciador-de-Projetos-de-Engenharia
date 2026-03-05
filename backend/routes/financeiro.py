@@ -228,7 +228,7 @@ async def criar_orcamento(
 @router.get("/orcamentos")
 async def listar_orcamentos(
     projeto_id: Optional[int] = None,
-    status: Optional[str] = Query(None, regex="^(ativo|encerrado|cancelado)$"),
+    status: Optional[str] = Query(None, pattern="^(ativo|encerrado|cancelado)$"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100)
 ):
@@ -309,7 +309,7 @@ async def criar_fatura(
 @router.get("/faturas")
 async def listar_faturas(
     projeto_id: Optional[int] = None,
-    status: Optional[str] = Query(None, regex="^(aberta|paga|cancelada|atrasada)$"),
+    status: Optional[str] = Query(None, pattern="^(aberta|paga|cancelada|atrasada)$"),
     vencidas: Optional[bool] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100)
@@ -362,7 +362,7 @@ async def criar_movimento_fluxo(
     projeto_id: int,
     valor: Decimal,
     descricao: str,
-    tipo: str = Query(..., regex="^(entrada|saida)$"),
+    tipo: str = Query(..., pattern="^(entrada|saida)$"),
     categoria: Optional[str] = None,
     data_movimento: Optional[date] = None
 ):
@@ -390,7 +390,7 @@ async def listar_fluxo_caixa(
     projeto_id: int,
     mes: Optional[int] = Query(None, ge=1, le=12),
     ano: Optional[int] = Query(None, ge=2020),
-    tipo: Optional[str] = Query(None, regex="^(entrada|saida)$")
+    tipo: Optional[str] = Query(None, pattern="^(entrada|saida)$")
 ):
     """
     Listar fluxo de caixa com filtros por mês/ano
@@ -486,7 +486,7 @@ async def relatorio_orcamento_realizado(projeto_id: int):
 @router.post("/relatorios/exportar-pdf")
 async def exportar_relatorio_pdf(
     projeto_id: int,
-    tipo: str = Query(..., regex="^(custos|orcamentos|faturas|fluxo_caixa)$")
+    tipo: str = Query(..., pattern="^(custos|orcamentos|faturas|fluxo_caixa)$")
 ):
     """
     Exportar relatório em PDF

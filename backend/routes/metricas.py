@@ -307,3 +307,156 @@ async def metricas_gerais(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@router.get("/dashboard")
+async def dashboard_geral(
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Dashboard geral do sistema com métricas consolidadas.
+    Retorna visão completa para a tela principal.
+    """
+    db = DatabaseHelper()
+    user_id = current_user.get("user_id") or current_user.get("id")
+    is_admin = current_user.get("is_admin", False)
+    
+    try:
+        # Query base - admin vê tudo, usuário vê só seus projetos
+        if is_admin:
+            # Total de projetos
+            projetos = db.execute_query(
+                """
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'planejamento' THEN 1 ELSE 0 END) as planejamento,
+                    SUM(CASE WHEN status = 'em_andamento' THEN 1 ELSE 0 END) as em_andamento,
+                    SUM(CASE WHEN status = 'em_revisao' THEN 1 ELSE 0 END) as em_revisao,
+                    SUM(CASE WHEN status = 'concluido' THEN 1 ELSE 0 END) as concluidos,
+                    SUM(CASE WHEN status = 'pausado' THEN 1 ELSE 0 END) as pausados
+                FROM projetos
+                """,
+                fetch=True
+            )
+            
+            # Total de tarefas
+            tarefas = db.execute_query(
+                """
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'a_fazer' THEN 1 ELSE 0 END) as a_fazer,
+                    SUM(CASE WHEN status = 'em_andamento' THEN 1 ELSE 0 END) as em_andamento,
+                    SUM(CASE WHEN status = 'em_revisao' THEN 1 ELSE 0 END) as em_revisao,
+                    SUM(CASE WHEN status = 'concluida' THEN 1 ELSE 0 END) as concluidas
+                FROM tarefas
+                """,
+                fetch=True
+            )
+            
+            # Total de usuários
+            usuarios = db.execute_query(
+                "SELECT COUNT(*) as total FROM usuarios_new WHERE ativo = 1",
+                fetch=True
+            )
+        else:
+            # Projetos do usuário
+            projetos = db.execute_query(
+                """
+                SELECT 
+                    COUNT(DISTINCT p.id) as total,
+                    SUM(CASE WHEN p.status = 'planejamento' THEN 1 ELSE 0 END) as planejamento,
+                    SUM(CASE WHEN p.status = 'em_andamento' THEN 1 ELSE 0 END) as em_andamento,
+                    SUM(CASE WHEN p.status = 'em_revisao' THEN 1 ELSE 0 END) as em_revisao,
+                    SUM(CASE WHEN p.status = 'concluido' THEN 1 ELSE 0 END) as concluidos,
+                    SUM(CASE WHEN p.status = 'pausado' THEN 1 ELSE 0 END) as pausados
+                FROM projetos p
+                INNER JOIN equipes e ON p.id = e.projeto_id
+                WHERE e.usuario_id = %s AND e.ativo = 1
+                """,
+                (user_id,),
+                fetch=True
+            )
+            
+            # Tarefas dos projetos do usuário
+            tarefas = db.execute_query(
+                """
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN t.status = 'a_fazer' THEN 1 ELSE 0 END) as a_fazer,
+                    SUM(CASE WHEN t.status = 'em_andamento' THEN 1 ELSE 0 END) as em_andamento,
+                    SUM(CASE WHEN t.status = 'em_revisao' THEN 1 ELSE 0 END) as em_revisao,
+                    SUM(CASE WHEN t.status = 'concluida' THEN 1 ELSE 0 END) as concluidas
+                FROM tarefas t
+                INNER JOIN projetos p ON t.projeto_id = p.id
+                INNER JOIN equipes e ON p.id = e.projeto_id
+                WHERE e.usuario_id = %s AND e.ativo = 1
+                """,
+                (user_id,),
+                fetch=True
+            )
+            
+            usuarios = [{"total": 0}]
+        
+        proj_stats = projetos[0] if projetos else {}
+        tar_stats = tarefas[0] if tarefas else {}
+        
+        # Calcular progresso geral
+        total_tarefas = tar_stats.get('total', 0) or 0
+        concluidas = tar_stats.get('concluidas', 0) or 0
+        progresso_geral = round((concluidas / total_tarefas * 100), 1) if total_tarefas > 0 else 0
+        
+        # Atividades recentes (últimas 5)
+        atividades = db.execute_query(
+            """
+            SELECT 'tarefa' as tipo, t.titulo as descricao, t.criado_em as data
+            FROM tarefas t
+            ORDER BY t.criado_em DESC
+            LIMIT 5
+            """,
+            fetch=True
+        ) or []
+        
+        return {
+            "success": True,
+            "resumo": {
+                "total_projetos": proj_stats.get('total', 0) or 0,
+                "projetos_ativos": (proj_stats.get('em_andamento', 0) or 0) + (proj_stats.get('planejamento', 0) or 0),
+                "total_tarefas": total_tarefas,
+                "tarefas_concluidas": concluidas,
+                "progresso_geral": progresso_geral,
+                "total_usuarios": usuarios[0]['total'] if usuarios else 0
+            },
+            "projetos": {
+                "total": proj_stats.get('total', 0) or 0,
+                "planejamento": proj_stats.get('planejamento', 0) or 0,
+                "em_andamento": proj_stats.get('em_andamento', 0) or 0,
+                "em_revisao": proj_stats.get('em_revisao', 0) or 0,
+                "concluidos": proj_stats.get('concluidos', 0) or 0,
+                "pausados": proj_stats.get('pausados', 0) or 0
+            },
+            "tarefas": {
+                "total": total_tarefas,
+                "a_fazer": tar_stats.get('a_fazer', 0) or 0,
+                "em_andamento": tar_stats.get('em_andamento', 0) or 0,
+                "em_revisao": tar_stats.get('em_revisao', 0) or 0,
+                "concluidas": concluidas
+            },
+            "atividades_recentes": atividades
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/status/config")
+async def obter_configuracao_status():
+    """
+    Retorna configuração de status e cores para o frontend.
+    Endpoint público (não requer autenticação).
+    """
+    from utils.status_manager import obter_todos_status
+    
+    return {
+        "success": True,
+        **obter_todos_status()
+    }
+

@@ -1,38 +1,98 @@
 """
 Utilitário para geração de códigos de projeto
-Formato: LETRA + 4 NÚMEROS (ex: A1234, B9876)
+Formato Profissional: ENG-2026-0001 (Prefixo + Ano + Sequencial)
+Desenvolvido por: Vicente de Souza
 """
 
 import random
 import string
 import sys
 import os
+from datetime import datetime
 
 # Adicionar path do database
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'database'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
 from db_helper import DatabaseHelper
 
+# Prefixo padrão para projetos de engenharia
+PREFIXO_PROJETO = "ENG"
 
-def gerar_codigo_projeto():
+
+def obter_proximo_numero_sequencial(ano: int = None) -> int:
     """
-    Gera um código único para projeto.
-    Formato: UMA LETRA MAIÚSCULA + 4 NÚMEROS
-    Exemplo: A1234, B9876, X4521
+    Obtém o próximo número sequencial para o ano especificado.
+    Analisa os códigos existentes no formato ENG-ANO-XXXX.
+    
+    Args:
+        ano: Ano para buscar sequencial (padrão: ano atual)
+        
+    Returns:
+        Próximo número sequencial disponível
     """
-    letra = random.choice(string.ascii_uppercase)
-    numeros = random.randint(1000, 9999)
-    return f"{letra}{numeros}"
+    if ano is None:
+        ano = datetime.now().year
+    
+    db = DatabaseHelper()
+    
+    # Buscar maior número do ano atual
+    resultado = db.execute_query(
+        """
+        SELECT codigo_acesso FROM projetos 
+        WHERE codigo_acesso LIKE %s
+        ORDER BY codigo_acesso DESC LIMIT 1
+        """,
+        (f"{PREFIXO_PROJETO}-{ano}-%",),
+        fetch=True
+    )
+    
+    if resultado and len(resultado) > 0:
+        ultimo_codigo = resultado[0].get('codigo_acesso', '')
+        try:
+            # Extrair número sequencial do código (última parte)
+            partes = ultimo_codigo.split('-')
+            if len(partes) == 3:
+                ultimo_num = int(partes[2])
+                return ultimo_num + 1
+        except (ValueError, IndexError):
+            pass
+    
+    # Primeiro projeto do ano
+    return 1
 
 
-def gerar_codigo_unico():
+def gerar_codigo_projeto(ano: int = None) -> str:
+    """
+    Gera um código único para projeto no formato profissional.
+    Formato: ENG-2026-0001
+    
+    - ENG: Prefixo fixo (Engenharia)
+    - 2026: Ano atual
+    - 0001: Número sequencial (4 dígitos com zeros à esquerda)
+    
+    Args:
+        ano: Ano para o código (padrão: ano atual)
+        
+    Returns:
+        Código no formato ENG-AAAA-NNNN
+    """
+    if ano is None:
+        ano = datetime.now().year
+    
+    numero = obter_proximo_numero_sequencial(ano)
+    return f"{PREFIXO_PROJETO}-{ano}-{numero:04d}"
+
+
+def gerar_codigo_unico() -> str:
     """
     Gera um código garantidamente único verificando no banco.
+    Formato: ENG-2026-0001
     """
     db = DatabaseHelper()
     max_tentativas = 100
+    ano = datetime.now().year
     
     for _ in range(max_tentativas):
-        codigo = gerar_codigo_projeto()
+        codigo = gerar_codigo_projeto(ano)
         
         # Verifica se já existe no banco
         existente = db.execute_query(
@@ -43,9 +103,23 @@ def gerar_codigo_unico():
         
         if not existente or len(existente) == 0:
             return codigo
+        
+        # Se existe, força incremento
+        numero = obter_proximo_numero_sequencial(ano)
     
-    # Fallback com mais caracteres se necessário
-    return f"{random.choice(string.ascii_uppercase)}{random.randint(10000, 99999)}"
+    # Fallback extremo com timestamp
+    return f"{PREFIXO_PROJETO}-{ano}-{int(datetime.now().timestamp()) % 10000:04d}"
+
+
+def gerar_codigo_legado():
+    """
+    Gera um código no formato legado (LETRA + 4 NÚMEROS).
+    Mantido para compatibilidade.
+    Formato: A1234, B9876, X4521
+    """
+    letra = random.choice(string.ascii_uppercase)
+    numeros = random.randint(1000, 9999)
+    return f"{letra}{numeros}"
 
 
 def validar_formato_codigo(codigo: str) -> bool:

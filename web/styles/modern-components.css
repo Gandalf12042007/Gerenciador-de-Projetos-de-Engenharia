@@ -1,0 +1,511 @@
+/* =====================================================
+   🎨 MODERN COMPONENTS V3.0
+   Componentes Adicionais para o Sistema de Engenharia
+   Fase 3: Modernização Visual
+   ===================================================== */
+
+/* =====================================================
+   📊 PROGRESS COMPONENTS
+   ===================================================== */
+
+.progress-ring {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.progress-ring__circle {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    fill: none;
+    stroke-width: 6;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset var(--transition-slow);
+}
+
+.progress-ring__bg {
+    stroke: var(--gray-200);
+}
+
+.progress-ring__text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+/* =====================================================
+   🏷️ TAGS & CHIPS
+   ===================================================== */
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all var(--transition);
+}
+
+.tag-primary {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.tag-success {
+    background: var(--success-bg);
+    color: var(--accent);
+}
+
+.tag-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.tag-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.tag-info {
+    background: var(--info-bg);
+    color: var(--info);
+}
+
+.tag-removable {
+    cursor: pointer;
+}
+
+.tag-removable:hover {
+    opacity: 0.8;
+}
+
+.tag-close {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity var(--transition-fast);
+}
+
+.tag-close:hover {
+    opacity: 1;
+}
+
+/* =====================================================
+   📋 DATA TABLES
+   ===================================================== */
+
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #FFFFFF;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.data-table thead {
+    background: var(--gray-100);
+}
+
+.data-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid var(--border);
+}
+
+.data-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.95rem;
+    color: var(--dark);
+}
+
+.data-table tbody tr {
+    transition: background var(--transition-fast);
+}
+
+.data-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* =====================================================
+   🔔 ALERTS & NOTIFICATIONS
+   ===================================================== */
+
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+    border-left: 4px solid;
+}
+
+.alert-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+.alert-message {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.alert-success {
+    background: var(--success-bg);
+    border-color: var(--accent);
+    color: var(--accent-dark);
+}
+
+.alert-warning {
+    background: var(--warning-bg);
+    border-color: var(--warning);
+    color: #92400E;
+}
+
+.alert-danger {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    color: #991B1B;
+}
+
+.alert-info {
+    background: var(--info-bg);
+    border-color: var(--info);
+    color: #1E40AF;
+}
+
+/* =====================================================
+   💫 EMPTY STATES
+   ===================================================== */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: var(--gray-300);
+    margin-bottom: 20px;
+}
+
+.empty-state-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 8px;
+}
+
+.empty-state-description {
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    max-width: 400px;
+    margin-bottom: 24px;
+}
+
+/* =====================================================
+   🎴 AVATAR GROUP
+   ===================================================== */
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 2px solid #FFFFFF;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+}
+
+.avatar-lg {
+    width: 52px;
+    height: 52px;
+    font-size: 1.1rem;
+}
+
+.avatar-group {
+    display: flex;
+}
+
+.avatar-group .avatar {
+    margin-left: -10px;
+}
+
+.avatar-group .avatar:first-child {
+    margin-left: 0;
+}
+
+/* =====================================================
+   📱 MOBILE OPTIMIZATIONS
+   ===================================================== */
+
+@media (max-width: 768px) {
+    .data-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .stat-card {
+        padding: 20px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .alert {
+        padding: 14px 16px;
+    }
+}
+
+/* =====================================================
+   🌈 SKELETON LOADERS
+   ===================================================== */
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--gray-200) 25%,
+        var(--gray-100) 50%,
+        var(--gray-200) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius);
+}
+
+.skeleton-text {
+    height: 1em;
+    margin-bottom: 8px;
+}
+
+.skeleton-title {
+    height: 1.5em;
+    width: 60%;
+    margin-bottom: 12px;
+}
+
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    height: 150px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* =====================================================
+   🔍 SEARCH COMPONENT
+   ===================================================== */
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 48px;
+    padding-right: 16px;
+    width: 100%;
+    height: 48px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    transition: all var(--transition);
+    background: var(--gray-50);
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-bg);
+    background: #FFFFFF;
+}
+
+.search-box i {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-500);
+    font-size: 1.1rem;
+}
+
+/* =====================================================
+   📍 BREADCRUMB
+   ===================================================== */
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin-bottom: 20px;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.breadcrumb-item a {
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary);
+}
+
+.breadcrumb-item.active {
+    color: var(--dark);
+    font-weight: 600;
+}
+
+.breadcrumb-separator {
+    color: var(--gray-400);
+}
+
+/* =====================================================
+   ⚡ TOOLTIPS
+   ===================================================== */
+
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    padding: 8px 12px;
+    background: var(--dark);
+    color: #FFFFFF;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: var(--radius);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+    z-index: 1000;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px);
+}
+
+/* =====================================================
+   📊 METRIC HIGHLIGHT
+   ===================================================== */
+
+.metric-highlight {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.metric-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.metric-icon.primary {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.metric-icon.success {
+    background: var(--success-bg);
+    color: var(--accent);
+}
+
+.metric-icon.warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.metric-icon.danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    margin-top: 4px;
+}

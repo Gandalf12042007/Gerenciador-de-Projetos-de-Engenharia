@@ -1,74 +1,123 @@
 /* =====================================================
-   VARIÁVEIS E RESET - TEMA CORPORATIVO
+   🎨 SISTEMA DE DESIGN V3.0 - ENGENHARIA PROFISSIONAL
+   FASE 3: MODERNIZAÇÃO VISUAL COMPLETA
    ===================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    /* Cores principais - Azul Corporativo */
-    --primary: #1E3A5F;
-    --primary-dark: #0F2744;
-    --primary-light: #2D5A8B;
-    --primary-bg: rgba(30, 58, 95, 0.1);
+    /* ================================================
+       PALETA PRINCIPAL - TEMA ENGENHARIA
+       Azul Petróleo + Grafite + Verde Tech
+       ================================================ */
     
-    /* Cores de destaque */
-    --accent: #4CAF50;
-    --accent-orange: #FF9800;
-    --accent-blue: #2196F3;
-    --accent-red: #F44336;
-    --accent-purple: #9C27B0;
+    /* 🔵 Azul Petróleo - Cor Primária */
+    --primary: #0B3D91;
+    --primary-dark: #062557;
+    --primary-light: #1565C0;
+    --primary-bg: rgba(11, 61, 145, 0.08);
+    --primary-50: #E3F2FD;
+    --primary-100: #BBDEFB;
+    --primary-gradient: linear-gradient(135deg, #0B3D91 0%, #1565C0 50%, #1976D2 100%);
     
-    /* Cores de status - VIBRANTES */
-    --success: #4CAF50;
-    --success-light: #81C784;
-    --success-bg: #4CAF50;
-    --danger: #F44336;
-    --danger-light: #E57373;
-    --danger-bg: #F44336;
-    --warning: #FF9800;
-    --warning-light: #FFB74D;
-    --warning-bg: #FF9800;
-    --info: #2196F3;
-    --info-bg: #2196F3;
+    /* ⬛ Grafite/Carvão - Tema Escuro */
+    --dark: #1C1F26;
+    --dark-light: #2A2F38;
+    --dark-lighter: #3D4450;
+    --charcoal: #1C1F26;
     
-    /* Cores neutras */
-    --dark: #1E3A5F;
-    --dark-light: #2D5A8B;
-    --gray-900: #1A1A2E;
-    --gray-800: #16213E;
-    --gray-700: #334155;
-    --gray-600: #475569;
-    --gray-500: #64748B;
-    --gray-400: #94A3B8;
-    --gray-300: #CBD5E1;
-    --gray-200: #E2E8F0;
-    --gray-100: #F1F5F9;
-    --gray-50: #F8FAFC;
-    --light: #F5F5F5;
+    /* 💚 Verde Tecnológico - Sucesso/Ações */
+    --accent: #1FAA59;
+    --accent-light: #2CD770;
+    --accent-dark: #178F4A;
+    --accent-gradient: linear-gradient(135deg, #1FAA59 0%, #2CD770 100%);
+    
+    /* ================================================
+       CORES DE STATUS - VIBRANTES E ACESSÍVEIS
+       ================================================ */
+    --success: #1FAA59;
+    --success-light: #2CD770;
+    --success-bg: rgba(31, 170, 89, 0.12);
+    --success-border: rgba(31, 170, 89, 0.25);
+    
+    --danger: #EF4444;
+    --danger-light: #F87171;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --danger-border: rgba(239, 68, 68, 0.25);
+    
+    --warning: #F59E0B;
+    --warning-light: #FBBF24;
+    --warning-bg: rgba(245, 158, 11, 0.12);
+    --warning-border: rgba(245, 158, 11, 0.25);
+    
+    --info: #3B82F6;
+    --info-light: #60A5FA;
+    --info-bg: rgba(59, 130, 246, 0.12);
+    --info-border: rgba(59, 130, 246, 0.25);
+    
+    --purple: #8B5CF6;
+    --purple-light: #A78BFA;
+    --purple-bg: rgba(139, 92, 246, 0.12);
+    
+    /* ================================================
+       CORES NEUTRAS - ESCALA REFINADA
+       ================================================ */
+    --gray-950: #0F172A;
+    --gray-900: #1E293B;
+    --gray-800: #334155;
+    --gray-700: #475569;
+    --gray-600: #64748B;
+    --gray-500: #94A3B8;
+    --gray-400: #CBD5E1;
+    --gray-300: #E2E8F0;
+    --gray-200: #F1F5F9;
+    --gray-100: #F8FAFC;
+    --gray-50: #FAFBFC;
+    --light: #F8FAFC;
     --white: #FFFFFF;
     
-    /* Sombras */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-    --shadow: 0 2px 4px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 8px rgba(0,0,0,0.12);
-    --shadow-lg: 0 8px 16px rgba(0,0,0,0.15);
-    --shadow-xl: 0 12px 24px rgba(0,0,0,0.2);
+    /* ================================================
+       SOMBRAS MODERNAS
+       ================================================ */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08);
+    --shadow-2xl: 0 24px 64px rgba(0, 0, 0, 0.2);
+    --shadow-primary: 0 4px 14px rgba(11, 61, 145, 0.25);
+    --shadow-success: 0 4px 14px rgba(31, 170, 89, 0.25);
+    --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
     
-    /* Transições */
-    --transition-fast: 150ms ease;
-    --transition: 200ms ease;
-    --transition-slow: 300ms ease;
+    /* ================================================
+       TRANSIÇÕES SUAVES
+       ================================================ */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
     
-    /* Bordas */
-    --radius-sm: 4px;
+    /* ================================================
+       BORDAS ARREDONDADAS
+       ================================================ */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
     --radius: 8px;
+    --radius-md: 10px;
     --radius-lg: 12px;
     --radius-xl: 16px;
     --radius-2xl: 20px;
+    --radius-3xl: 24px;
+    --radius-full: 9999px;
     
-    /* Bordas */
-    --border: #E0E0E0;
-    --border-dark: #BDBDBD;
+    /* ================================================
+       BORDAS
+       ================================================ */
+    --border: #E2E8F0;
+    --border-light: #F1F5F9;
+    --border-dark: #CBD5E1;
+    --border-focus: #0B3D91;
 }
 
 * {
@@ -198,13 +247,13 @@ body {
 }
 
 /* =====================================================
-   BOTÕES - CORES VIBRANTES
+   BOTÕES - DESIGN PROFISSIONAL V3
    ===================================================== */
 
 .btn {
-    padding: 10px 20px;
+    padding: 12px 24px;
     border: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
@@ -214,9 +263,10 @@ body {
     justify-content: center;
     gap: 8px;
     text-decoration: none;
-    letter-spacing: 0;
+    letter-spacing: 0.02em;
     position: relative;
     overflow: hidden;
+    white-space: nowrap;
 }
 
 .btn::before {
@@ -229,75 +279,107 @@ body {
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
 }
 
 .btn:active {
     transform: translateY(0);
 }
 
+.btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Botão Primário - Azul Petróleo */
 .btn-primary {
-    background: #2196F3;
+    background: var(--primary-gradient);
     color: #FFFFFF;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    box-shadow: var(--shadow-primary);
 }
 
 .btn-primary:hover {
-    background: #1976D2;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+    box-shadow: 0 6px 20px rgba(11, 61, 145, 0.35);
+    filter: brightness(1.08);
 }
 
+/* Botão Sucesso - Verde Tecnológico */
 .btn-success {
-    background: #4CAF50;
+    background: var(--accent-gradient);
     color: #FFFFFF;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    box-shadow: var(--shadow-success);
 }
 
 .btn-success:hover {
-    background: #43A047;
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 6px 20px rgba(31, 170, 89, 0.35);
+    filter: brightness(1.08);
 }
 
+/* Botão Perigo */
 .btn-danger {
-    background: #F44336;
+    background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
     color: #FFFFFF;
-    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
 }
 
 .btn-danger:hover {
-    background: #D32F2F;
-    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+    filter: brightness(1.08);
 }
 
+/* Botão Alerta */
 .btn-warning {
-    background: #FF9800;
-    color: #FFFFFF;
-    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+    background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
+    color: #1C1F26;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
 }
 
 .btn-warning:hover {
-    background: #F57C00;
-    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+    filter: brightness(1.05);
 }
 
+/* Botão Info */
+.btn-info {
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+    color: #FFFFFF;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+}
+
+.btn-info:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+    filter: brightness(1.08);
+}
+
+/* Variantes de tamanho */
 .btn-small {
-    padding: 6px 12px;
+    padding: 8px 16px;
     font-size: 0.8rem;
     border-radius: var(--radius-sm);
+}
+
+.btn-large {
+    padding: 14px 32px;
+    font-size: 1rem;
+    border-radius: var(--radius-lg);
 }
 
 .btn-full {
     width: 100%;
 }
 
+/* Botão Outline - Elegante */
 .btn-outline {
     background: transparent;
-    border: 2px solid #2196F3;
-    color: #2196F3;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    box-shadow: none;
 }
 
 .btn-outline:hover {
-    background: #2196F3;
+    background: var(--primary);
+    color: #FFFFFF;
+    box-shadow: var(--shadow-primary);
+}
     color: #FFFFFF;
 }
 
@@ -305,74 +387,86 @@ body {
    FORMULÁRIOS - BORDAS VISÍVEIS
    ===================================================== */
 
+/* =====================================================
+   📝 FORMULÁRIOS - DESIGN PROFISSIONAL V3
+   ===================================================== */
+
 .form-group {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-weight: 600;
     font-size: 0.9rem;
-    color: #333333;
-    letter-spacing: 0;
+    color: var(--dark);
+    letter-spacing: 0.01em;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #CCCCCC;
-    border-radius: var(--radius);
+    padding: 14px 16px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
     font-size: 1rem;
     font-family: inherit;
     transition: all var(--transition);
-    background: #FFFFFF;
-    color: #333333;
+    background: var(--gray-50);
+    color: var(--dark);
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-    color: #999999;
+    color: var(--gray-400);
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #2196F3;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-bg);
+    background: #FFFFFF;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+    border-color: var(--gray-400);
 }
 
 .form-group small {
     display: block;
-    margin-top: 4px;
-    color: #666666;
+    margin-top: 6px;
+    color: var(--gray-600);
     font-size: 0.85rem;
 }
 
 .form-footer {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 24px;
     font-size: 0.9rem;
-    color: #666666;
+    color: var(--gray-600);
 }
 
 .form-footer a {
-    color: #2196F3;
+    color: var(--primary);
     text-decoration: none;
     font-weight: 600;
     transition: color var(--transition);
 }
 
 .form-footer a:hover {
-    color: #1976D2;
+    color: var(--primary-dark);
     text-decoration: underline;
 }
 
 /* =====================================================
-   TELA DE LOGIN - COM IMAGEM DE FUNDO
+   🔐 TELA DE LOGIN - DESIGN PROFISSIONAL V3
+   Tema Premium com Gradiente Elegante
    ===================================================== */
 
 .login-container {
@@ -382,12 +476,12 @@ body {
     width: 100%;
     height: 100%;
     min-height: 100vh;
-    padding: 20px;
+    padding: 24px;
     position: relative;
     overflow: hidden;
-    /* Imagem de fundo de engenharia civil - LOCAL */
+    /* Background Gradiente Moderno */
     background: 
-        linear-gradient(135deg, rgba(30, 58, 95, 0.90) 0%, rgba(15, 39, 68, 0.85) 100%),
+        linear-gradient(135deg, rgba(28, 31, 38, 0.95) 0%, rgba(11, 61, 145, 0.85) 100%),
         url('bg-login.jpg');
     background-size: cover;
     background-position: center;
@@ -403,42 +497,46 @@ body {
 }
 
 .login-box {
-    background: #FFFFFF;
-    border-radius: var(--radius-lg);
-    padding: 40px 36px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: var(--radius-2xl);
+    padding: 48px 40px;
+    box-shadow: 
+        0 24px 64px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     position: relative;
     z-index: 10;
     border: none;
+    backdrop-filter: blur(20px);
 }
 
 .logo {
-    font-size: 56px;
+    font-size: 60px;
     text-align: center;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     filter: none;
     animation: none;
+    color: var(--primary);
 }
 
 .login-box h1 {
     text-align: center;
-    color: var(--primary);
+    color: var(--dark);
     margin-bottom: 8px;
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     background: none;
     -webkit-background-clip: unset;
-    -webkit-text-fill-color: var(--primary);
+    -webkit-text-fill-color: var(--dark);
     background-clip: unset;
 }
 
 .subtitle {
     text-align: center;
-    color: #666;
-    margin-bottom: 32px;
+    color: var(--gray-600);
+    margin-bottom: 36px;
     font-size: 1rem;
     font-weight: 500;
     display: block;
@@ -452,18 +550,19 @@ body {
 }
 
 /* =====================================================
-   NAVBAR - AZUL CORPORATIVO
+   🔝 NAVBAR - DESIGN PROFISSIONAL V3
+   Tema Grafite Premium
    ===================================================== */
 
 .navbar {
-    background: var(--primary);
+    background: linear-gradient(90deg, var(--dark) 0%, #262B35 100%);
     border-bottom: none;
-    padding: 0 24px;
-    height: 56px;
+    padding: 0 28px;
+    height: 60px;
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .navbar-content {
@@ -478,22 +577,23 @@ body {
 .navbar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-weight: 600;
+    gap: 14px;
+    font-weight: 700;
     color: #FFFFFF;
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     text-decoration: none;
 }
 
 .logo-small {
-    font-size: 28px;
+    font-size: 30px;
     filter: none;
+    color: var(--accent);
 }
 
 .brand-text {
     display: inline;
-    font-weight: 600;
-    letter-spacing: 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     color: #FFFFFF;
     background: none;
     -webkit-background-clip: unset;
@@ -504,30 +604,30 @@ body {
 .navbar-menu {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
 }
 
 .menu-toggle {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    padding: 8px;
+    padding: 10px;
     display: none;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     transition: all var(--transition);
 }
 
 .menu-toggle:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(31, 170, 89, 0.3);
 }
 
 .menu-toggle span {
-    width: 18px;
-    height: 2px;
+    width: 20px;
+    height: 2.5px;
     background: #FFFFFF;
-    border-radius: 1px;
+    border-radius: 2px;
     transition: all var(--transition-slow);
 }
 
@@ -552,40 +652,42 @@ body {
 .user-menu {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .user-name {
     font-size: 0.9rem;
     color: #FFFFFF;
-    max-width: 150px;
+    max-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 500;
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    background: rgba(31, 170, 89, 0.2);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(31, 170, 89, 0.3);
     border: none;
 }
 
 /* =====================================================
-   SIDEBAR - AZUL ESCURO COM TEXTO BRANCO
+   🗂️ SIDEBAR - DESIGN PROFISSIONAL V3
+   Tema Grafite Elegante com Verde Tecnológico
    ===================================================== */
 
 .container-main {
     display: flex;
     flex: 1;
     min-height: calc(100vh - 56px);
-    background: #F5F5F5;
+    background: var(--gray-100);
 }
 
 .sidebar {
-    background: var(--primary);
+    background: linear-gradient(180deg, var(--dark) 0%, #262B35 100%);
     border-right: none;
-    width: 240px;
-    min-width: 240px;
-    max-width: 240px;
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
     overflow-y: auto;
     overflow-x: hidden;
     transition: all var(--transition);
@@ -593,7 +695,7 @@ body {
     position: sticky;
     top: 56px;
     z-index: 50;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
     flex-shrink: 0;
 }
 
@@ -602,54 +704,55 @@ body {
 }
 
 .sidebar.active {
-    width: 240px;
+    width: 260px;
 }
 
 /* Mobile: sidebar oculta */
 @media (max-width: 767px) {
     .sidebar {
         position: fixed;
-        left: -240px;
-        width: 240px;
+        left: -260px;
+        width: 260px;
         top: 56px;
-        height: calc(100vh - 70px);
+        height: calc(100vh - 56px);
     }
     .sidebar.active {
         left: 0;
-        box-shadow: 8px 0 40px rgba(0, 0, 0, 0.2);
+        box-shadow: 12px 0 48px rgba(0, 0, 0, 0.3);
     }
 }
 
 /* Desktop: sidebar visível */
 @media (min-width: 768px) {
     .sidebar {
-        width: 240px;
+        width: 260px;
         position: sticky;
     }
 }
 
 .nav-list {
     list-style: none;
-    padding: 16px 12px;
+    padding: 20px 16px;
     margin-top: 0;
 }
 
 .nav-list li {
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
 .nav-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    color: rgba(255, 255, 255, 0.85);
+    gap: 14px;
+    padding: 14px 18px;
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     transition: all var(--transition);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     position: relative;
+    border-left: 3px solid transparent;
 }
 
 .nav-link::before {
@@ -657,9 +760,9 @@ body {
 }
 
 .nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: #FFFFFF;
-    transform: none;
+    transform: translateX(3px);
 }
 
 .nav-link:hover::before {
@@ -667,15 +770,27 @@ body {
 }
 
 .nav-link.active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(31, 170, 89, 0.15);
     color: #FFFFFF;
     box-shadow: none;
-    border-left: 4px solid #4CAF50;
+    border-left: 3px solid var(--accent);
     font-weight: 600;
 }
 
 .nav-link.active::before {
     display: none;
+}
+
+.nav-link i {
+    font-size: 1.1rem;
+    width: 22px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.nav-link.active i {
+    color: var(--accent);
+    opacity: 1;
 }
 
 /* =====================================================
@@ -755,11 +870,15 @@ body {
     margin-bottom: 32px;
 }
 
+/* =====================================================
+   📊 STAT CARDS - DESIGN PROFISSIONAL V3
+   ===================================================== */
+
 .stat-card {
-    padding: 24px;
-    border-radius: var(--radius-lg);
+    padding: 28px;
+    border-radius: var(--radius-xl);
     text-align: left;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     transition: all var(--transition);
     border: none;
     position: relative;
@@ -767,24 +886,24 @@ body {
     color: #FFFFFF;
 }
 
-/* Card 1 - Verde */
+/* Card 1 - Verde Tecnológico */
 .stat-card:nth-child(1) {
-    background: linear-gradient(135deg, #4CAF50 0%, #43A047 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
 }
 
-/* Card 2 - Laranja */
+/* Card 2 - Laranja Alerta */
 .stat-card:nth-child(2) {
-    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    background: linear-gradient(135deg, var(--warning) 0%, var(--warning-light) 100%);
 }
 
-/* Card 3 - Azul */
+/* Card 3 - Azul Petróleo */
 .stat-card:nth-child(3) {
-    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
 }
 
-/* Card 4 - Vermelho */
+/* Card 4 - Vermelho Perigo */
 .stat-card:nth-child(4) {
-    background: linear-gradient(135deg, #F44336 0%, #D32F2F 100%);
+    background: linear-gradient(135deg, var(--danger) 0%, var(--danger-light) 100%);
 }
 
 .stat-card::before {
@@ -794,69 +913,79 @@ body {
 .stat-card::after {
     content: '';
     position: absolute;
-    top: -20px;
-    right: -20px;
-    width: 80px;
-    height: 80px;
-    background: rgba(255, 255, 255, 0.15);
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 50%;
     pointer-events: none;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: var(--shadow-2xl);
 }
 
 .stat-number {
-    font-size: 2.4rem;
+    font-size: 2.6rem;
     font-weight: 800;
     color: #FFFFFF;
     background: none;
     -webkit-background-clip: unset;
     -webkit-text-fill-color: #FFFFFF;
     background-clip: unset;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     line-height: 1;
+    letter-spacing: -0.02em;
 }
 
 .stat-label {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.9rem;
     font-weight: 500;
     text-transform: none;
-    letter-spacing: 0;
+    letter-spacing: 0.01em;
 }
+
+/* =====================================================
+   🗂️ CARDS E DASHBOARD - DESIGN PROFISSIONAL V3
+   ===================================================== */
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px;
 }
 
 .card {
     background: #FFFFFF;
-    padding: 20px;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow);
-    border: 1px solid #E0E0E0;
+    padding: 24px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
     transition: all var(--transition);
 }
 
 .card:hover {
     box-shadow: var(--shadow-xl);
+    border-color: var(--border-dark);
 }
 
 .card h3 {
-    margin-bottom: 16px;
-    color: #333333;
+    margin-bottom: 18px;
+    color: var(--dark);
     font-size: 1.1rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #E0E0E0;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.card h3 i {
+    color: var(--primary);
 }
 
 .card h3::before {
@@ -864,26 +993,26 @@ body {
 }
 
 .list {
-    max-height: 350px;
+    max-height: 380px;
     overflow-y: auto;
 }
 
 .list-item {
-    padding: 12px 14px;
-    border-bottom: 1px solid #EEEEEE;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--gray-200);
     font-size: 0.9rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all var(--transition);
-    border-radius: var(--radius-sm);
-    margin-bottom: 4px;
-    background: #FAFAFA;
+    border-radius: var(--radius-md);
+    margin-bottom: 6px;
+    background: var(--gray-100);
 }
 
 .list-item:hover {
-    background: #F0F0F0;
-    transform: none;
+    background: var(--gray-200);
+    transform: translateX(4px);
 }
 
 .list-item:last-child {
@@ -891,12 +1020,12 @@ body {
 }
 
 .list-item strong {
-    color: #333333;
+    color: var(--dark);
     font-weight: 600;
 }
 
 .list-item span {
-    color: #666666;
+    color: var(--gray-600);
     font-size: 0.85rem;
     font-weight: 400;
 }
@@ -967,30 +1096,30 @@ body {
     white-space: nowrap;
 }
 
-/* Status colors */
+/* Status colors - Tema Profissional V3 */
 .project-status.status-planejamento {
-    background: rgba(99, 102, 241, 0.15);
-    color: #4F46E5;
+    background: var(--color-info-bg);
+    color: var(--info);
 }
 
 .project-status.status-em_andamento {
-    background: rgba(16, 185, 129, 0.15);
-    color: #10b981;
+    background: var(--success-bg);
+    color: var(--accent);
 }
 
 .project-status.status-pausado {
-    background: rgba(245, 158, 11, 0.15);
-    color: #D97706;
+    background: var(--warning-bg);
+    color: var(--warning);
 }
 
 .project-status.status-concluido {
-    background: rgba(34, 197, 94, 0.15);
-    color: #059669;
+    background: rgba(31, 170, 89, 0.18);
+    color: var(--accent-dark);
 }
 
 .project-status.status-cancelado {
-    background: rgba(239, 68, 68, 0.15);
-    color: #DC2626;
+    background: var(--danger-bg);
+    color: var(--danger);
 }
 
 .project-client {

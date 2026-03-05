@@ -17,7 +17,7 @@
 
 ```python
 # ❌ ERRADO (atual):
-"senha": "Admin@2026",
+"senha": "Admin@2025",
 
 # ✅ CORRETO (necessário):
 "senha_hash": "$2b$12$...(bcrypt hash)..."

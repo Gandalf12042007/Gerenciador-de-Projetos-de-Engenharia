@@ -25,6 +25,7 @@ from utils.security_audit import (
     esta_bloqueado,
     tempo_ate_desbloquear
 )
+from utils.smtp_mailer import send_password_reset_email, send_password_changed_notification
 from middleware.rate_limit import RateLimitDecorators
 from middleware.auth_middleware import get_current_active_user
 from config import settings
@@ -477,9 +478,27 @@ async def forgot_password(request_data: ForgotPasswordRequest, request: Request)
                 (user_id, token, expira_em)
             )
             
-            # MODO DESENVOLVIMENTO: Retorna o link diretamente
+            # Gerar link de reset
             reset_link = f"http://localhost:5500/web/reset-password.html?token={token}"
-            logger.info(f"[RESET SENHA] Link gerado para {user_email}: {reset_link}")
+            
+            # Obter nome do usuário
+            user_nome = user['nome'] if isinstance(user, dict) else user[1]
+            
+            # Enviar email de recuperação de senha
+            email_result = send_password_reset_email(
+                to_email=user_email,
+                nome_usuario=user_nome or "Usuário",
+                token=token,
+                reset_link=reset_link
+            )
+            
+            # Log do resultado
+            if email_result.get('success'):
+                logger.info(f"[RESET SENHA] Email enviado para {user_email}")
+            else:
+                logger.warning(f"[RESET SENHA] Falha ao enviar email: {email_result.get('error')}")
+            
+            # Log no console (modo desenvolvimento)
             print(f"\n{'='*60}")
             print(f"📧 LINK DE RESET DE SENHA")
             print(f"📧 Email: {user_email}")
@@ -576,6 +595,17 @@ async def reset_password(request_data: ResetPasswordRequest, request: Request):
             "UPDATE tokens_reset_senha SET usado = 1 WHERE id = %s",
             (token_id,)
         )
+        
+        # Buscar nome do usuário para notificação
+        usuario_info = db.execute_query(
+            "SELECT nome FROM usuarios WHERE id = %s",
+            (user_id,),
+            fetch=True
+        )
+        user_nome = usuario_info[0]['nome'] if usuario_info and isinstance(usuario_info[0], dict) else "Usuário"
+        
+        # Enviar notificação de senha alterada
+        send_password_changed_notification(user_email, user_nome)
         
         logger.info(f"Senha resetada com sucesso para: {user_email}")
         

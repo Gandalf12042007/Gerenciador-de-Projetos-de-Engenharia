@@ -4,7 +4,7 @@ Rotas de Projetos - CRUD
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse, JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date
 import sys

@@ -176,7 +176,10 @@ function initJiraLayout() {
     
     document.getElementById('layoutLogout')?.addEventListener('click', () => {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
         localStorage.removeItem('user_data');
+        localStorage.removeItem('keep_logged_in');
+        sessionStorage.clear();
         window.location.href = pathPrefix + 'login.html';
     });
     
@@ -193,7 +196,8 @@ function initJiraLayout() {
 }
 
 function updateUserInfo() {
-    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
+    // Compatibilidade: tenta 'user' primeiro (api-client), depois 'user_data'
+    const userData = JSON.parse(localStorage.getItem('user') || localStorage.getItem('user_data') || '{}');
     const userName = document.getElementById('sidebarUserName');
     const userAvatar = document.getElementById('sidebarAvatar');
     const userRole = document.getElementById('sidebarUserRole');

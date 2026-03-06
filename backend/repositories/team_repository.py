@@ -1,4 +1,9 @@
-from database.db_helper import DatabaseHelper
+import os
+import sys
+
+# Adicionar path do database
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
+from db_helper import DatabaseHelper
 
 
 class TeamRepository:

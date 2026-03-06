@@ -2,6 +2,29 @@
 let projects = [];
 let loading = false;
 
+// ======================================================================
+// WRAPPER DE COMPATIBILIDADE - mapeia API antiga para api-client.js
+// ======================================================================
+const API = {
+  Projetos: {
+    listar: () => api.getProjetos(),
+    criar: (dados) => api.createProjeto(dados),
+    atualizar: (id, dados) => api.updateProjeto(id, dados),
+    deletar: (id) => api.deleteProjeto(id),
+    buscar: (id) => api.getProjetoById(id)
+  },
+  Auth: {
+    logout: () => api.logout()
+  },
+  Tarefas: {
+    listarPorProjeto: (projetoId) => api.getTarefasByProjeto(projetoId),
+    criar: (dados) => api.createTarefa(dados),
+    atualizar: (id, dados) => api.updateTarefa(id, dados),
+    deletar: (id) => api.deleteTarefa(id)
+  }
+};
+// ======================================================================
+
 // Carregar projetos da API
 async function loadProjects() {
   // Verifica autenticação

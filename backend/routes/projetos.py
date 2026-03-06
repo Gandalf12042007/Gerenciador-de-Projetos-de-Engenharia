@@ -10,6 +10,10 @@ from datetime import date
 import sys
 import os
 import csv
+import logging
+
+# Configurar logger
+logger = logging.getLogger(__name__)
 
 # Adicionar path do database
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'database'))
@@ -113,9 +117,12 @@ async def listar_projetos(
     from services.project_service import ProjectService
     svc = ProjectService()
     user_id = current_user.get("user_id") or current_user.get("id")
-    result = svc.list_user_projects(user_id, status_filter, page, per_page)
-    # Paginação já feita pelo serviço
-    return result["items"]
+    # ProjectService.list_user_projects aceita apenas (user_id, status)
+    result = svc.list_user_projects(user_id, status_filter)
+    # Aplicar paginação manual se necessário
+    start = (page - 1) * per_page
+    end = start + per_page
+    return result[start:end] if isinstance(result, list) else result
 
 
 @router.get("/audit/logs")

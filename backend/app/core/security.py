@@ -1,15 +1,19 @@
 from datetime import datetime, timedelta
 from jose import jwt
-from passlib.context import CryptContext
+import bcrypt
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Usar bcrypt diretamente (passlib tem problemas de compatibilidade)
+def verify_password(plain: str, hashed: str) -> bool:
+    """Verifica senha usando bcrypt diretamente"""
+    try:
+        return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
+    except Exception:
+        return False
 
-def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    """Gera hash bcrypt da senha"""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
 
 def create_access_token(subject: str):
     expire = datetime.utcnow() + timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS)

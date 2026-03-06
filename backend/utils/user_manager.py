@@ -30,16 +30,19 @@ def obter_usuario_por_email(email: str) -> dict:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, nome, email, senha_hash, telefone, cargo, role, ativo, ultimo_login
-            FROM usuarios_new
-            WHERE email = ? AND ativo = TRUE
+            SELECT id, nome, email, senha_hash, telefone, cargo, ativo
+            FROM usuarios
+            WHERE email = ? AND ativo = 1
         ''', (email_normalized,))
         
         row = cursor.fetchone()
         conn.close()
         
         if row:
-            return dict(row)
+            user_dict = dict(row)
+            # Adiciona role baseado no cargo para compatibilidade
+            user_dict['role'] = user_dict.get('cargo', 'usuario')
+            return user_dict
         
         return None
         
@@ -76,8 +79,8 @@ def atualizar_ultimo_login(email: str):
         cursor = conn.cursor()
         
         cursor.execute('''
-            UPDATE usuarios_new
-            SET ultimo_login = ?
+            UPDATE usuarios
+            SET atualizado_em = ?
             WHERE email = ?
         ''', (datetime.now(), email_normalized))
         
@@ -105,16 +108,16 @@ def listar_usuarios(role: str = None, limit: int = 100):
         
         if role:
             cursor.execute('''
-                SELECT id, nome, email, cargo, role, ativo, ultimo_login
-                FROM usuarios_new
-                WHERE role = ?
+                SELECT id, nome, email, cargo, ativo
+                FROM usuarios
+                WHERE cargo = ?
                 ORDER BY nome
                 LIMIT ?
             ''', (role, limit))
         else:
             cursor.execute('''
-                SELECT id, nome, email, cargo, role, ativo, ultimo_login
-                FROM usuarios_new
+                SELECT id, nome, email, cargo, ativo
+                FROM usuarios
                 ORDER BY nome
                 LIMIT ?
             ''', (limit,))
@@ -151,9 +154,9 @@ def criar_usuario(nome: str, email: str, senha_hash: str, cargo: str, role: str,
         cursor = conn.cursor()
         
         cursor.execute('''
-            INSERT INTO usuarios_new (nome, email, senha_hash, telefone, cargo, role, ativo)
-            VALUES (?, ?, ?, ?, ?, ?, TRUE)
-        ''', (nome, email_normalized, senha_hash, telefone, cargo, role))
+            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
+            VALUES (?, ?, ?, ?, ?, 1)
+        ''', (nome, email_normalized, senha_hash, telefone, cargo))
         
         conn.commit()
         conn.close()
@@ -198,7 +201,7 @@ def atualizar_usuario(email: str, **kwargs) -> bool:
         valores.append(email_normalized)
         
         query = f'''
-            UPDATE usuarios_new
+            UPDATE usuarios
             SET {', '.join(campos)}
             WHERE email = ?
         '''
@@ -228,9 +231,9 @@ def contar_usuarios(role: str = None) -> int:
         cursor = conn.cursor()
         
         if role:
-            cursor.execute('SELECT COUNT(*) FROM usuarios_new WHERE role = ?', (role,))
+            cursor.execute('SELECT COUNT(*) FROM usuarios WHERE cargo = ?', (role,))
         else:
-            cursor.execute('SELECT COUNT(*) FROM usuarios_new')
+            cursor.execute('SELECT COUNT(*) FROM usuarios')
         
         count = cursor.fetchone()[0]
         conn.close()

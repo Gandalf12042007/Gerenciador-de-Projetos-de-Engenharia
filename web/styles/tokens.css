@@ -1,60 +1,124 @@
-/* ============================================
-   DESIGN SYSTEM - TOKENS CSS
-   Sistema de tokens centralizados para design
-   ============================================ */
+/* =====================================================
+   🎨 DESIGN SYSTEM V3.0 - ENGENHARIA PROFISSIONAL
+   Sistema de Design Tokens para Projeto de Engenharia
+   Fase 3: Modernização Visual
+   ===================================================== */
 
 :root {
-  /* ========== CORES - PRIMÁRIAS ========== */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;   /* PRIMARY */
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c3d66;
+  /* =====================================================
+     PALETA PRINCIPAL - TEMA ENGENHARIA
+     Inspiração: Corporativo + Industrial + Tech
+     ===================================================== */
+  
+  /* 🔵 AZUL PETRÓLEO - Cor Principal */
+  --brand-primary: #0B3D91;
+  --brand-primary-dark: #062557;
+  --brand-primary-light: #1565C0;
+  --brand-primary-50: #E3F2FD;
+  --brand-primary-100: #BBDEFB;
+  --brand-primary-200: #90CAF9;
+  --brand-primary-300: #64B5F6;
+  --brand-primary-400: #42A5F5;
+  --brand-primary-500: #0B3D91;
+  --brand-primary-600: #0A3680;
+  --brand-primary-700: #082E6E;
+  --brand-primary-800: #06265C;
+  --brand-primary-900: #041E4A;
 
-  /* ========== CORES - SUCESSO ========== */
-  --color-success-50: #f0fdf4;
-  --color-success-100: #dcfce7;
-  --color-success-500: #10b981;
-  --color-success-600: #059669;
-  --color-success-700: #047857;
-
-  /* ========== CORES - ERRO ========== */
-  --color-error-50: #fef2f2;
-  --color-error-100: #fee2e2;
-  --color-error-500: #ef4444;
-  --color-error-600: #dc2626;
-  --color-error-700: #b91c1c;
-
-  /* ========== CORES - AVISO ========== */
-  --color-warning-50: #fffbeb;
-  --color-warning-100: #fef3c7;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-warning-700: #b45309;
-
-  /* ========== CORES - NEUTRAS ========== */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #f9fafb;
-  --color-neutral-100: #f3f4f6;
-  --color-neutral-150: #efefef;
-  --color-neutral-200: #e5e7eb;
-  --color-neutral-300: #d1d5db;
-  --color-neutral-400: #9ca3af;
-  --color-neutral-500: #6b7280;
-  --color-neutral-600: #4b5563;
-  --color-neutral-700: #374151;
-  --color-neutral-800: #1f2937;
-  --color-neutral-900: #111827;
-
-  /* ========== TIPOGRAFIA ========== */
-  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  --font-family-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* ⬛ GRAFITE/CARVÃO - Neutros Escuros */
+  --brand-dark: #1C1F26;
+  --brand-dark-lighter: #2A2F38;
+  --brand-dark-light: #3D4450;
+  --brand-charcoal: #1C1F26;
+  
+  /* 💚 VERDE TECNOLÓGICO - Cor de Ação/Sucesso */
+  --brand-accent: #1FAA59;
+  --brand-accent-dark: #178F4A;
+  --brand-accent-light: #2CD770;
+  --brand-accent-50: #E8F5E9;
+  --brand-accent-100: #C8E6C9;
+  --brand-accent-200: #A5D6A7;
+  --brand-accent-500: #1FAA59;
+  --brand-accent-600: #1B9750;
+  --brand-accent-700: #178447;
+  
+  /* =====================================================
+     CORES SEMÂNTICAS - STATUS
+     ===================================================== */
+  
+  /* ✅ Sucesso */
+  --color-success: #1FAA59;
+  --color-success-bg: rgba(31, 170, 89, 0.12);
+  --color-success-border: rgba(31, 170, 89, 0.3);
+  --color-success-light: #2CD770;
+  --color-success-50: #E8F5E9;
+  --color-success-100: #C8E6C9;
+  --color-success-500: #1FAA59;
+  --color-success-600: #1B9750;
+  --color-success-700: #178447;
+  
+  /* ⚠️ Alerta */
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-warning-border: rgba(245, 158, 11, 0.3);
+  --color-warning-light: #FBBF24;
+  --color-warning-50: #FFFBEB;
+  --color-warning-100: #FEF3C7;
+  --color-warning-500: #F59E0B;
+  --color-warning-600: #D97706;
+  --color-warning-700: #B45309;
+  
+  /* ❌ Erro/Perigo */
+  --color-error: #EF4444;
+  --color-error-bg: rgba(239, 68, 68, 0.12);
+  --color-error-border: rgba(239, 68, 68, 0.3);
+  --color-error-light: #F87171;
+  --color-error-50: #FEF2F2;
+  --color-error-100: #FEE2E2;
+  --color-error-500: #EF4444;
+  --color-error-600: #DC2626;
+  --color-error-700: #B91C1C;
+  
+  /* ℹ️ Info */
+  --color-info: #3B82F6;
+  --color-info-bg: rgba(59, 130, 246, 0.12);
+  --color-info-border: rgba(59, 130, 246, 0.3);
+  --color-info-light: #60A5FA;
+  --color-info-50: #EFF6FF;
+  --color-info-100: #DBEAFE;
+  --color-info-500: #3B82F6;
+  --color-info-600: #2563EB;
+  --color-info-700: #1D4ED8;
+  
+  /* 🟣 Especial/Destaque */
+  --color-special: #8B5CF6;
+  --color-special-bg: rgba(139, 92, 246, 0.12);
+  --color-special-border: rgba(139, 92, 246, 0.3);
+  
+  /* =====================================================
+     CORES NEUTRAS - ESCALA DE CINZAS
+     ===================================================== */
+  --color-neutral-0: #FFFFFF;
+  --color-neutral-50: #F8FAFC;
+  --color-neutral-100: #F1F5F9;
+  --color-neutral-150: #E8ECF1;
+  --color-neutral-200: #E2E8F0;
+  --color-neutral-300: #CBD5E1;
+  --color-neutral-400: #94A3B8;
+  --color-neutral-500: #64748B;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1E293B;
+  --color-neutral-900: #0F172A;
+  --color-neutral-950: #020617;
+  
+  /* =====================================================
+     TIPOGRAFIA PROFISSIONAL
+     ===================================================== */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
+  --font-family-base: var(--font-family-primary);
 
   /* Font Sizes */
   --font-size-xs: 0.75rem;      /* 12px */

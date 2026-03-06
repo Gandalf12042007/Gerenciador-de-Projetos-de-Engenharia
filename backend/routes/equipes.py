@@ -645,7 +645,7 @@ async def gerar_codigo_convite(
     try:
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id, nome, criador_id FROM projetos WHERE id = ?",
+            "SELECT id, nome, criador_id FROM projetos WHERE id = %s",
             (dados.projeto_id,),
             fetch=True
         )
@@ -658,7 +658,7 @@ async def gerar_codigo_convite(
         if user_cargo not in ['admin', 'gerente'] and projeto.get('criador_id') != user_id:
             # Verificar se é gerente do projeto
             membro = db.execute_query(
-                "SELECT papel FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+                "SELECT papel FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
                 (dados.projeto_id, user_id),
                 fetch=True
             )
@@ -672,7 +672,7 @@ async def gerar_codigo_convite(
         tentativas = 0
         while tentativas < 10:
             existente = db.execute_query(
-                "SELECT id FROM convites_equipes WHERE token = ? AND (usado = 0 OR usado IS NULL)",
+                "SELECT id FROM convites_equipes WHERE token = %s AND (usado = 0 OR usado IS NULL)",
                 (codigo,),
                 fetch=True
             )
@@ -690,7 +690,7 @@ async def gerar_codigo_convite(
             INSERT INTO convites_equipes (
                 projeto_id, email_convidado, papel, token, 
                 data_expiracao, criado_por, criado_em
-            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            ) VALUES (%s, %s, %s, %s, %s, %s, datetime('now'))
             """,
             (
                 dados.projeto_id,
@@ -744,7 +744,7 @@ async def enviar_convite_por_email(
         
         # Verificar se projeto existe
         projeto = db.execute_query(
-            "SELECT id, nome, criador_id FROM projetos WHERE id = ?",
+            "SELECT id, nome, criador_id FROM projetos WHERE id = %s",
             (dados.projeto_id,),
             fetch=True
         )
@@ -756,7 +756,7 @@ async def enviar_convite_por_email(
         # Verificar permissão (admin, gerente ou criador do projeto)
         if user_cargo not in ['admin', 'gerente'] and projeto.get('criador_id') != user_id:
             membro = db.execute_query(
-                "SELECT papel FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+                "SELECT papel FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
                 (dados.projeto_id, user_id),
                 fetch=True
             )
@@ -769,7 +769,7 @@ async def enviar_convite_por_email(
         tentativas = 0
         while tentativas < 10:
             existente = db.execute_query(
-                "SELECT id FROM convites_equipes WHERE token = ? AND (usado = 0 OR usado IS NULL)",
+                "SELECT id FROM convites_equipes WHERE token = %s AND (usado = 0 OR usado IS NULL)",
                 (codigo,),
                 fetch=True
             )
@@ -787,7 +787,7 @@ async def enviar_convite_por_email(
             INSERT INTO convites_equipes (
                 projeto_id, email_convidado, papel, token, 
                 data_expiracao, criado_por, criado_em
-            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+            ) VALUES (%s, %s, %s, %s, %s, %s, datetime('now'))
             """,
             (
                 dados.projeto_id,
@@ -865,7 +865,7 @@ async def entrar_com_codigo(
                    p.nome as projeto_nome
             FROM convites_equipes c
             JOIN projetos p ON c.projeto_id = p.id
-            WHERE c.token = ?
+            WHERE c.token = %s
             """,
             (codigo,),
             fetch=True
@@ -890,7 +890,7 @@ async def entrar_com_codigo(
         
         # Verificar se usuário já está no projeto
         existente = db.execute_query(
-            "SELECT id FROM equipes WHERE projeto_id = ? AND usuario_id = ? AND ativo = 1",
+            "SELECT id FROM equipes WHERE projeto_id = %s AND usuario_id = %s AND ativo = 1",
             (convite['projeto_id'], user_id),
             fetch=True
         )
@@ -901,14 +901,14 @@ async def entrar_com_codigo(
         membro_id = db.execute_query(
             """
             INSERT INTO equipes (projeto_id, usuario_id, papel, data_entrada, ativo, criado_em)
-            VALUES (?, ?, ?, date('now'), 1, datetime('now'))
+            VALUES (%s, %s, %s, date('now'), 1, datetime('now'))
             """,
             (convite['projeto_id'], user_id, convite['papel'])
         )
         
         # Marcar convite como usado
         db.execute_query(
-            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = ?",
+            "UPDATE convites_equipes SET usado = 1, usado_em = datetime('now') WHERE id = %s",
             (convite['id'],)
         )
         
@@ -944,7 +944,7 @@ async def validar_codigo(codigo: str):
                    p.nome as projeto_nome, p.descricao as projeto_descricao
             FROM convites_equipes c
             JOIN projetos p ON c.projeto_id = p.id
-            WHERE c.token = ?
+            WHERE c.token = %s
             """,
             (codigo,),
             fetch=True

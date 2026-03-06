@@ -1,0 +1,131 @@
+╔══════════════════════════════════════════════════════════════╗
+║    COMO RODAR O GERENCIADOR DE PROJETOS DE ENGENHARIA       ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 OPÇÃO 1: Duplo clique no arquivo (MAIS FÁCIL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Dê duplo clique em: RODAR_SISTEMA.bat
+2. Uma janela do terminal irá abrir
+3. O navegador abrirá automaticamente em: http://localhost:8000/login.html
+
+
+📋 OPÇÃO 2: Rodar manualmente
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PASSO 1 - Abrir terminal
+-------------------------
+Aperte: Windows + R
+Digite: cmd
+Aperte: Enter
+
+
+PASSO 2 - Navegar até a pasta do projeto
+-----------------------------------------
+cd C:\Users\vicen\Gerenciador-de-Projetos-de-Engenharia-3\backend
+
+
+PASSO 3 - Iniciar o backend
+----------------------------
+python app.py
+
+
+PASSO 4 - Abrir o navegador
+----------------------------
+Abra seu navegador (Chrome, Edge, Firefox) e acesse:
+http://localhost:8000/login.html
+
+
+═══════════════════════════════════════════════════════════════
+
+🔐 CONTAS DE TESTE DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+
+┌─────────────┬────────────────────────────────┬──────────────┐
+│    TIPO     │            EMAIL               │    SENHA     │
+├─────────────┼────────────────────────────────┼──────────────┤
+│ 👑 Admin    │ vicentedesouza762@gmail.com    │ Admin@2026   │
+│ 👑 Admin    │ francisco@projeto.com          │ Admin@2026   │
+│ 👑 Admin    │ professor@projeto.com          │ Admin@2026   │
+│ 👔 Gerente  │ gerenteteste@projeto.com       │ Gerente@123  │
+│ 👷 Engenheiro│ engenheiroteste@projeto.com   │ Engenheiro@123│
+│ 🔧 Técnico  │ tecnicoteste@projeto.com       │ Tecnico@123  │
+│ 🏠 Cliente  │ clienteteste@projeto.com       │ Cliente@123  │
+└─────────────┴────────────────────────────────┴──────────────┘
+
+
+═══════════════════════════════════════════════════════════════
+
+🌐 PÁGINAS DISPONÍVEIS
+═══════════════════════════════════════════════════════════════
+
+🔑 Login:         http://localhost:8000/login.html
+📊 Dashboard:     http://localhost:8000/projects/
+📚 Documentação:  http://localhost:8000/docs
+🔍 API Docs:      http://localhost:8000/redoc
+
+
+═══════════════════════════════════════════════════════════════
+
+✅ VERIFICAR SE ESTÁ FUNCIONANDO
+═══════════════════════════════════════════════════════════════
+
+1. Acesse: http://localhost:8000
+   Deve aparecer: API - Gerenciador de Projetos de Engenharia Civil
+
+2. Acesse: http://localhost:8000/docs
+   Deve abrir a documentação Swagger da API
+
+3. Acesse: http://localhost:8000/health
+   Deve aparecer: {"status":"healthy","service":"api-gerenciador-projetos"}
+
+
+═══════════════════════════════════════════════════════════════
+
+🛑 COMO PARAR O SISTEMA
+═══════════════════════════════════════════════════════════════
+
+1. Vá até a janela do terminal onde o backend está rodando
+2. Aperte: Ctrl + C
+3. Ou simplesmente feche a janela do terminal
+
+
+═══════════════════════════════════════════════════════════════
+
+❓ PROBLEMAS COMUNS
+═══════════════════════════════════════════════════════════════
+
+ERRO: "Address already in use" ou porta ocupada
+SOLUÇÃO: Outra instância já está rodando. Feche-a primeiro.
+
+ERRO: "ModuleNotFoundError"
+SOLUÇÃO: Instale as dependências:
+         cd backend
+         python -m pip install -r requirements.txt
+
+ERRO: Página não carrega no navegador
+SOLUÇÃO: Verifique se o terminal mostra:
+         "Uvicorn running on http://0.0.0.0:8000"
+
+
+═══════════════════════════════════════════════════════════════
+
+💡 DICA IMPORTANTE
+═══════════════════════════════════════════════════════════════
+
+O backend DEVE estar rodando (terminal aberto) enquanto você
+usa o sistema. Se fechar o terminal, o sistema para de funcionar.
+
+
+═══════════════════════════════════════════════════════════════
+
+📞 SUPORTE
+═══════════════════════════════════════════════════════════════
+
+Desenvolvido por: Vicente de Souza
+Email: vicentedesouza762@gmail.com
+GitHub: @Souza371
+
+
+═══════════════════════════════════════════════════════════════
+Última atualização: Fevereiro 2026
+═══════════════════════════════════════════════════════════════

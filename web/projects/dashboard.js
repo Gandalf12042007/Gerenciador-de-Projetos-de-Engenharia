@@ -17,29 +17,52 @@ let projectId = null;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
+    // Verificar role do usuário
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : {};
+    const isAdmin = user && (user.role === 'admin' || user.role === 'administrador');
+    
+    console.log('Dashboard Init:', { user, isAdmin, userRole: user?.role });
+    
     projectId = getProjectIdFromUrlOrStorage();
-    if (!projectId) {
+    
+    // Admin pode entrar sem projeto (vê dashboard geral)
+    // Usuários normais precisam de um projeto
+    if (!projectId && !isAdmin) {
+        console.warn('Acesso negado: não é admin e sem projectId');
         localStorage.removeItem('current_project_id');
         alert('Selecione um projeto na tela inicial para acessar o sistema.');
         window.location.href = '../index.html';
         return;
     }
-    localStorage.setItem('current_project_id', projectId);
+    
+    if (projectId) {
+        localStorage.setItem('current_project_id', projectId);
+    }
+    
     // Exibir nome do usuário
-    const user = api.user;
     if (user && user.nome) {
-        document.getElementById('userName').textContent = user.nome.split(' ')[0];
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl) {
+            userNameEl.textContent = user.nome.split(' ')[0];
+        }
     }
 
     // Handlers
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        api.logout();
-        window.location.href = '../login.html';
-    });
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            api.logout();
+            window.location.href = '../login.html';
+        });
+    }
 
-    document.getElementById('profileBtn').addEventListener('click', () => {
-        window.location.href = '../profile.html';
-    });
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            window.location.href = '../profile.html';
+        });
+    }
 
     // Carregar dados
     loadDashboardData();
@@ -50,15 +73,19 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function loadDashboardData() {
     try {
+        console.log('Iniciando carregamento do dashboard...');
+        
         // Carregar projetos
-        const projectsResponse = await api.get('/projetos/');
+        console.log('Carregando projetos...');
+        const projectsResponse = await api.get('/api/projetos/');
         projects = projectsResponse || [];
+        console.log('Projetos carregados:', projects.length);
 
         // Carregar tarefas de todos os projetos
         tasks = [];
         for (const project of projects) {
             try {
-                const projectTasks = await api.get(`/tarefas/projeto/${project.id}`);
+                const projectTasks = await api.get(`/api/tarefas/projeto/${project.id}`);
                 if (Array.isArray(projectTasks)) {
                     tasks.push(...projectTasks.map(t => ({ ...t, projeto_nome: project.nome })));
                 }
@@ -67,13 +94,18 @@ async function loadDashboardData() {
             }
         }
 
+        console.log('Atualizando UI...');
         // Atualizar UI
         updateSummaryCards();
         updateCharts();
         updateLists();
+        
+        console.log('Dashboard carregado com sucesso');
 
     } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
+        console.error('Stack:', error.stack);
+        alert(`Erro ao carregar dashboard: ${error.message}`);
     }
 }
 
@@ -99,11 +131,20 @@ function updateSummaryCards() {
         : 0;
 
     // Atualizar elementos
-    document.getElementById('totalProjects').textContent = totalProjects;
-    document.getElementById('completedProjects').textContent = completedProjects;
-    document.getElementById('activeProjects').textContent = activeProjects;
-    document.getElementById('overdueTasks').textContent = overdueTasks;
-    document.getElementById('avgProgress').textContent = `${avgProgress}%`;
+    const totalEl = document.getElementById('totalProjects');
+    if (totalEl) totalEl.textContent = totalProjects;
+    
+    const completedEl = document.getElementById('completedProjects');
+    if (completedEl) completedEl.textContent = completedProjects;
+    
+    const activeEl = document.getElementById('activeProjects');
+    if (activeEl) activeEl.textContent = activeProjects;
+    
+    const overdueEl = document.getElementById('overdueTasks');
+    if (overdueEl) overdueEl.textContent = overdueTasks;
+    
+    const progressEl = document.getElementById('avgProgress');
+    if (progressEl) progressEl.textContent = `${avgProgress}%`;
 }
 
 /**

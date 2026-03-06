@@ -31,7 +31,8 @@ class PermissionManager:
     }
     
     # IDs de administradores do sistema (sincronizado com auth.py)
-    ADMIN_USER_IDS = {1, 2, 3}  # Vicente, Francisco, Professor
+    # Inclui ID 8 do admin@sistema.com
+    ADMIN_USER_IDS = {1, 2, 3, 8}  # Vicente, Francisco, Professor, Admin Sistema
     
     def __init__(self):
         pass  # Usando db_helper, não precisa de config
@@ -41,14 +42,36 @@ class PermissionManager:
         Verifica se usuário é administrador do sistema.
         Administradores têm acesso total a todos os projetos.
         
+        Verifica primeiro pela lista de IDs conhecidos, 
+        depois consulta o banco de dados para verificar role='admin'.
+        
         Args:
             user_id: ID do usuário
             
         Returns:
             True se é admin, False caso contrário
         """
-        # Verificar pela lista de IDs de admin (hardcoded, sincronizado com auth.py)
-        return user_id in self.ADMIN_USER_IDS
+        # Verificar pela lista de IDs de admin (cache rápido)
+        if user_id in self.ADMIN_USER_IDS:
+            return True
+        
+        # Verificar no banco de dados pelo role
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            query = "SELECT role FROM usuarios_new WHERE id = %s AND role = 'admin'"
+            cursor.execute(query, (user_id,))
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            if result:
+                # Adicionar ao cache para próximas verificações
+                self.ADMIN_USER_IDS.add(user_id)
+                return True
+        except Exception:
+            pass
+        
+        return False
     
     def _get_connection(self):
         """Cria conexão com banco de dados (compatível MySQL/SQLite)"""

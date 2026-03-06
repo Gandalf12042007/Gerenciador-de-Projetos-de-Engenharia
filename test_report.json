@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-03-03T20:16:32.701788",
+  "tests": [
+    {
+      "name": "Backend Connection",
+      "status": "PASS",
+      "data": {
+        "status": "healthy",
+        "service": "api-gerenciador-projetos"
+      }
+    },
+    {
+      "name": "Database Connection",
+      "status": "PASS",
+      "code": 422
+    },
+    {
+      "name": "Auth Endpoint: /api/auth/login",
+      "status": "PASS",
+      "code": 422
+    },
+    {
+      "name": "Auth Endpoint: /api/auth/register",
+      "status": "PASS",
+      "code": 422
+    },
+    {
+      "name": "Auth Endpoint: /api/auth/verify",
+      "status": "PASS",
+      "code": 404
+    },
+    {
+      "name": "Project Endpoint: /api/projects",
+      "status": "PASS",
+      "code": 404
+    },
+    {
+      "name": "Project Endpoint: /api/projects/1",
+      "status": "PASS",
+      "code": 404
+    },
+    {
+      "name": "CORS Headers",
+      "status": "PASS",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": null,
+        "Access-Control-Allow-Headers": null
+      }
+    },
+    {
+      "name": "Frontend File: /login.html",
+      "status": "PASS"
+    },
+    {
+      "name": "Frontend File: /manifest.json",
+      "status": "WARN",
+      "code": 404
+    },
+    {
+      "name": "Frontend File: /service-worker.js",
+      "status": "WARN",
+      "code": 404
+    },
+    {
+      "name": "Frontend File: /pwa-installer.js",
+      "status": "WARN",
+      "code": 404
+    },
+    {
+      "name": "Frontend File: /projects/index.html",
+      "status": "PASS"
+    },
+    {
+      "name": "API Docs: /docs",
+      "status": "PASS"
+    },
+    {
+      "name": "API Docs: /redoc",
+      "status": "PASS"
+    },
+    {
+      "name": "API Docs: /openapi.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Response Time: /health",
+      "status": "WARN",
+      "time_ms": 2062.504529953003
+    },
+    {
+      "name": "Response Time: /api/projects",
+      "status": "WARN",
+      "time_ms": 2030.0042629241943
+    },
+    {
+      "name": "Response Time: /login.html",
+      "status": "WARN",
+      "time_ms": 2052.14786529541
+    }
+  ],
+  "errors": [],
+  "summary": {
+    "passed": 13,
+    "failed": 6,
+    "total": 19,
+    "success_rate": "68.4%"
+  }
+}

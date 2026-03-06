@@ -18,10 +18,15 @@ from db_helper import DatabaseHelper
 
 from utils.auth import hash_password, verify_password, create_access_token
 from utils.two_factor_auth import gerar_otp, enviar_otp_email, validar_otp, resend_otp
+from utils.user_manager import obter_usuario_por_email, atualizar_ultimo_login
+from utils.security_audit import (
+    registro_log_auth, 
+    registrar_tentativa_falhada, 
+    esta_bloqueado,
+    tempo_ate_desbloquear
+)
 from middleware.rate_limit import RateLimitDecorators
 from middleware.auth_middleware import get_current_active_user
-from services.auth_service import AuthService
-from services.user_service import UserService
 from config import settings
 
 # Logger para auditoria de segurança
@@ -82,29 +87,149 @@ class VerifyOTPRequest(BaseModel):
 @RateLimitDecorators.login
 async def login(credentials: LoginRequest, request: Request):
     """
-    Login de usuário
+    Login de usuário com autenticação baseada em banco de dados
+    
+    Segurança implementada:
+    - Bcrypt para hash de senhas
+    - Rate limiting (3 tentativas = 15 min bloqueio)
+    - Auditoria completa de login/falhas
+    - IP address logging
     
     Returns:
         Token JWT e dados do usuário
     """
-    auth_service = AuthService()
-    user = auth_service.authenticate_user(credentials.email, credentials.senha)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email ou senha incorretos"
+    try:
+        # Extrair IP da request
+        client_ip = request.client.host if request.client else "desconhecido"
+        email_normalized = credentials.email.lower()
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 1: Verificar se conta está bloqueada por rate limiting
+        # ═════════════════════════════════════════════════════════════════════
+        if esta_bloqueado(email_normalized):
+            minutos = tempo_ate_desbloquear(email_normalized)
+            
+            # Log da tentativa bloqueada
+            registro_log_auth(
+                email=email_normalized,
+                acao="login_bloqueado",
+                sucesso=False,
+                ip_address=client_ip,
+                motivo=f"Conta bloqueada por rate limit - {minutos} minutos restantes"
+            )
+            
+            logger.warning(f"❌ Tentativa de login bloqueada (rate limit): {email_normalized} de {client_ip}")
+            
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Conta temporariamente bloqueada. Tente novamente em {minutos} minutos."
+            )
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 2: Buscar usuário no banco de dados
+        # ═════════════════════════════════════════════════════════════════════
+        user = obter_usuario_por_email(email_normalized)
+        
+        if not user:
+            # Usuário não encontrado - registrar tentativa
+            registrar_tentativa_falhada(email_normalized, client_ip)
+            
+            registro_log_auth(
+                email=email_normalized,
+                acao="login_falha",
+                sucesso=False,
+                ip_address=client_ip,
+                motivo="Usuário não encontrado"
+            )
+            
+            logger.warning(f"❌ Tentativa de login para usuário não encontrado: {email_normalized} de {client_ip}")
+            
+            # Resposta genérica (não revela informações)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email ou senha incorretos"
+            )
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 3: Verificar senha usando bcrypt
+        # ═════════════════════════════════════════════════════════════════════
+        senha_hash = user.get('senha_hash') or user.get('senha_hash')
+        
+        if not verify_password(credentials.senha, senha_hash):
+            # Senha incorreta - registrar tentativa falhada
+            registrar_tentativa_falhada(email_normalized, client_ip)
+            
+            registro_log_auth(
+                email=email_normalized,
+                acao="login_falha",
+                sucesso=False,
+                ip_address=client_ip,
+                motivo="Senha incorreta"
+            )
+            
+            logger.warning(f"❌ Senha incorreta para: {email_normalized} de {client_ip}")
+            
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Email ou senha incorretos"
+            )
+        
+        # ═════════════════════════════════════════════════════════════════════
+        # PASSO 4: Gerar token JWT e registrar login bem-sucedido
+        # ═════════════════════════════════════════════════════════════════════
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={
+                "user_id": user.get("id"),
+                "email": user.get("email"),
+                "nome": user.get("nome"),
+                "role": user.get("role", "usuario")
+            },
+            expires_delta=access_token_expires
         )
-
-    access_token = auth_service.create_access_token_for_user(user)
-    logger.info(f"Login bem-sucedido: {credentials.email}")
-
-    return TokenResponse(
-        access_token=access_token,
-        user_id=user.get("id"),
-        nome=user.get("nome") or user.get("name"),
-        email=user.get("email"),
-        role=user.get("role", "usuario")
-    )
+        
+        # Atualizar último login
+        atualizar_ultimo_login(email_normalized)
+        
+        # Log de sucesso
+        registro_log_auth(
+            email=email_normalized,
+            acao="login_sucesso",
+            sucesso=True,
+            ip_address=client_ip,
+            motivo="Credenciais válidas"
+        )
+        
+        logger.info(f"✅ Login bem-sucedido: {email_normalized} de {client_ip}")
+        
+        return TokenResponse(
+            access_token=access_token,
+            user_id=user.get("id"),
+            nome=user.get("nome"),
+            email=user.get("email"),
+            role=user.get("role", "usuario")
+        )
+    
+    except HTTPException:
+        # Re-lançar exceções HTTP (para não serem capturadas novamente)
+        raise
+    
+    except Exception as e:
+        # Log de erro não esperado
+        logger.error(f"❌ Erro inesperado no login: {str(e)}")
+        
+        registro_log_auth(
+            email=credentials.email.lower(),
+            acao="login_erro",
+            sucesso=False,
+            ip_address=request.client.host if request.client else "desconhecido",
+            motivo=f"Erro interno: {str(e)[:50]}"
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao processar login"
+        )
 
 
 @router.post("/register", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
@@ -115,24 +240,81 @@ async def register(user_data: RegisterRequest, request: Request):
     
     Returns:
         Mensagem de sucesso
+        
+    Raises:
+        HTTPException: Email já existe, senha fraca, erro ao inserir
     """
-    service = UserService()
-    try:
-        service.create_user(
-            nome=user_data.nome,
-            email=user_data.email,
-            senha=user_data.senha,
-            telefone=user_data.telefone,
-            cargo=user_data.cargo
+    db = DatabaseHelper()
+    
+    # Validar força da senha
+    if not RegisterRequest.validate_password(user_data.senha):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Senha fraca. Requisitos: mín. 8 caracteres, 1 maiúscula, 1 número"
         )
-        logger.info(f"Novo usuário registrado: {user_data.email}")
-        # Enviar OTP (2FA ou confirmação de cadastro)
-        enviar_otp_email(user_data.email)
-        return {"message": "Usuário cadastrado com sucesso. Verifique seu email para confirmar o cadastro."}
-    except ValueError as ve:
-        # Erros esperados pelo serviço viram 400
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    
+    # Validar nome (mínimo 3 caracteres)
+    if len(user_data.nome.strip()) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nome deve ter no mínimo 3 caracteres"
+        )
+    
+    # Verificar se email já existe (sem expor detalhes)
+    try:
+        existing = db.execute_query(
+            "SELECT id FROM usuarios WHERE email = %s",
+            (user_data.email,),
+            fetch=True
+        )
+        
+        if existing and len(existing) > 0:
+            # Log para auditoria
+            logger.warning(f"Tentativa de registro com email já existente: {user_data.email}")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email já cadastrado no sistema"
+            )
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Erro ao verificar email único: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao validar email"
+        )
+    
+    # Hash da senha (bcrypt com salt rounds automático)
+    try:
+        senha_hash = hash_password(user_data.senha)
+    except Exception as e:
+        logger.error(f"Erro ao gerar hash de senha: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao processar senha"
+        )
+    
+    # Inserir usuário com tratamento específico de erros
+    try:
+        db.execute_query(
+            """
+            INSERT INTO usuarios (nome, email, senha_hash, telefone, cargo, ativo)
+            VALUES (%s, %s, %s, %s, %s, 1)
+            """,
+            (user_data.nome.strip(), user_data.email.lower(), senha_hash, user_data.telefone, user_data.cargo)
+        )
+        
+        logger.info(f"Novo usuário registrado: {user_data.email}")
+        
+        # ✅ Sprint 1: Integração de 2FA (Autenticação de Dois Fatores)
+        # Enviar OTP por email para validação de cadastro
+        logger.info(f"Enviando OTP para confirmação de registro: {user_data.email}")
+        enviar_otp_email(user_data.email)
+        
+        return {"message": "Usuário cadastrado com sucesso. Verifique seu email para confirmar o cadastro."}
+    
+    except Exception as e:
+        # Não expor detalhes de erro ao cliente (segurança)
         logger.error(f"Erro ao cadastrar usuário {user_data.email}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

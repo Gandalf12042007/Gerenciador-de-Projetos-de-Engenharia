@@ -127,6 +127,11 @@ if WEB_DIR.exists():
     if styles_dir.exists():
         app.mount("/styles", StaticFiles(directory=str(styles_dir)), name="styles")
     
+    # Diretório de scripts JS
+    js_dir = WEB_DIR / "js"
+    if js_dir.exists():
+        app.mount("/js", StaticFiles(directory=str(js_dir)), name="js")
+    
     # Arquivos de projetos (CSS, JS específicos)
     projects_dir = WEB_DIR / "projects"
     if projects_dir.exists():
@@ -216,6 +221,17 @@ if WEB_DIR.exists():
         if forgot_file.exists():
             return FileResponse(forgot_file, media_type="text/html")
         return {"error": "Forgot password page not found"}
+    
+    @app.get("/manifest.json")
+    async def serve_manifest():
+        manifest_file = WEB_DIR / "manifest.json"
+        if manifest_file.exists():
+            return FileResponse(manifest_file, media_type="application/manifest+json")
+        return {"error": "Manifest not found"}
+    
+    # Montar a raiz como StaticFiles para servir arquivos CSS, JS, etc
+    # IMPORTANTE: Isso deve ser feito por ÚLTIMO pois monta a raiz
+    app.mount("/", StaticFiles(directory=str(WEB_DIR), html=True), name="web")
 
 
 if __name__ == "__main__":

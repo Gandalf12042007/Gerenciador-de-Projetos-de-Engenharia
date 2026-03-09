@@ -510,10 +510,27 @@ function formatStatus(status) {
 
 /**
  * Buscar projectId do URL ou do localStorage
+ * Verifica múltiplas chaves para compatibilidade
  */
 function getProjectIdFromUrlOrStorage() {
     const params = new URLSearchParams(window.location.search);
-    let pid = params.get('project');
-    if (!pid) pid = localStorage.getItem('current_project_id');
+    // Verificar parâmetro URL (aceita 'project' ou 'projeto')
+    let pid = params.get('project') || params.get('projeto');
+    
+    // Se não encontrou na URL, buscar no localStorage
+    if (!pid) {
+        pid = localStorage.getItem('current_project_id');
+    }
+    
+    // Fallback: tentar extrair ID de projeto_atual (objeto JSON)
+    if (!pid) {
+        try {
+            const projetoAtual = JSON.parse(localStorage.getItem('projeto_atual') || '{}');
+            pid = projetoAtual.id;
+        } catch (e) {
+            console.warn('Erro ao ler projeto_atual:', e);
+        }
+    }
+    
     return pid || null;
 }

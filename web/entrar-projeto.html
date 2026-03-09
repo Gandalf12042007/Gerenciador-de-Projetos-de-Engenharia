@@ -514,10 +514,12 @@
                 const response = await api.post('/projetos/admin/entrar-projeto', { projeto_id: parseInt(projetoId) });
                 
                 showAlert('Acessando projeto...', 'success');
+                // Salvar projeto de forma consistente
                 localStorage.setItem('projeto_atual', JSON.stringify(response.projeto));
+                localStorage.setItem('current_project_id', response.projeto.id.toString());
                 
                 setTimeout(() => {
-                    window.location.href = 'projects/index.html';
+                    window.location.href = `projects/index.html?project=${response.projeto.id}`;
                 }, 500);
             } catch (error) {
                 showAlert(error.message || 'Erro ao acessar projeto');
@@ -602,11 +604,12 @@
                 
                 showAlert('Conectando ao projeto...', 'success');
                 
-                // Store project info and redirect
+                // Store project info and redirect - usar chaves consistentes
                 localStorage.setItem('projeto_atual', JSON.stringify(response.projeto));
+                localStorage.setItem('current_project_id', response.projeto.id.toString());
                 
                 setTimeout(() => {
-                    window.location.href = `projects/index.html?projeto=${codigo}`;
+                    window.location.href = `projects/index.html?project=${response.projeto.id}`;
                 }, 1000);
 
             } catch (error) {

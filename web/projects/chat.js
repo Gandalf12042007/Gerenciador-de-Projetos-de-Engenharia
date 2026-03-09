@@ -18,8 +18,16 @@ function getUser() {
 
 function getProjectIdFromUrlOrStorage() {
   const params = new URLSearchParams(window.location.search);
-  let pid = params.get('project');
+  // Aceita 'project' ou 'projeto' na URL
+  let pid = params.get('project') || params.get('projeto');
   if (!pid) pid = localStorage.getItem('current_project_id');
+  // Fallback: extrair de projeto_atual
+  if (!pid) {
+    try {
+      const projetoAtual = JSON.parse(localStorage.getItem('projeto_atual') || '{}');
+      pid = projetoAtual.id;
+    } catch (e) { /* ignore */ }
+  }
   return pid || null;
 }
 

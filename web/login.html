@@ -574,9 +574,11 @@
                 
                 // Administradores vão direto para o dashboard (acesso total)
                 // Outros usuários precisam informar o código do projeto
+                // Verifica se é admin (aceita 'admin', 'Admin', 'Administrador', 'administrador')
+                const isAdmin = ['admin', 'administrador'].includes(response.role?.toLowerCase());
                 setTimeout(() => {
-                    console.log('Redirecionando para:', response.role === 'admin' ? 'projects/dashboard.html' : 'entrar-projeto.html');
-                    if (response.role === 'admin') {
+                    console.log('Redirecionando para:', isAdmin ? 'projects/dashboard.html' : 'entrar-projeto.html');
+                    if (isAdmin) {
                         window.location.href = 'projects/dashboard.html';
                     } else {
                         window.location.href = 'entrar-projeto.html';

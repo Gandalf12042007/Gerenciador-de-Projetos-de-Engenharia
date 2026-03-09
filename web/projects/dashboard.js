@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Verificar role do usuário
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : {};
-    const isAdmin = user && (user.role === 'admin' || user.role === 'administrador');
+    // Aceita 'admin', 'Admin', 'Administrador', 'administrador'
+    const isAdmin = user && ['admin', 'administrador'].includes(user.role?.toLowerCase());
     
     console.log('Dashboard Init:', { user, isAdmin, userRole: user?.role });
     

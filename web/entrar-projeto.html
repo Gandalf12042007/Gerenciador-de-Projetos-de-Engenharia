@@ -456,7 +456,8 @@
         // VERIFICAR SE É ADMIN
         // ========================================
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        const isAdmin = userData.role === 'admin';
+        // Aceita 'admin', 'Admin', 'Administrador', 'administrador'
+        const isAdmin = ['admin', 'administrador'].includes(userData.role?.toLowerCase());
 
         if (isAdmin) {
             // Mostrar seção de admin, esconder formulário de código

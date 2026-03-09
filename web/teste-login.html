@@ -168,8 +168,10 @@
                     log(`Dados salvos no localStorage!`, 'success');
                     log(`Redirecionando em 2 segundos...`, 'info');
                     
+                    // Verifica se é admin (aceita 'admin', 'Administrador', etc)
+                    const isAdmin = ['admin', 'administrador'].includes(data.role?.toLowerCase());
                     setTimeout(() => {
-                        if (data.role === 'admin') {
+                        if (isAdmin) {
                             window.location.href = '/projects/dashboard.html';
                         } else {
                             window.location.href = '/entrar-projeto.html';

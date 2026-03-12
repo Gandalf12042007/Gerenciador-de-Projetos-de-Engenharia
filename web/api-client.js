@@ -15,11 +15,9 @@ const getApiUrl = () => {
         return 'http://localhost:8000';
     }
     
-    // Se estiver em localhost com porta 3000 (dev frontend), aponta para 8000 (dev backend)
+    // Se estiver em localhost (qualquer porta diferente de 8000), aponta para o backend 8000
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        if (window.location.port === '3000') {
-            return 'http://localhost:8000';
-        }
+        return 'http://localhost:8000';
     }
     
     // Em produção ou quando acessando diretamente pelo backend

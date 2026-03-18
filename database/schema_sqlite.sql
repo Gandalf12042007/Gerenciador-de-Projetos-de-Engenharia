@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS usuario_permissoes (
 CREATE TABLE IF NOT EXISTS projetos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
+    project_code TEXT UNIQUE,
     descricao TEXT,
     endereco TEXT,
     cliente TEXT,
@@ -71,6 +72,45 @@ CREATE TABLE IF NOT EXISTS projetos (
 
 CREATE INDEX IF NOT EXISTS idx_projetos_status ON projetos(status);
 CREATE INDEX IF NOT EXISTS idx_projetos_criador ON projetos(criador_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_projetos_project_code ON projetos(project_code);
+
+-- ===== SEGURANCA DE AUTENTICACAO =====
+
+CREATE TABLE IF NOT EXISTS auth_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    acao TEXT NOT NULL,
+    ip_address TEXT,
+    sucesso INTEGER,
+    motivo TEXT,
+    timestamp TEXT DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_logs_email_time ON auth_logs(email, timestamp);
+
+CREATE TABLE IF NOT EXISTS failed_login_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    ip_address TEXT,
+    timestamp TEXT DEFAULT (datetime('now', 'localtime')),
+    bloqueado_ate TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_failed_login_email_time ON failed_login_attempts(email, timestamp);
+
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now', 'localtime')),
+    used_at TEXT,
+    ip_address TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_email ON password_reset_tokens(email);
+CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON password_reset_tokens(token_hash);
 
 CREATE TABLE IF NOT EXISTS equipes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
